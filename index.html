@@ -58,14 +58,67 @@
             margin-top: 5px; margin-bottom: 10px; z-index: 10; letter-spacing: 1px;
         }
 
-        .bin-lid { width: 85%; background: #4CAF50; border-radius: 40px 40px 10px 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; z-index: 5; box-shadow: 0 10px 0px #2E7D32; position: relative; transition: 0.3s; }
-        .status-badge { background: white; border: 3px solid #2E7D32; border-radius: 25px; padding: 8px 16px; font-size: 0.98rem; font-weight: 800; color: #333; min-width: 220px; max-width: 100%; text-align: center; margin-bottom: 10px; line-height: 1.35; }
-        .face { display: flex; gap: 40px; align-items: flex-end; margin-top: 5px; margin-bottom: 5px; }
-        .eye { width: 18px; height: 18px; background: #333; border-radius: 50%; position: relative; animation: blink 4s infinite; }
-        .eye::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: white; border-radius: 50%; }
-        .mouth { width: 20px; height: 10px; border-bottom: 4px solid #333; border-radius: 0 0 15px 15px; }
+        .bin-lid {
+            width: 85%; background: #4CAF50; border-radius: 40px 40px 10px 10px; padding: 15px;
+            display: flex; flex-direction: column; align-items: center; z-index: 5;
+            box-shadow: 0 10px 0px #2E7D32; position: relative;
+            transform-origin: 12% 100%;
+            transition: background-color 0.3s ease, transform 0.25s cubic-bezier(.3,1.6,.5,1);
+        }
+        .bin-lid.lid-open { transform: translateY(-18px) rotate(-10deg); }
 
-        .bin-body { width: 75%; background: #4CAF50; padding: 15px; padding-top: 30px; border-radius: 0 0 40px 40px; margin-top: -10px; z-index: 1; box-shadow: inset 0 -10px 20px rgba(0,0,0,0.2); }
+        .status-badge { background: white; border: 3px solid #2E7D32; border-radius: 25px; padding: 8px 16px; font-size: 0.98rem; font-weight: 800; color: #333; min-width: 220px; max-width: 100%; text-align: center; margin-bottom: 10px; line-height: 1.35; }
+
+        /* --- ใบหน้าน้องถัง (เปลี่ยนตามอารมณ์) --- */
+        .face { display: flex; gap: 40px; align-items: flex-end; margin-top: 5px; margin-bottom: 5px; min-height: 26px; }
+        .eye { width: 18px; height: 18px; background: #333; border-radius: 50%; position: relative; animation: blink 4s infinite; transition: height 0.2s ease, transform 0.2s ease; }
+        .eye::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: white; border-radius: 50%; animation: lookAround 7s ease-in-out infinite; }
+        .mouth { width: 20px; height: 10px; border-bottom: 4px solid #333; border-radius: 0 0 15px 15px; transition: all 0.25s ease; }
+
+        @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+        @keyframes lookAround {
+            0%, 35% { left: 3px; top: 3px; }
+            45%, 60% { left: 9px; top: 4px; }
+            70%, 85% { left: 2px; top: 6px; }
+            95%, 100% { left: 3px; top: 3px; }
+        }
+        @keyframes eyeSpin { to { transform: rotate(360deg); } }
+        @keyframes faceHop { 0% { transform: translateY(0); } 40% { transform: translateY(-9px); } 100% { transform: translateY(0); } }
+        @keyframes faceShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(4px); } }
+
+        /* กำลังคิด: ตาหมุน ปาก o */
+        .mood-thinking .eye { animation: eyeSpin 0.8s linear infinite; }
+        .mood-thinking .eye::after { animation: none; left: 3px; top: 3px; }
+        .mood-thinking .mouth { width: 12px; height: 12px; border: 3px solid #333; border-radius: 50%; }
+
+        /* ดีใจ: ตายิ้ม ^^ ปากยิ้มกว้าง กระโดด */
+        .mood-happy .eye { background: transparent; border-top: 5px solid #333; border-radius: 50%; animation: none; transform: translateY(6px); }
+        .mood-happy .eye::after { display: none; }
+        .mood-happy .mouth { width: 32px; height: 16px; border-bottom-width: 5px; border-radius: 0 0 20px 20px; }
+        .mood-happy .face { animation: faceHop 0.55s cubic-bezier(.3,1.6,.5,1); }
+
+        /* เศร้า: ปากเส้นตรง มองลง */
+        .mood-sad .eye::after { animation: none; left: 4px; top: 10px; }
+        .mood-sad .mouth { width: 16px; height: 0; border-bottom-width: 4px; border-radius: 2px; }
+
+        /* โกรธ: คิ้วขมวด ปากคว่ำ ส่ายหัว */
+        .mood-angry .eye { height: 11px; animation: none; }
+        .mood-angry .eye::after { animation: none; top: 2px; left: 6px; }
+        .mood-angry .eye::before { content: ''; position: absolute; top: -10px; left: -3px; width: 24px; height: 4px; background: #333; border-radius: 2px; }
+        .mood-angry .eye:first-child::before { transform: rotate(22deg); }
+        .mood-angry .eye:last-child::before { transform: rotate(-22deg); }
+        .mood-angry .mouth { border-bottom: none; border-top: 4px solid #333; border-radius: 15px 15px 0 0; height: 10px; transform: translateY(6px); }
+        .mood-angry .face { animation: faceShake 0.5s ease; }
+
+        .bin-body { width: 75%; background: #4CAF50; padding: 15px; padding-top: 30px; border-radius: 0 0 40px 40px; margin-top: -10px; z-index: 1; box-shadow: inset 0 -10px 20px rgba(0,0,0,0.2); transform-origin: 50% 100%; }
+        .bin-body.gulp { animation: gulp 0.45s ease; }
+        @keyframes gulp {
+            0% { transform: scale(1, 1); }
+            30% { transform: scale(1.06, 0.92); }
+            60% { transform: scale(0.97, 1.04); }
+            100% { transform: scale(1, 1); }
+        }
+
         .camera-frame { 
             width: 100%; aspect-ratio: 3/4; background: #161f30; border-radius: 20px; border: 4px solid #fff; 
             overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; 
@@ -73,6 +126,46 @@
         
         #webcam-video, #captured-image { 
             width: 100%; height: 100%; object-fit: cover; display: block; 
+        }
+
+        /* ภาพที่ถ่าย + ชั้นกรอบขยะ */
+        .capture-wrap { position: absolute; inset: 0; z-index: 4; }
+        .capture-wrap.dropping { animation: dropInBin 0.6s cubic-bezier(.5,0,.75,0) forwards; }
+        .capture-wrap.gone { opacity: 0; }
+        @keyframes dropInBin { to { transform: translateY(-80%) scale(0.12) rotate(-12deg); opacity: 0; } }
+
+        .box-layer { position: absolute; inset: 0; pointer-events: none; }
+        .det-box {
+            position: absolute; border: 3px solid var(--c); border-radius: 10px; background: var(--bg);
+            opacity: 0; transform: scale(0.6);
+            animation: boxPop 0.45s cubic-bezier(.2,1.5,.4,1) forwards;
+        }
+        .det-label {
+            position: absolute; left: -3px; top: -24px; background: var(--c); color: var(--fg);
+            font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 8px 8px 8px 0;
+            white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .det-box.label-inside .det-label { top: 2px; left: 2px; border-radius: 8px; }
+        @keyframes boxPop { to { opacity: 1; transform: scale(1); } }
+
+        /* เลเซอร์สแกนระหว่างวิเคราะห์ */
+        .scan-overlay { position: absolute; inset: 0; z-index: 7; pointer-events: none; overflow: hidden; }
+        .scan-overlay::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(rgba(74,222,128,0.10) 1px, transparent 1px) 0 0 / 100% 18px,
+                        linear-gradient(90deg, rgba(74,222,128,0.08) 1px, transparent 1px) 0 0 / 18px 100%;
+        }
+        .scan-line {
+            position: absolute; left: 0; right: 0; height: 3px; background: #4ADE80;
+            box-shadow: 0 0 12px 4px rgba(74,222,128,0.7);
+            animation: scanMove 1.5s ease-in-out infinite alternate;
+        }
+        .scan-line::after { content: ''; position: absolute; left: 0; right: 0; bottom: 3px; height: 60px; background: linear-gradient(to top, rgba(74,222,128,0.25), transparent); }
+        @keyframes scanMove { from { top: 2%; } to { top: 96%; } }
+        .scan-label {
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: #fff; font-size: 0.78rem; font-weight: 600;
+            padding: 5px 14px; border-radius: 20px; white-space: nowrap; display: flex; align-items: center; gap: 8px;
         }
 
         .live-overlay-grid {
@@ -130,12 +223,13 @@
         .controls-area { margin-top: 20px; display: flex; gap: 22px; align-items: center; z-index: 10; }
         .btn-circle { width: 58px; height: 58px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; cursor: pointer; box-shadow: 0 5px 12px rgba(0,0,0,0.08); transition: 0.15s; }
         .btn-circle:active { transform: scale(0.92); }
+        .btn-circle:disabled { cursor: not-allowed; }
         .btn-snap { width: 78px; height: 78px; background: white; border: 5px solid #ff5252; color: #ff5252; font-size: 2rem; box-shadow: 0 6px 16px rgba(255,82,82,0.25); }
-        .btn-snap:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+        .btn-snap:disabled { opacity: 0.45; box-shadow: none; }
         .btn-history { background: #E3F2FD; color: #1565C0; }
         .btn-rank { background: #FFF9C4; color: #FBC02D; }
         .btn-confirm { background: #C8E6C9; color: #2E7D32; width: 70px; height: 70px; transition: 0.3s; position: relative; }
-        .btn-confirm:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; opacity: 0.6; }
+        .btn-confirm:disabled { background: #e0e0e0; color: #999; opacity: 0.6; }
         .btn-retry { background: #FFCCBC; color: #D84315; width: 70px; height: 70px; }
         .btn-fix { background: #EDE7F6; color: #5E35B1; }
 
@@ -145,6 +239,39 @@
             padding: 3px 8px; border-radius: 20px; border: 2px solid white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.25);
         }
+
+        /* +N ลอยไปหาคะแนน */
+        .fly-points {
+            position: fixed; z-index: 2500; pointer-events: none;
+            background: linear-gradient(135deg, #22C55E, #15803D); color: #fff;
+            font-weight: 800; font-size: 1.1rem; padding: 6px 14px; border-radius: 30px;
+            box-shadow: 0 6px 16px rgba(21,128,61,0.4); white-space: nowrap;
+        }
+
+        /* แถบแจ้งเตือนด้านล่าง */
+        .app-toast {
+            position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 160%);
+            background: #1E293B; color: #fff; padding: 12px 22px; border-radius: 30px;
+            font-weight: 600; font-size: 0.9rem; z-index: 3000; max-width: 90%; text-align: center;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.3);
+            transition: transform 0.35s cubic-bezier(.2,1.4,.4,1);
+        }
+        .app-toast.show { transform: translate(-50%, 0); }
+
+        /* 🔥 ไฟ streak */
+        .flame { display: inline-block; transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; transition: filter 1.2s ease, opacity 1.2s ease; }
+        .flame.flame-out { animation: none; filter: grayscale(100%) brightness(1.1); opacity: 0.5; }
+        @keyframes flicker {
+            0%, 100% { transform: scale(1) rotate(-2deg); filter: brightness(1); }
+            25% { transform: scale(1.08, 1.12) rotate(2deg); filter: brightness(1.15); }
+            50% { transform: scale(0.96, 1.02) rotate(-1deg); filter: brightness(1); }
+            75% { transform: scale(1.05, 1.1) rotate(1.5deg); filter: brightness(1.1); }
+        }
+
+        /* ฉลองขึ้นระดับ */
+        .tierup-badge { font-size: 3.4rem; line-height: 1; animation: badgePop 0.7s cubic-bezier(.2,1.6,.4,1); }
+        @keyframes badgePop { 0% { transform: scale(0) rotate(-30deg); } 100% { transform: scale(1) rotate(0); } }
+        .tierup-art { max-width: 100%; max-height: 170px; object-fit: contain; margin: 6px auto 4px; display: block; }
 
         /* --- แก้ประเภทขยะ --- */
         .fix-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #eee; }
@@ -192,8 +319,6 @@
             transition: 0.2s;
         }
         .btn-my-certs:hover { background: #0F172A; color: white; }
-
-        @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
 
         /* --- Profile Modal Cards --- */
         .profile-img-large { width: 105px; height: 105px; border-radius: 50%; object-fit: cover; border: 4px solid #4CAF50; box-shadow: 0 5px 15px rgba(0,0,0,0.12); margin-bottom: 10px; }
@@ -276,6 +401,15 @@
         #certCanvas { width: 100%; height: auto; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
         .cert-tier-item { border: 2px solid #E2E8F0; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
         .cert-tier-item.unlocked { border-color: #0284C7; background: #F0F9FF; }
+
+        /* ผู้ใช้ที่ตั้งค่า "ลดการเคลื่อนไหว" */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -284,6 +418,9 @@
     <input type="file" id="editProfileInput" class="hidden" accept="image/*" onchange="handleProfileUpdate(this)">
     <!-- ทางสำรอง: เปิดแอปกล้องของมือถือ (ปิดไว้ตามค่า ALLOW_CAMERA_APP_FALLBACK) -->
     <input type="file" id="cameraAppInput" class="hidden" accept="image/*" capture="environment" onchange="handleCameraAppFile(this)">
+
+    <!-- แถบแจ้งเตือน -->
+    <div id="appToast" class="app-toast" role="status" aria-live="polite"></div>
 
     <!-- AUTH -->
     <div id="authSection" class="auth-container">
@@ -321,7 +458,7 @@
                 <img id="userAvatar" src="" class="user-avatar-small" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
                 <div>
                     <div style="line-height:1.1;"><span id="dispName" style="font-weight:700;">...</span></div>
-                    <small class="fw-bold" style="color:#15803D;">🏆 <span id="dispScore">0</span> <span id="dispFlameIcon">🔥</span></small>
+                    <small class="fw-bold" style="color:#15803D;">🏆 <span id="dispScore">0</span> <span id="dispFlameIcon" class="flame">🔥</span></small>
                 </div>
             </div>
             <button class="btn-logout-top" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
@@ -329,15 +466,26 @@
 
         <div class="title-header">น้องถังช่วยทิ้ง</div>
 
-        <div class="bin-lid" id="binLid">
+        <div class="bin-lid mood-idle" id="binLid">
             <div class="status-badge" id="statusText">กำลังเปิดกล้อง...</div>
             <div class="face"><div class="eye"></div><div class="mouth"></div><div class="eye"></div></div>
         </div>
 
-        <div class="bin-body">
+        <div class="bin-body" id="binBody">
             <div class="camera-frame" onclick="onCameraFrameTap()">
                 <video id="webcam-video" autoplay playsinline muted></video>
-                <img id="captured-image" class="hidden">
+
+                <!-- ภาพที่ถ่าย + กรอบขยะ -->
+                <div id="captureWrap" class="capture-wrap hidden">
+                    <img id="captured-image" alt="">
+                    <div class="box-layer" id="boxLayer"></div>
+                </div>
+
+                <!-- เลเซอร์สแกนระหว่างวิเคราะห์ -->
+                <div class="scan-overlay hidden" id="scanOverlay">
+                    <div class="scan-line"></div>
+                    <div class="scan-label"><span class="spinner-grow spinner-grow-sm text-success"></span> น้องถังกำลังดู... <span id="scanTimer">0.0</span>s</div>
+                </div>
 
                 <!-- ป้าย LIVE แสดงว่าเป็นภาพจากกล้องสด -->
                 <div class="live-badge hidden" id="liveBadge"><span class="live-dot"></span>LIVE</div>
@@ -379,7 +527,7 @@
                 <button class="btn-circle btn-rank" onclick="openLeaderboard()"><i class="fas fa-trophy"></i></button>
             </div>
             <div id="ctrlAction" class="hidden" style="display:flex; gap:22px; align-items:center;">
-                <button class="btn-circle btn-retry" onclick="resetCamera()" title="ถ่ายใหม่"><i class="fas fa-undo"></i></button>
+                <button class="btn-circle btn-retry" id="btnRetry" onclick="resetCamera()" title="ถ่ายใหม่"><i class="fas fa-undo"></i></button>
                 <button class="btn-circle btn-fix hidden" id="btnFix" onclick="openFixModal()" title="แก้ประเภท"><i class="fas fa-pen"></i></button>
                 <button class="btn-circle btn-confirm" id="btnConfirm" onclick="confirmSave()" title="ยืนยันบันทึก">
                     <i class="fas fa-check"></i>
@@ -393,6 +541,25 @@
             <i class="fas fa-award"></i>
             <span id="mainCertBtnText">ดาวน์โหลดประกาศนียบัตรรับรอง</span>
         </button>
+    </div>
+
+    <!-- MODAL: ฉลองขึ้นระดับใหม่ -->
+    <div class="modal fade" id="tierUpModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 text-center p-3">
+                <div class="tierup-badge">🏅</div>
+                <div class="small fw-bold mt-2" style="letter-spacing:3px; color:#B45309;">LEVEL UP!</div>
+                <div class="small text-muted mt-1">ยินดีด้วย! ปลดล็อกระดับใหม่แล้ว</div>
+                <h4 class="fw-bold mt-1 mb-0" id="tierUpName" style="color:#0F172A;"></h4>
+                <div class="text-muted small mb-1" id="tierUpNameEn"></div>
+                <img id="tierUpArt" class="tierup-art" alt="" onerror="this.classList.add('hidden')">
+                <p class="small text-muted mb-2 px-2" id="tierUpDesc"></p>
+                <button class="btn-cert-corporate w-100 mt-1" style="max-width:100%;" onclick="openTierCertFromCelebration()">
+                    <i class="fas fa-award"></i> ดูประกาศนียบัตรของฉัน
+                </button>
+                <button type="button" class="btn btn-link text-muted mt-1" data-bs-dismiss="modal">ไว้ทีหลัง</button>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL: แก้ประเภทขยะ -->
@@ -441,7 +608,7 @@
 
                     <!-- กล่องสถานะไฟ -->
                     <div id="modalStreakCard" class="streak-card active">
-                        <div class="streak-icon" id="modalStreakIcon">🔥</div>
+                        <div class="streak-icon flame" id="modalStreakIcon">🔥</div>
                         <div>
                             <div class="streak-title" id="modalStreakTitle">ความต่อเนื่องในการคัดแยก</div>
                             <div class="streak-desc" id="modalStreakDesc">คัดแยกขยะอย่างสม่ำเสมอเพื่อรักษาสถานะการรับรองความยั่งยืน</div>
@@ -536,6 +703,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script>
         // =========================================================================
         // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — ใส่ลิงก์ /exec ของคุณตรงนี้
@@ -590,6 +758,7 @@
         const ALLOW_CAMERA_APP_FALLBACK = false;        // ปิดไว้ = รับภาพจากกล้องสดในแอปเท่านั้น
         const FRESH_PHOTO_MAX_AGE_MS = 2 * 60 * 1000;   // (ใช้เมื่อเปิดทางสำรอง) รูปต้องถ่ายไม่เกิน 2 นาที
         const AVATAR_SIZE = 200;                        // ขนาดรูปโปรไฟล์ (px) ที่เก็บใน Sheet
+        const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
         
         const WASTE_MAP = {
             "General Waste": { th: "ขยะทั่วไป", binText: "ถังสีน้ำเงิน", color: "#2196F3", hint: "ย่อยสลายยาก/เปื้อน" },
@@ -741,18 +910,29 @@
         let currentUser = null;
         let userTotalScore = 0;
         let userDaysInactive = 0;
+        let scoreLoaded = false;
         let selectedCertTier = RANK_TIERS[0];
         let currentDetectedItems = [];
         let lastRawCanvas = null;        // ภาพต้นฉบับ (ไม่มีกรอบสี) ของการสแกนล่าสุด
         let lastAnalysisSource = 'local';
         let lastElapsed = '0';
         let itemsCorrected = false;
+        let scanTimerId = null;
+        let toastTimer = null;
+        let pendingCelebrateTier = null;
+        const countAnims = new WeakMap();
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
         function escapeHtml(s) {
             return String(s == null ? '' : s)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        function isShowingCapture() {
+            return !document.getElementById('captureWrap').classList.contains('hidden');
         }
 
         window.onload = function() {
@@ -782,10 +962,159 @@
             if (document.hidden) {
                 if (cameraReady) stopLiveVideo();
             } else {
-                const showingCapture = !document.getElementById('captured-image').classList.contains('hidden');
-                if (!showingCapture && !cameraReady) startLiveVideo();
+                if (!isShowingCapture() && !cameraReady) startLiveVideo();
             }
         });
+
+        // วาดกรอบใหม่เมื่อหมุนจอ/ปรับขนาด
+        window.addEventListener('resize', function() {
+            if (isShowingCapture() && currentDetectedItems.length > 0) renderBoxes(currentDetectedItems, false);
+        });
+
+        // =========================================================================
+        // 😊 อารมณ์ของน้องถัง: idle | thinking | happy | sad | angry
+        // =========================================================================
+        function setMood(mood) {
+            const lid = document.getElementById('binLid');
+            lid.classList.remove('mood-idle', 'mood-thinking', 'mood-happy', 'mood-sad', 'mood-angry');
+            void lid.offsetWidth; // ให้แอนิเมชันเล่นซ้ำได้
+            lid.classList.add('mood-' + mood);
+        }
+
+        // =========================================================================
+        // ✨ เอฟเฟกต์: แจ้งเตือน, ตัวเลขนับขึ้น, +N ลอย, พลุ
+        // =========================================================================
+        function showToast(msg) {
+            const t = document.getElementById('appToast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+        }
+
+        function countUp(el, from, to, dur = 700) {
+            if (!el) return;
+            const prev = countAnims.get(el);
+            if (prev) cancelAnimationFrame(prev);
+            if (REDUCED_MOTION || from === to) { el.textContent = to; return; }
+            const t0 = performance.now();
+            function step(now) {
+                const p = Math.min(1, (now - t0) / dur);
+                const e = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(from + (to - from) * e);
+                if (p < 1) countAnims.set(el, requestAnimationFrame(step));
+            }
+            countAnims.set(el, requestAnimationFrame(step));
+        }
+
+        function popBadge() {
+            const badgeBox = document.getElementById('userBadgeBox');
+            badgeBox.classList.remove('score-pop');
+            void badgeBox.offsetWidth;
+            badgeBox.classList.add('score-pop');
+        }
+
+        function flyPoints(n, fromEl, toEl) {
+            return new Promise(resolve => {
+                if (REDUCED_MOTION || !fromEl || !toEl || !document.body.animate) return resolve();
+                const a = fromEl.getBoundingClientRect();
+                const b = toEl.getBoundingClientRect();
+                const sx = a.left + a.width / 2;
+                const sy = a.top + a.height / 2;
+                const dx = (b.left + b.width / 2) - sx;
+                const dy = (b.top + b.height / 2) - sy;
+
+                const el = document.createElement('div');
+                el.className = 'fly-points';
+                el.textContent = `+${n} ♻️`;
+                el.style.left = sx + 'px';
+                el.style.top = sy + 'px';
+                document.body.appendChild(el);
+
+                const anim = el.animate([
+                    { transform: 'translate(-50%, -50%) scale(0.4)', opacity: 0 },
+                    { transform: 'translate(-50%, -160%) scale(1.25)', opacity: 1, offset: 0.3 },
+                    { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.5)`, opacity: 0.4 }
+                ], { duration: 950, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' });
+
+                anim.onfinish = () => { el.remove(); resolve(); };
+                anim.oncancel = () => { el.remove(); resolve(); };
+            });
+        }
+
+        function fireConfetti(color) {
+            if (REDUCED_MOTION || typeof confetti !== 'function') return;
+            const colors = [color || '#22C55E', '#FFD700', '#22C55E', '#FFFFFF'];
+            confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: colors, zIndex: 3000 });
+            setTimeout(() => {
+                confetti({ particleCount: 60, angle: 60, spread: 60, origin: { x: 0, y: 0.75 }, colors: colors, zIndex: 3000 });
+                confetti({ particleCount: 60, angle: 120, spread: 60, origin: { x: 1, y: 0.75 }, colors: colors, zIndex: 3000 });
+            }, 250);
+        }
+
+        function celebrateTierUp(tier) {
+            pendingCelebrateTier = tier;
+            document.getElementById('tierUpName').textContent = tier.name;
+            document.getElementById('tierUpNameEn').textContent = tier.nameEn;
+            document.getElementById('tierUpDesc').textContent = tier.desc;
+            const art = document.getElementById('tierUpArt');
+            art.classList.remove('hidden');
+            art.src = tier.artImgUrl;
+            new bootstrap.Modal(document.getElementById('tierUpModal')).show();
+            fireConfetti(tier.primaryColor);
+        }
+
+        function openTierCertFromCelebration() {
+            const m = bootstrap.Modal.getInstance(document.getElementById('tierUpModal'));
+            if (m) m.hide();
+            if (pendingCelebrateTier) {
+                const t = pendingCelebrateTier;
+                setTimeout(() => openCertificatePreview(t), 350);
+            }
+        }
+
+        // 🗑️ ฝาเปิด → ขยะหล่นลงถัง → ฝาปิด → ถังเด้ง
+        async function playGulp() {
+            const lid = document.getElementById('binLid');
+            const body = document.getElementById('binBody');
+            const wrap = document.getElementById('captureWrap');
+            setMood('happy');
+            if (REDUCED_MOTION) { wrap.classList.add('gone'); return; }
+            lid.classList.add('lid-open');
+            await sleep(220);
+            wrap.classList.add('dropping');
+            await sleep(600);
+            lid.classList.remove('lid-open');
+            body.classList.add('gulp');
+            await sleep(450);
+            body.classList.remove('gulp');
+        }
+
+        function restoreAfterFailedGulp() {
+            const wrap = document.getElementById('captureWrap');
+            wrap.classList.remove('dropping', 'gone');
+            document.getElementById('binLid').classList.remove('lid-open');
+            document.getElementById('binBody').classList.remove('gulp');
+        }
+
+        // 🔦 เลเซอร์สแกน + ตัวนับเวลา
+        function startScanFx() {
+            const ov = document.getElementById('scanOverlay');
+            const lbl = document.getElementById('scanTimer');
+            ov.classList.remove('hidden');
+            const t0 = performance.now();
+            lbl.textContent = '0.0';
+            clearInterval(scanTimerId);
+            scanTimerId = setInterval(() => {
+                lbl.textContent = ((performance.now() - t0) / 1000).toFixed(1);
+            }, 100);
+        }
+
+        function stopScanFx() {
+            clearInterval(scanTimerId);
+            scanTimerId = null;
+            document.getElementById('scanOverlay').classList.add('hidden');
+        }
 
         function getRankInfo(score) {
             let currentTier = null;
@@ -802,19 +1131,19 @@
         function refreshCertificateButtons(score, daysInactive) {
             userTotalScore = score;
             userDaysInactive = daysInactive || 0;
+            scoreLoaded = true;
 
             const { currentTier, nextTier } = getRankInfo(score);
             const highestTier = currentTier || RANK_TIERS[0];
             selectedCertTier = highestTier;
 
+            // 🔥 ไฟ streak: ไหวเมื่อยัง active / มอดเป็นสีเทาเมื่อขาดเกิน 3 วันหรือยังไม่มีคะแนน
+            const flameOut = score === 0 || (userDaysInactive >= 3 && score > 0);
             const flameEl = document.getElementById('dispFlameIcon');
-            if (userDaysInactive >= 3 && score > 0) {
-                flameEl.innerText = '⚪';
-                flameEl.style.filter = 'grayscale(100%)';
-            } else {
-                flameEl.innerText = '🔥';
-                flameEl.style.filter = 'none';
-            }
+            flameEl.textContent = '🔥';
+            flameEl.style.filter = '';
+            flameEl.classList.add('flame');
+            flameEl.classList.toggle('flame-out', flameOut);
 
             const btnLabel = currentTier 
                 ? `ดาวน์โหลดประกาศนียบัตร (${currentTier.name})` 
@@ -831,21 +1160,22 @@
             const rankBar = document.getElementById('modalRankBar');
             const rankSub = document.getElementById('modalRankSub');
 
+            streakIcon.textContent = '🔥';
+            streakIcon.classList.add('flame');
+            streakIcon.classList.toggle('flame-out', flameOut);
+
             if (userDaysInactive >= 3 && score > 0) {
                 streakCard.classList.remove('active');
-                streakIcon.innerHTML = '<span style="filter:grayscale(100%); opacity:0.65;">🔥</span>';
                 streakTitle.innerText = 'ขาดการบันทึกความต่อเนื่อง';
-                streakDesc.innerText = `ไม่ได้บันทึกมา ${userDaysInactive} วัน — คัดแยกขยะ 1 ชิ้นเพื่อต่ออายุสถานะความต่อเนื่อง`;
+                streakDesc.innerText = `ไม่ได้บันทึกมา ${userDaysInactive} วัน — คัดแยกขยะ 1 ชิ้นเพื่อจุดไฟความต่อเนื่องอีกครั้ง`;
                 rankTitle.innerHTML = `ระดับปัจจุบัน: <span class="text-secondary">${highestTier.name} (${highestTier.nameEn})</span>`;
             } else if (score === 0) {
                 streakCard.classList.remove('active');
-                streakIcon.innerHTML = '<span style="filter:grayscale(100%); opacity:0.65;">🔥</span>';
                 streakTitle.innerText = 'ยังไม่มีประวัติการบันทึก';
-                streakDesc.innerText = 'เริ่มต้นคัดแยกขยะชิ้นแรกเพื่อรับการรับรองมาตรฐานก้าวแรก';
+                streakDesc.innerText = 'เริ่มต้นคัดแยกขยะชิ้นแรกเพื่อจุดไฟและรับการรับรองมาตรฐานก้าวแรก';
                 rankTitle.innerText = 'ระดับการรับรอง: ยังไม่เข้าเกณฑ์ (ต้องมีอย่างน้อย 1 คะแนน)';
             } else {
                 streakCard.classList.add('active');
-                streakIcon.innerText = '🔥';
                 streakTitle.innerText = 'ความต่อเนื่องระดับมาตรฐาน (Active)';
                 streakDesc.innerText = 'ท่านรักษามาตรฐานการคัดแยกอย่างสม่ำเสมอตามเกณฑ์ ESG';
                 rankTitle.innerHTML = `ระดับการรับรอง: <span style="color:#0F172A; font-weight:800;">${highestTier.name} (${highestTier.nameEn})</span>`;
@@ -1037,7 +1367,7 @@
                                 localStorage.setItem('smartBinUser', JSON.stringify(currentUser)); 
                                 if (modalImg) modalImg.src = res.newUrl; 
                                 if (headerImg) headerImg.src = res.newUrl; 
-                                alert("✅ อัปเดตรูปสำเร็จ!"); 
+                                showToast("✅ อัปเดตรูปโปรไฟล์แล้ว"); 
                             } else { 
                                 alert("❌ " + (res && res.message ? res.message : "อัปโหลดรูปไม่สำเร็จ")); 
                             } 
@@ -1584,6 +1914,7 @@
                 snapBtn.disabled = false;
                 lidText.innerText = "กดชัตเตอร์เพื่อสแกน";
                 lidText.style.color = "#333";
+                setMood('idle');
                 return;
             }
 
@@ -1607,6 +1938,7 @@
 
             lidText.innerText = state === 'loading' ? 'กำลังเปิดกล้อง...' : 'ต้องเปิดกล้องก่อนสแกน';
             lidText.style.color = "#333";
+            setMood(state === 'error' ? 'sad' : 'idle');
         }
 
         function cameraErrorMessage(err) {
@@ -1705,8 +2037,7 @@
                 await waitForVideoReady(video);
                 cameraReady = true;
 
-                const showingCapture = !document.getElementById('captured-image').classList.contains('hidden');
-                if (!showingCapture) setCameraUI('live');
+                if (!isShowingCapture()) setCameraUI('live');
             } catch (err) {
                 console.warn("Camera error:", err);
                 stopLiveVideo();
@@ -1815,48 +2146,56 @@
             return out;
         }
 
-        function drawBoundingBoxesOnCanvas(canvas, items) {
-            const ctx = canvas.getContext('2d');
-            const scale = Math.max(1, canvas.width / 500);
-            const lineWidth = Math.round(5 * scale);
-            const fontSize = Math.round(18 * scale);
+        // 🟩 วาดกรอบขยะเป็น element บนภาพ (เด้งขึ้นทีละชิ้น)
+        function renderBoxes(items, animate = true) {
+            const layer = document.getElementById('boxLayer');
+            layer.innerHTML = '';
+            if (!lastRawCanvas || !items || items.length === 0) return;
 
-            ctx.font = `bold ${fontSize}px Prompt, sans-serif`;
+            const fw = layer.clientWidth;
+            const fh = layer.clientHeight;
+            if (!fw || !fh) return;
+            const iw = lastRawCanvas.width;
+            const ih = lastRawCanvas.height;
+            // ภาพแสดงแบบ object-fit: cover → คำนวณสเกลและส่วนที่ถูกตัด
+            const s = Math.max(fw / iw, fh / ih);
+            const ox = (fw - iw * s) / 2;
+            const oy = (fh - ih * s) / 2;
 
-            items.forEach((item, index) => {
-                const info = WASTE_MAP[item.className] || WASTE_MAP["General Waste"];
-                const [x, y, w, h] = item.bbox;
+            items.forEach((it, i) => {
+                const info = WASTE_MAP[it.className] || WASTE_MAP["General Waste"];
+                const [x, y, w, h] = it.bbox;
+                const L = x * s + ox;
+                const T = y * s + oy;
+                const l = Math.max(2, L);
+                const t = Math.max(2, T);
+                const r = Math.min(fw - 2, L + w * s);
+                const b = Math.min(fh - 2, T + h * s);
+                if (r - l < 8 || b - t < 8) return;
 
-                ctx.fillStyle = info.color + "28";
-                ctx.fillRect(x, y, w, h);
+                const el = document.createElement('div');
+                el.className = 'det-box' + (t < 26 ? ' label-inside' : '');
+                el.style.left = l + 'px';
+                el.style.top = t + 'px';
+                el.style.width = (r - l) + 'px';
+                el.style.height = (b - t) + 'px';
+                el.style.setProperty('--c', info.color);
+                el.style.setProperty('--bg', info.color + '22');
+                el.style.setProperty('--fg', it.className === 'Recyclable Waste' ? '#212121' : '#FFFFFF');
+                if (animate) {
+                    el.style.animationDelay = (i * 180) + 'ms';
+                } else {
+                    el.style.animation = 'none';
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                }
 
-                ctx.strokeStyle = info.color;
-                ctx.lineWidth = lineWidth;
-                ctx.strokeRect(x, y, w, h);
-
-                const label = `#${index + 1} ${info.th} (${info.binText})`;
-                const textWidth = ctx.measureText(label).width;
-                const padX = 10 * scale;
-                const boxH = fontSize + 12 * scale;
-                const labelY = Math.max(boxH, y);
-
-                ctx.fillStyle = info.color;
-                ctx.fillRect(x, labelY - boxH, Math.min(canvas.width - x, textWidth + padX * 2), boxH);
-
-                ctx.fillStyle = (item.className === "Recyclable Waste") ? "#212121" : "#FFFFFF";
-                ctx.fillText(label, x + padX, labelY - (4 * scale));
+                const lab = document.createElement('span');
+                lab.className = 'det-label';
+                lab.textContent = `#${i + 1} ${info.th}`;
+                el.appendChild(lab);
+                layer.appendChild(el);
             });
-        }
-
-        function getIoU(boxA, boxB) {
-            const xA = Math.max(boxA[0], boxB[0]);
-            const yA = Math.max(boxA[1], boxB[1]);
-            const xB = Math.min(boxA[0] + boxA[2], boxB[0] + boxB[2]);
-            const yB = Math.min(boxA[1] + boxA[3], boxB[1] + boxB[3]);
-            const interArea = Math.max(0, xB - xA) * Math.max(0, yB - yA);
-            const boxAArea = boxA[2] * boxA[3];
-            const boxBArea = boxB[2] * boxB[3];
-            return interArea / (boxAArea + boxBArea - interArea + 0.0001);
         }
 
         // ส่งภาพย่อไปให้ Gemini ผ่าน Apps Script — คืน null ถ้าใช้ไม่ได้ (ไม่มี key / โควตาหมด / error)
@@ -2030,19 +2369,25 @@
             return { living: null, items: finalItems };
         }
 
+        function getIoU(boxA, boxB) {
+            const xA = Math.max(boxA[0], boxB[0]);
+            const yA = Math.max(boxA[1], boxB[1]);
+            const xB = Math.min(boxA[0] + boxA[2], boxB[0] + boxB[2]);
+            const yB = Math.min(boxA[1] + boxA[3], boxB[1] + boxB[3]);
+            const interArea = Math.max(0, xB - xA) * Math.max(0, yB - yA);
+            const boxAArea = boxA[2] * boxA[3];
+            const boxBArea = boxB[2] * boxB[3];
+            return interArea / (boxAArea + boxBArea - interArea + 0.0001);
+        }
+
         function sourceLabel() {
             const src = lastAnalysisSource === 'gemini' ? 'Gemini AI' : 'AI ในเครื่อง';
             return `${lastElapsed}s • ${src}${itemsCorrected ? ' • แก้ไขแล้ว' : ''}`;
         }
 
-        // วาดกรอบบนสำเนาของภาพต้นฉบับ แล้วแสดงผล
         function showDetectionResult(items) {
-            if (lastRawCanvas) {
-                const boxed = makeCanvasCopy(lastRawCanvas);
-                if (items.length > 0) drawBoundingBoxesOnCanvas(boxed, items);
-                document.getElementById('captured-image').src = boxed.toDataURL('image/jpeg', 0.88);
-            }
             renderMultiWasteResult(items, false, sourceLabel());
+            renderBoxes(items, true);
         }
 
         async function analyzeFrame(rawCanvas, startTime) {
@@ -2105,20 +2450,31 @@
 
         function displayCapturedImage(src) {
             const video = document.getElementById('webcam-video');
-            const capImg = document.getElementById('captured-image');
+            const wrap = document.getElementById('captureWrap');
             const overlay = document.getElementById('overlayGrid');
 
-            capImg.src = src;
-            capImg.classList.remove('hidden');
+            document.getElementById('captured-image').src = src;
+            document.getElementById('boxLayer').innerHTML = '';
+            wrap.classList.remove('hidden', 'dropping', 'gone');
             video.classList.add('hidden');
             overlay.classList.add('hidden');
             document.getElementById('camStatus').classList.add('hidden');
             document.getElementById('liveBadge').classList.add('hidden');
             document.getElementById('statusText').innerText = "กำลังสแกนและตีกรอบขยะ...";
+            startScanFx();
+            setMood('thinking');
+        }
+
+        function setActionButtonsDisabled(disabled) {
+            ['btnRetry', 'btnFix', 'btnConfirm'].forEach(id => {
+                const b = document.getElementById(id);
+                if (b) b.disabled = disabled;
+            });
         }
 
         function renderMultiWasteResult(items, isLivingBeing, extraInfo) {
             currentDetectedItems = items || [];
+            stopScanFx();
 
             const badge = document.getElementById('statusText');
             const hint = document.getElementById('hintText');
@@ -2128,10 +2484,14 @@
             const pointsBadge = document.getElementById('confirmPointsBadge');
             const colorBar = document.getElementById('colorBar');
 
+            document.getElementById('btnRetry').disabled = false;
+            fixBtn.disabled = false;
+
             if (isLivingBeing || currentDetectedItems.length === 0) {
                 badge.innerText = "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ";
                 badge.style.color = "#D32F2F";
                 lid.style.backgroundColor = isLivingBeing ? "#E91E63" : "#9E9E9E";
+                setMood(isLivingBeing ? 'angry' : 'sad');
 
                 colorBar.style.backgroundColor = "#D32F2F";
                 colorBar.innerText = "❌ ไม่ใช่ขยะ ห้ามทิ้งลงถัง";
@@ -2150,6 +2510,7 @@
                 badge.innerText = `${info.th} (+1 คะแนน)`;
                 badge.style.color = info.color;
                 lid.style.backgroundColor = info.color;
+                setMood('happy');
 
                 colorBar.style.backgroundColor = info.color;
                 colorBar.innerText = `ทิ้งลง${info.binText}`;
@@ -2167,6 +2528,7 @@
                 badge.innerText = `พบขยะ ${count} ชิ้น! (+${count} คะแนน)`;
                 badge.style.color = "#15803D";
                 lid.style.backgroundColor = firstInfo.color;
+                setMood('happy');
 
                 const summaryList = currentDetectedItems.map((it, idx) => {
                     const inf = WASTE_MAP[it.className];
@@ -2244,8 +2606,14 @@
             currentDetectedItems = [];
             lastRawCanvas = null;
             itemsCorrected = false;
-            document.getElementById('captured-image').classList.add('hidden'); 
+            stopScanFx();
+
+            const wrap = document.getElementById('captureWrap');
+            wrap.classList.add('hidden');
+            wrap.classList.remove('dropping', 'gone');
+            document.getElementById('boxLayer').innerHTML = '';
             document.getElementById('webcam-video').classList.remove('hidden');
+            document.getElementById('binLid').classList.remove('lid-open');
             
             document.getElementById('statusText').style.color = "#333";
             document.getElementById('binLid').style.backgroundColor = "#4CAF50";
@@ -2253,6 +2621,7 @@
             document.getElementById('colorBar').classList.add('hidden');
             document.getElementById('confirmPointsBadge').classList.add('hidden');
             document.getElementById('btnFix').classList.add('hidden');
+            setActionButtonsDisabled(false);
             
             document.getElementById('ctrlAction').style.display = 'none'; 
             document.getElementById('ctrlAction').classList.add('hidden');
@@ -2266,14 +2635,18 @@
             }
         }
 
-        function confirmSave() {
+        // ✅ ยืนยันบันทึก: น้องถังงับขยะ + คะแนนลอยไปเข้ากระเป๋า (เล่นพร้อมกับการส่งข้อมูล)
+        async function confirmSave() {
             if (!currentDetectedItems || currentDetectedItems.length === 0) { 
                 alert("อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ!"); 
                 return; 
             }
-            const btn = document.getElementById('btnConfirm'); 
-            btn.disabled = true; 
-            
+            setActionButtonsDisabled(true);
+
+            const confirmBtn = document.getElementById('btnConfirm');
+            const badgeBox = document.getElementById('userBadgeBox');
+            const scoreEl = document.getElementById('dispScore');
+
             const addedPoints = currentDetectedItems.length;
             const categoriesToSave = currentDetectedItems.map(it => WASTE_MAP[it.className].th);
             const meta = {
@@ -2281,44 +2654,57 @@
                 corrected: itemsCorrected,
                 itemNames: currentDetectedItems.map(it => it.itemName || '')
             };
-
-            const scoreEl = document.getElementById('dispScore');
-            const badgeBox = document.getElementById('userBadgeBox');
-            let currentVal = parseInt(scoreEl.innerText) || 0;
-            scoreEl.innerText = currentVal + addedPoints;
-            
-            badgeBox.classList.remove('score-pop');
-            void badgeBox.offsetWidth;
-            badgeBox.classList.add('score-pop');
+            const prevShown = parseInt(scoreEl.textContent) || 0;
+            const prevTierScore = userTotalScore;
+            const wasLoaded = scoreLoaded;
 
             // บันทึกรูปต้นฉบับ (ไม่มีกรอบสี) ไว้ใช้เทรนโมเดลต่อได้
             const imgData = lastRawCanvas
                 ? makeCanvasCopy(lastRawCanvas, 1024).toDataURL('image/jpeg', 0.8)
                 : document.getElementById('captured-image').src;
 
-            google.script.run
-                .withSuccessHandler(res => {
-                    btn.disabled = false;
-                    if(res && res.success) { 
-                        if (typeof res.newScore !== 'undefined') {
-                            scoreEl.innerText = res.newScore;
-                            refreshCertificateButtons(res.newScore, 0);
-                        } else {
-                            updateScore();
-                        }
-                        alert(res.message); 
-                        resetCamera(); 
-                    } else { 
-                        scoreEl.innerText = currentVal;
-                        alert(res && res.message ? res.message : "❌ บันทึกไม่สำเร็จ"); 
-                    }
-                })
-                .withFailureHandler(err => {
-                    btn.disabled = false;
-                    scoreEl.innerText = currentVal;
-                    alert("❌ บันทึกไม่สำเร็จ: " + err.message);
-                })
-                .logWasteData(currentUser.studentId, categoriesToSave, imgData, meta);
+            const savePromise = new Promise(resolve => {
+                google.script.run
+                    .withSuccessHandler(res => resolve({ res: res }))
+                    .withFailureHandler(err => resolve({ err: err }))
+                    .logWasteData(currentUser.studentId, categoriesToSave, imgData, meta);
+            });
+
+            const gulpPromise = playGulp();
+            const flyPromise = sleep(REDUCED_MOTION ? 0 : 450)
+                .then(() => flyPoints(addedPoints, confirmBtn, badgeBox))
+                .then(() => {
+                    popBadge();
+                    countUp(scoreEl, prevShown, prevShown + addedPoints);
+                });
+
+            const [saved] = await Promise.all([savePromise, gulpPromise, flyPromise]);
+            const res = saved.res;
+
+            if (res && res.success) {
+                const newScore = (typeof res.newScore === 'number') ? res.newScore : prevShown + addedPoints;
+                if (newScore !== prevShown + addedPoints) {
+                    countUp(scoreEl, parseInt(scoreEl.textContent) || 0, newScore);
+                }
+
+                const beforeTier = getRankInfo(prevTierScore).currentTier;
+                refreshCertificateButtons(newScore, 0);
+                const afterTier = getRankInfo(newScore).currentTier;
+
+                showToast(res.message || '✅ บันทึกสำเร็จ!');
+                resetCamera();
+
+                if (wasLoaded && afterTier && (!beforeTier || beforeTier.id !== afterTier.id)) {
+                    setTimeout(() => celebrateTierUp(afterTier), 300);
+                }
+            } else {
+                countUp(scoreEl, parseInt(scoreEl.textContent) || 0, prevShown);
+                restoreAfterFailedGulp();
+                setActionButtonsDisabled(false);
+                setMood('sad');
+                const msg = res && res.message ? res.message : ('❌ บันทึกไม่สำเร็จ: ' + (saved.err ? saved.err.message : ''));
+                alert(msg);
+            }
         }
 
         function updateScore() { 
