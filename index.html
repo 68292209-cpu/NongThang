@@ -1,0 +1,2220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>น้องถังช่วยทิ้ง - วิทยาลัยเทคโนโลยีสยาม (สยามเทค)</title>
+    
+    <!-- Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- TensorFlow.js, Teachable Machine & COCO-SSD -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Prompt:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Prompt', sans-serif; 
+            background-color: #FEFDF5; 
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex; flex-direction: column; align-items: center; 
+            padding-bottom: 25px;
+        }
+        .hidden { display: none !important; }
+
+        /* --- Auth Screen --- */
+        .auth-container { min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 999; background: #FEFDF5; position: fixed; top:0; left:0; overflow-y: auto; }
+        .auth-card { background: white; width: 100%; max-width: 390px; padding: 32px 28px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 3px solid #81C784; }
+        .profile-upload { width: 100px; height: 100px; background: #eee; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer; border: 3px solid #4CAF50; }
+        .profile-upload img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- App Layout --- */
+        .app-container { width: 100%; max-width: 450px; min-height: 100vh; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; }
+
+        /* Header Bar */
+        .header-bar { width: 90%; display: flex; justify-content: space-between; align-items: center; z-index: 20; margin-bottom: 5px; }
+        .user-badge { background: white; padding: 5px 15px 5px 5px; border-radius: 30px; font-size: 0.85rem; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s; }
+        .user-avatar-small { width: 38px; height: 38px; border-radius: 50%; background: #ddd; object-fit: cover; border: 2px solid #4CAF50; }
+        .btn-logout-top { background: #ffebee; color: #c62828; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        @keyframes popScore {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); background-color: #FFF9C4; }
+            100% { transform: scale(1); }
+        }
+        .score-pop { animation: popScore 0.6s ease; }
+
+        /* --- Design น้องถัง --- */
+        .title-header { 
+            font-size: 2.2rem; font-weight: 800; 
+            color: #66BB6A; 
+            text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px #A5D6A7; 
+            margin-top: 5px; margin-bottom: 10px; z-index: 10; letter-spacing: 1px;
+        }
+
+        .bin-lid { width: 85%; background: #4CAF50; border-radius: 40px 40px 10px 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; z-index: 5; box-shadow: 0 10px 0px #2E7D32; position: relative; transition: 0.3s; }
+        .status-badge { background: white; border: 3px solid #2E7D32; border-radius: 25px; padding: 8px 16px; font-size: 0.98rem; font-weight: 800; color: #333; min-width: 220px; max-width: 100%; text-align: center; margin-bottom: 10px; line-height: 1.35; }
+        .face { display: flex; gap: 40px; align-items: flex-end; margin-top: 5px; margin-bottom: 5px; }
+        .eye { width: 18px; height: 18px; background: #333; border-radius: 50%; position: relative; animation: blink 4s infinite; }
+        .eye::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: white; border-radius: 50%; }
+        .mouth { width: 20px; height: 10px; border-bottom: 4px solid #333; border-radius: 0 0 15px 15px; }
+
+        .bin-body { width: 75%; background: #4CAF50; padding: 15px; padding-top: 30px; border-radius: 0 0 40px 40px; margin-top: -10px; z-index: 1; box-shadow: inset 0 -10px 20px rgba(0,0,0,0.2); }
+        .camera-frame { 
+            width: 100%; aspect-ratio: 3/4; background: #161f30; border-radius: 20px; border: 4px solid #fff; 
+            overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; 
+        }
+        
+        #webcam-video, #captured-image { 
+            width: 100%; height: 100%; object-fit: cover; display: block; 
+        }
+
+        .live-overlay-grid {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 5;
+        }
+        .live-reticle {
+            width: 190px; height: 190px; border: 2px dashed rgba(255,255,255,0.45);
+            border-radius: 25px; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 12px;
+        }
+        .reticle-cam-icon { font-size: 3.2rem; color: rgba(255,255,255,0.55); }
+        .cam-guide-title { color: #fff; font-weight: 700; font-size: 0.95rem; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+        .cam-guide-sub { color: #94a3b8; font-size: 0.75rem; }
+
+        /* --- โหมดกล้องสด (Live) --- */
+        .live-overlay-grid.is-live .reticle-cam-icon { display: none; }
+        .live-overlay-grid.is-live .live-reticle { border: 2px dashed rgba(255,255,255,0.8); box-shadow: 0 0 0 2000px rgba(0,0,0,0.12); }
+        .live-overlay-grid.is-live .cam-guide-sub { color: #f1f5f9; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+        .live-badge {
+            position: absolute; top: 10px; left: 10px; z-index: 9;
+            background: rgba(0,0,0,0.55); color: #fff; font-size: 0.7rem; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 6px;
+            pointer-events: none; letter-spacing: 1px;
+        }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: livePulse 1.2s infinite; }
+        @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .cam-status {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 8;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 18px 16px 70px; background: #161f30; color: #fff; gap: 10px;
+        }
+        .cam-status-text { font-size: 0.84rem; line-height: 1.5; color: #e2e8f0; white-space: pre-line; }
+        .cam-status-detail { font-size: 0.66rem; color: #64748b; word-break: break-word; max-width: 100%; }
+        .btn-cam-retry {
+            background: #22c55e; color: #fff; border: none; border-radius: 30px;
+            padding: 9px 20px; font-weight: 700; font-size: 0.88rem; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(34,197,94,0.35);
+        }
+        .btn-cam-alt {
+            background: transparent; color: #e2e8f0; border: 2px solid rgba(255,255,255,0.45); border-radius: 30px;
+            padding: 7px 18px; font-weight: 600; font-size: 0.82rem; cursor: pointer;
+        }
+        .btn-cam-retry:active, .btn-cam-alt:active { transform: scale(0.96); }
+
+        /* Color Bar & Hint */
+        .bottom-info-area { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; z-index: 10; }
+        .color-bar { width: 100%; padding: 8px 10px; text-align: center; font-weight: 800; color: white; font-size: 1.05rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); background: #555; transition: background 0.3s ease; }
+        .result-hint-overlay { background: rgba(0,0,0,0.85); color: #fff; text-align: center; padding: 8px; font-size: 0.8rem; line-height: 1.35; }
+
+        /* Controls */
+        .controls-area { margin-top: 20px; display: flex; gap: 22px; align-items: center; z-index: 10; }
+        .btn-circle { width: 58px; height: 58px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; cursor: pointer; box-shadow: 0 5px 12px rgba(0,0,0,0.08); transition: 0.15s; }
+        .btn-circle:active { transform: scale(0.92); }
+        .btn-snap { width: 78px; height: 78px; background: white; border: 5px solid #ff5252; color: #ff5252; font-size: 2rem; box-shadow: 0 6px 16px rgba(255,82,82,0.25); }
+        .btn-snap:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+        .btn-history { background: #E3F2FD; color: #1565C0; }
+        .btn-rank { background: #FFF9C4; color: #FBC02D; }
+        .btn-confirm { background: #C8E6C9; color: #2E7D32; width: 70px; height: 70px; transition: 0.3s; position: relative; }
+        .btn-confirm:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; opacity: 0.6; }
+        .btn-retry { background: #FFCCBC; color: #D84315; width: 70px; height: 70px; }
+
+        .points-badge {
+            position: absolute; top: -6px; right: -6px;
+            background: #FF5722; color: white; font-size: 0.78rem; font-weight: 800;
+            padding: 3px 8px; border-radius: 20px; border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        }
+
+        /* --- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG --- */
+        .btn-cert-corporate {
+            background: linear-gradient(135deg, #0A192F 0%, #173865 50%, #047857 100%);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            padding: 13px 26px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 85%;
+            max-width: 360px;
+            margin-top: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 10;
+        }
+        .btn-cert-corporate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35); color: #fff; }
+        .btn-cert-corporate:active { transform: scale(0.97); }
+
+        .btn-my-certs {
+            background: #1E293B;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-my-certs:hover { background: #0F172A; color: white; }
+
+        @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
+        /* --- Profile Modal Cards --- */
+        .profile-img-large { width: 105px; height: 105px; border-radius: 50%; object-fit: cover; border: 4px solid #4CAF50; box-shadow: 0 5px 15px rgba(0,0,0,0.12); margin-bottom: 10px; }
+        
+        .score-box-green {
+            background: #EFFDF5;
+            border: 2px solid #BBF7D0;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+        .score-box-title { color: #555; font-size: 0.9rem; margin-bottom: 2px; }
+        .score-box-value { color: #15803D; font-size: 2rem; font-weight: 800; line-height: 1.2; }
+        .score-box-sub { color: #0284C7; font-size: 0.85rem; font-weight: 600; margin-top: 4px; }
+
+        .streak-card {
+            background: #F3F4F6;
+            border: 2px solid #CBD5E1;
+            border-radius: 20px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-align: left;
+            margin-bottom: 14px;
+        }
+        .streak-card.active {
+            background: #FFF7ED;
+            border-color: #FDBA74;
+        }
+        .streak-icon { font-size: 2.3rem; line-height: 1; }
+        .streak-title { font-weight: 800; font-size: 1rem; color: #EF4444; margin-bottom: 2px; }
+        .streak-card.active .streak-title { color: #EA580C; }
+        .streak-desc { font-size: 0.8rem; color: #475569; line-height: 1.35; }
+
+        .rank-progress-card {
+            background: #F8FAFC;
+            border: 2px solid #CBD5E1;
+            border-radius: 20px;
+            padding: 16px 18px;
+            text-align: left;
+            margin-bottom: 16px;
+        }
+        .rank-title-line { font-weight: 800; font-size: 0.95rem; color: #0F172A; margin-bottom: 8px; }
+        .rank-bar-bg { height: 11px; background: #E2E8F0; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+        .rank-bar-fill { height: 100%; background: linear-gradient(90deg, #173865, #047857); border-radius: 10px; transition: width 0.4s ease; }
+        .rank-sub-text { font-size: 0.82rem; color: #475569; }
+
+        .stat-bar-container { margin-bottom: 10px; }
+        .stat-label { font-size: 0.85rem; display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .progress { height: 10px; border-radius: 10px; background-color: #eee; }
+        .progress-bar { border-radius: 10px; }
+
+        /* Leaderboard */
+        .podium-container { display: flex; justify-content: center; align-items: flex-end; margin-bottom: 20px; padding-top: 20px; }
+        .podium-rank { text-align: center; position: relative; margin: 0 8px; }
+        .avatar-wrapper { position: relative; display: inline-block; }
+        .rank-avatar { border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #fff; }
+        .rank-name { font-size: 0.75rem; font-weight: bold; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+        .rank-score { background: #333; color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.7rem; display: inline-block; margin-top: 2px; }
+        .rank-status-icon { position: absolute; z-index: 10; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        .rank-1 { z-index: 3; order: 2; transform: translateY(-15px); }
+        .rank-1 .rank-avatar { width: 90px; height: 90px; border: 4px solid #FFD700; }
+        .rank-1 .rank-score { background: #FFD700; color: #5c4d00; font-size: 0.9rem; }
+        .rank-1 .rank-status-icon { top: -15px; left: 50%; transform: translateX(-50%); width: 32px; height: 32px; font-size: 20px; border: 2px solid #FFD700; }
+        
+        .rank-2 { z-index: 2; order: 1; }
+        .rank-3 { z-index: 2; order: 3; }
+        .rank-2 .rank-avatar, .rank-3 .rank-avatar { width: 70px; height: 70px; }
+        .rank-2 .rank-avatar { border-color: #C0C0C0; }
+        .rank-3 .rank-avatar { border-color: #CD7F32; }
+        .rank-2 .rank-status-icon, .rank-3 .rank-status-icon { bottom: 0; right: 0; width: 24px; height: 24px; font-size: 14px; border: 2px solid #fff; }
+        
+        .normal-rank-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .rank-num { width: 30px; text-align: center; font-weight: bold; color: #888; }
+
+        /* Certificate Preview */
+        #certCanvas { width: 100%; height: auto; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .cert-tier-item { border: 2px solid #E2E8F0; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
+        .cert-tier-item.unlocked { border-color: #0284C7; background: #F0F9FF; }
+    </style>
+</head>
+<body>
+
+    <!-- อัปโหลดรูปโปรไฟล์ (เลือกจากเครื่องได้ตามปกติ) -->
+    <input type="file" id="editProfileInput" class="hidden" accept="image/*" onchange="handleProfileUpdate(this)">
+    <!-- ทางสำรอง: เปิดแอปกล้องของมือถือ (ปิดไว้ตามค่า ALLOW_CAMERA_APP_FALLBACK) -->
+    <input type="file" id="cameraAppInput" class="hidden" accept="image/*" capture="environment" onchange="handleCameraAppFile(this)">
+
+    <!-- AUTH -->
+    <div id="authSection" class="auth-container">
+        <div class="auth-card text-center">
+            <div class="mb-3" style="font-size:3rem;">♻️</div>
+            <h3 class="fw-bold text-success mb-1">น้องถังช่วยทิ้ง</h3>
+            <p class="text-muted small mb-3">วิทยาลัยเทคโนโลยีสยาม (สยามเทค) • ITM</p>
+            <div id="loginForm">
+                <input type="text" id="logUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้">
+                <input type="password" id="logPass" class="form-control mb-3 rounded-pill" placeholder="รหัสผ่าน">
+                <button type="button" id="btnLoginSubmit" class="btn btn-success w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doLogin()">เข้าสู่ระบบ</button>
+                <small class="text-muted" style="cursor:pointer;" onclick="toggleAuth(true)">สมัครสมาชิกใหม่</small>
+            </div>
+            <div id="regForm" class="hidden">
+                <div class="profile-upload" onclick="document.getElementById('regFile').click()">
+                    <img id="previewAvatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="hidden" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
+                    <i id="uploadIcon" class="fas fa-camera"></i>
+                </div>
+                <input type="file" id="regFile" class="hidden" accept="image/*" onchange="previewImage(this)">
+                <div class="small text-muted mb-3">แตะเพื่อใส่รูปโปรไฟล์ (ถ้ามี)</div>
+                <input type="text" id="regUser" class="form-control mb-2 rounded-pill" placeholder="ตั้งชื่อผู้ใช้">
+                <input type="password" id="regPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่าน">
+                <input type="text" id="regId" class="form-control mb-2 rounded-pill" placeholder="รหัสนักศึกษา">
+                <input type="text" id="regName" class="form-control mb-3 rounded-pill" placeholder="ชื่อ-นามสกุล">
+                <button type="button" class="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doRegister()">ลงทะเบียน</button>
+                <small class="text-muted" style="cursor:pointer;" onclick="toggleAuth(false)">กลับไปเข้าสู่ระบบ</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appSection" class="app-container hidden">
+        <div class="header-bar">
+            <div class="user-badge" id="userBadgeBox" onclick="openProfileModal()">
+                <img id="userAvatar" src="" class="user-avatar-small" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
+                <div>
+                    <div style="line-height:1.1;"><span id="dispName" style="font-weight:700;">...</span></div>
+                    <small class="fw-bold" style="color:#15803D;">🏆 <span id="dispScore">0</span> <span id="dispFlameIcon">🔥</span></small>
+                </div>
+            </div>
+            <button class="btn-logout-top" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+
+        <div class="title-header">น้องถังช่วยทิ้ง</div>
+
+        <div class="bin-lid" id="binLid">
+            <div class="status-badge" id="statusText">กำลังเปิดกล้อง...</div>
+            <div class="face"><div class="eye"></div><div class="mouth"></div><div class="eye"></div></div>
+        </div>
+
+        <div class="bin-body">
+            <div class="camera-frame" onclick="onCameraFrameTap()">
+                <video id="webcam-video" autoplay playsinline muted></video>
+                <img id="captured-image" class="hidden">
+
+                <!-- ป้าย LIVE แสดงว่าเป็นภาพจากกล้องสด -->
+                <div class="live-badge hidden" id="liveBadge"><span class="live-dot"></span>LIVE</div>
+                
+                <div class="live-overlay-grid hidden" id="overlayGrid">
+                    <div class="live-reticle">
+                        <i class="fas fa-camera reticle-cam-icon"></i>
+                    </div>
+                    <div class="cam-guide-title">แตะเพื่อถ่าย (สแกนได้หลายชิ้นพร้อมกัน)</div>
+                    <div class="cam-guide-sub">วางขยะแยกกันเล็กน้อย ระบบจะตรวจจับและบันทึกคะแนน</div>
+                </div>
+
+                <!-- สถานะกล้อง: กำลังเปิด / เปิดไม่ได้ -->
+                <div class="cam-status" id="camStatus">
+                    <div class="spinner-border text-light" id="camSpinner" role="status"></div>
+                    <i class="fas fa-video-slash hidden" id="camErrIcon" style="font-size:2.2rem; color:#94a3b8;"></i>
+                    <div class="cam-status-text" id="camStatusText">กำลังเปิดกล้อง...</div>
+                    <button type="button" class="btn-cam-retry hidden" id="btnCamRetry" onclick="event.stopPropagation(); startLiveVideo();">
+                        <i class="fas fa-video me-1"></i> เปิดกล้องอีกครั้ง
+                    </button>
+                    <button type="button" class="btn-cam-alt hidden" id="btnCamAlt" onclick="event.stopPropagation(); openCameraApp();">
+                        <i class="fas fa-mobile-alt me-1"></i> ถ่ายด้วยแอปกล้องแทน
+                    </button>
+                    <div class="cam-status-detail hidden" id="camStatusDetail"></div>
+                </div>
+
+                <!-- Color Bar & Hint -->
+                <div class="bottom-info-area">
+                    <div id="colorBar" class="color-bar hidden">...</div>
+                    <div class="result-hint-overlay" id="hintText">วางขยะ 1 หรือหลายชิ้น แล้วกดถ่ายเลย!</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-area">
+            <div id="ctrlScan" style="display:flex; gap:22px; align-items:center;">
+                <button class="btn-circle btn-history" onclick="openHistory()"><i class="fas fa-history"></i></button>
+                <button class="btn-circle btn-snap" id="btnSnap" onclick="snapCurrentFrame()" disabled><i class="fas fa-camera"></i></button>
+                <button class="btn-circle btn-rank" onclick="openLeaderboard()"><i class="fas fa-trophy"></i></button>
+            </div>
+            <div id="ctrlAction" class="hidden" style="display:flex; gap:30px; align-items:center;">
+                <button class="btn-circle btn-retry" onclick="resetCamera()"><i class="fas fa-undo"></i></button>
+                <button class="btn-circle btn-confirm" id="btnConfirm" onclick="confirmSave()">
+                    <i class="fas fa-check"></i>
+                    <span id="confirmPointsBadge" class="points-badge hidden">+1</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG หน้าหลัก -->
+        <button id="mainCertBtn" class="btn-cert-corporate" onclick="handleCertAction()">
+            <i class="fas fa-award"></i>
+            <span id="mainCertBtnText">ดาวน์โหลดประกาศนียบัตรรับรอง</span>
+        </button>
+    </div>
+
+    <!-- MODAL: โปรไฟล์ของฉัน -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-success">👤 โปรไฟล์ผู้ใช้งาน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center pt-2">
+                    <img id="modalProfileImg" src="" class="profile-img-large" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
+                    <h5 class="fw-bold mb-0" id="modalProfileName">...</h5>
+                    <p class="text-muted small mb-1" id="modalStudentId">...</p>
+                    <div class="mb-2"><span class="badge bg-light text-dark border">วิทยาลัยเทคโนโลยีสยาม (สยามเทค) • ITM</span></div>
+                    <button class="btn btn-outline-secondary btn-sm rounded-pill mb-3 px-3" onclick="triggerProfileUpload()">
+                        <i class="fas fa-camera me-1"></i> เปลี่ยนรูปโปรไฟล์
+                    </button>
+
+                    <!-- กล่องคะแนนสะสม -->
+                    <div class="score-box-green">
+                        <div class="score-box-title">คะแนนการจัดการขยะสะสม (Waste Log Units)</div>
+                        <div class="score-box-value"><span id="modalTotalScore">0</span> คะแนน</div>
+                        <div class="score-box-sub" id="modalPendingText">🌱 ปฏิบัติตามเกณฑ์ ESG เพื่อยกระดับการรับรอง</div>
+                    </div>
+
+                    <!-- กล่องสถานะไฟ -->
+                    <div id="modalStreakCard" class="streak-card active">
+                        <div class="streak-icon" id="modalStreakIcon">🔥</div>
+                        <div>
+                            <div class="streak-title" id="modalStreakTitle">ความต่อเนื่องในการคัดแยก</div>
+                            <div class="streak-desc" id="modalStreakDesc">คัดแยกขยะอย่างสม่ำเสมอเพื่อรักษาสถานะการรับรองความยั่งยืน</div>
+                        </div>
+                    </div>
+
+                    <!-- กล่องระดับมาตรฐานการรับรอง (ESG Tier Progress) -->
+                    <div class="rank-progress-card">
+                        <div class="rank-title-line" id="modalRankTitle">ระดับการรับรอง: ...</div>
+                        <div class="rank-bar-bg">
+                            <div class="rank-bar-fill" id="modalRankBar" style="width: 100%;"></div>
+                        </div>
+                        <div class="rank-sub-text" id="modalRankSub">...</div>
+                    </div>
+
+                    <!-- ปุ่มดาวน์โหลดประกาศนียบัตร -->
+                    <button id="modalCertBtn" class="btn-cert-corporate w-100 max-w-100 mt-1 mb-2" style="max-width:100%;" onclick="handleCertAction()">
+                        <i class="fas fa-file-contract"></i>
+                        <span id="modalCertBtnText">ดาวน์โหลดประกาศนียบัตรระดับปัจจุบัน</span>
+                    </button>
+                    <button class="btn-my-certs mb-4" onclick="openMyCertificatesModal()">
+                        <i class="fas fa-folder-open"></i> รายการประกาศนียบัตรทั้งหมดของฉัน
+                    </button>
+
+                    <!-- สถิติการแยกขยะ -->
+                    <div class="text-start px-1">
+                        <h6 class="fw-bold text-muted mb-3"><i class="fas fa-chart-pie me-1"></i> สถิติการคัดแยกขยะรายประเภท</h6>
+                        <div id="statsContent">กำลังโหลดข้อมูล...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: พรีวิวและดาวน์โหลดประกาศนียบัตร -->
+    <div class="modal fade" id="certPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="color:#0F172A;"><i class="fas fa-stamp text-success me-1"></i> ประกาศนียบัตรรับรองมาตรฐานความยั่งยืน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <canvas id="certCanvas" width="1490" height="1055"></canvas>
+                    <div class="mt-3 d-flex gap-2 justify-content-center">
+                        <button class="btn-cert-corporate mt-0" style="width:auto; padding: 12px 35px;" onclick="downloadCanvasAsPNG()">
+                            <i class="fas fa-download me-1"></i> บันทึกไฟล์ประกาศนียบัตร (.PNG)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: รายการประกาศนียบัตรทั้งหมดตามเกณฑ์ -->
+    <div class="modal fade" id="myCertsListModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold" style="color:#0F172A;"><i class="fas fa-medal text-primary me-2"></i>เกณฑ์การรับรองตามมาตรฐาน (ESG Tiers)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="myCertsListBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ประวัติ -->
+    <div class="modal fade" id="historyModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-primary">📜 บันทึกประวัติการคัดแยกขยะ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="historyList">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: อันดับผู้นำความยั่งยืน -->
+    <div class="modal fade" id="leaderModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-warning">🏆 ทำเนียบผู้นำด้านความยั่งยืน (Leaderboard)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="leaderList" style="background:#f9f9f9;">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // =========================================================================
+        // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — แก้บรรทัดนี้บรรทัดเดียว
+        // =========================================================================
+        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbydl8qE8EbLz6NJHHQO6tByib5MHqUe5f8IF2AXIMu38y7syLDGrDl8r6a-44RCYgpz/exec';
+
+        // =========================================================================
+        // 🔌 ตัวแปลง google.script.run -> fetch
+        // ทำให้โค้ดเดิม google.script.run.withSuccessHandler(...).ชื่อฟังก์ชัน(...) ใช้ได้เหมือนเดิม
+        // =========================================================================
+        async function callApi(action, args) {
+            if (!API_URL || API_URL.indexOf('ใส่_ID') !== -1) {
+                throw new Error('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ index.html');
+            }
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // ใช้ text/plain เพื่อเลี่ยงปัญหา CORS ของ Apps Script
+                body: JSON.stringify({ action: action, args: args }),
+                redirect: 'follow'
+            });
+            if (!res.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับผิดพลาด (HTTP ' + res.status + ')');
+            const json = await res.json();
+            if (!json.ok) throw new Error(json.error || 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์');
+            return json.data;
+        }
+
+        function createScriptRunner(onSuccess, onFailure) {
+            return new Proxy({}, {
+                get(_, prop) {
+                    if (prop === 'withSuccessHandler') return fn => createScriptRunner(fn, onFailure);
+                    if (prop === 'withFailureHandler') return fn => createScriptRunner(onSuccess, fn);
+                    return (...args) => {
+                        callApi(String(prop), args)
+                            .then(data => { if (onSuccess) onSuccess(data); })
+                            .catch(err => {
+                                console.warn('API error [' + String(prop) + ']:', err);
+                                if (onFailure) onFailure(err);
+                                else alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + err.message);
+                            });
+                    };
+                }
+            });
+        }
+
+        window.google = { script: { get run() { return createScriptRunner(null, null); } } };
+
+        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/F8hAM3mgz/";
+
+        // ⚙️ ตั้งค่าระบบ
+        const USE_GEMINI = false;                       // ยังไม่มี analyzeWithGemini ใน Code.gs จึงปิดไว้
+        const ALLOW_CAMERA_APP_FALLBACK = false;        // ปิดไว้ = รับภาพจากกล้องสดในแอปเท่านั้น
+        const FRESH_PHOTO_MAX_AGE_MS = 2 * 60 * 1000;   // (ใช้เมื่อเปิดทางสำรอง) รูปต้องถ่ายไม่เกิน 2 นาที
+        
+        const WASTE_MAP = {
+            "General Waste": { th: "ขยะทั่วไป", binText: "ถังสีน้ำเงิน", color: "#2196F3", hint: "ย่อยสลายยาก/เปื้อน" },
+            "Compostable Waste": { th: "ขยะเปียก", binText: "ถังสีเขียว", color: "#4CAF50", hint: "เศษอาหาร/ใบไม้" },
+            "Recyclable Waste": { th: "ขยะรีไซเคิล", binText: "ถังสีเหลือง", color: "#FFC107", hint: "ขวด/กระดาษ/แก้ว/โลหะ" },
+            "Hazardous Waste": { th: "ขยะอันตราย", binText: "ถังสีแดง", color: "#F44336", hint: "ขยะติดเชื้อ/ถ่าน/สารเคมี/อิเล็กทรอนิกส์" },
+            "Non Waste": { th: "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ", binText: "ห้ามทิ้ง", color: "#9E9E9E", hint: "⛔ นี่ไม่ใช่ขยะ ถ่ายขยะจริงๆ มานะครับ" },
+            "Living Being": { th: "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ", binText: "ห้ามทิ้ง", color: "#E91E63", hint: "⛔ แหน่ะ! อย่าแกล้งถ่ายคนหรือสัตว์สิ ถ่ายขยะจริงๆ มานะ" }
+        };
+
+        const LIVING_CLASSES = {
+            "person": "คน (เพื่อน/ครู)",
+            "bird": "นก",
+            "cat": "แมว",
+            "dog": "สุนัข (หมา)",
+            "mouse": "หนู",
+            "horse": "ม้า",
+            "sheep": "แกะ",
+            "cow": "วัว",
+            "elephant": "ช้าง",
+            "bear": "หมี",
+            "zebra": "ม้าลาย",
+            "giraffe": "ยีราฟ"
+        };
+
+        const COCO_WASTE_HINT = {
+            "bottle": { className: "Recyclable Waste", itemName: "ขวดน้ำ" },
+            "wine glass": { className: "Recyclable Waste", itemName: "แก้ว" },
+            "cup": { className: "General Waste", itemName: "แก้วพลาสติก/ถ้วย" },
+            "fork": { className: "General Waste", itemName: "ส้อมพลาสติก" },
+            "knife": { className: "General Waste", itemName: "มีดพลาสติก" },
+            "spoon": { className: "General Waste", itemName: "ช้อนพลาสติก" },
+            "bowl": { className: "General Waste", itemName: "ถ้วย/ชาม" },
+            "banana": { className: "Compostable Waste", itemName: "เปลือกกล้วย/ผลไม้" },
+            "apple": { className: "Compostable Waste", itemName: "เศษผลไม้" },
+            "sandwich": { className: "Compostable Waste", itemName: "เศษอาหาร" },
+            "orange": { className: "Compostable Waste", itemName: "เปลือกส้ม/ผลไม้" },
+            "broccoli": { className: "Compostable Waste", itemName: "เศษผัก" },
+            "carrot": { className: "Compostable Waste", itemName: "เศษผัก" },
+            "hot dog": { className: "Compostable Waste", itemName: "เศษอาหาร" },
+            "pizza": { className: "Compostable Waste", itemName: "เศษอาหาร" },
+            "donut": { className: "Compostable Waste", itemName: "เศษขนม" },
+            "cake": { className: "Compostable Waste", itemName: "เศษเค้ก/อาหาร" },
+            "book": { className: "Recyclable Waste", itemName: "กระดาษ/หนังสือ" },
+            "cell phone": { className: "Hazardous Waste", itemName: "ขยะอิเล็กทรอนิกส์" },
+            "scissors": { className: "Recyclable Waste", itemName: "โลหะ" },
+            "toothbrush": { className: "General Waste", itemName: "แปรงสีฟันเก่า" }
+        };
+
+        // ==========================================
+        // 🏛️ มาตรฐานการรับรองตามหลักสากล (พร้อมรูปประกอบเฉพาะแต่ละระดับ)
+        // ==========================================
+        const RANK_TIERS = [
+            { 
+                id: 'participation', 
+                name: 'การมีส่วนร่วมขั้นต้น', 
+                nameEn: 'Participation Level', 
+                certTitleEn: 'CERTIFICATE OF PARTICIPATION',
+                certSubtitleEn: 'IN SUSTAINABILITY',
+                certThTitle: 'ใบประกาศนียบัตรรับรองมาตรฐานความยั่งยืน (ระดับการมีส่วนร่วมขั้นต้น)',
+                minScore: 1, 
+                primaryColor: '#059669',
+                artImgUrl: 'https://lh3.googleusercontent.com/d/18U2-XueDObRW1wN4zRjZ9N7u49rnyQmQ',
+                desc: 'ผ่านเกณฑ์เริ่มต้นการมีส่วนร่วมในการคัดแยกขยะต้นทาง'
+            },
+            { 
+                id: 'standard', 
+                name: 'การรับรองมาตรฐาน', 
+                nameEn: 'Standard Level Certified', 
+                certTitleEn: 'CERTIFICATE OF STANDARD PRACTICE',
+                certSubtitleEn: 'IN SUSTAINABILITY',
+                certThTitle: 'ใบประกาศนียบัตรรับรองมาตรฐานความยั่งยืน (ระดับมาตรฐาน)',
+                minScore: 20, 
+                primaryColor: '#0284C7',
+                artImgUrl: 'https://lh3.googleusercontent.com/d/1GrFhd5o7tr6ul9oJuFzrY7U2hMVQImPZ',
+                desc: 'ผ่านเกณฑ์มาตรฐานการคัดแยกขยะมูลฝอยอย่างถูกต้องตามหลักสุขอนามัย'
+            },
+            { 
+                id: 'advanced', 
+                name: 'ขั้นก้าวหน้า', 
+                nameEn: 'Advanced Sustainability Level', 
+                certTitleEn: 'CERTIFICATE OF ADVANCED LEVEL',
+                certSubtitleEn: 'IN SUSTAINABILITY',
+                certThTitle: 'ใบประกาศนียบัตรรับรองมาตรฐานความยั่งยืน (ระดับขั้นก้าวหน้า)',
+                minScore: 50, 
+                primaryColor: '#4F46E5',
+                artImgUrl: 'https://lh3.googleusercontent.com/d/1wfX2f_p28bJJ6MOOkqnE8vZ30UomRtgM',
+                desc: 'แสดงถึงวินัยและความมุ่งมั่นในการคัดแยกขยะอย่างสม่ำเสมอและต่อเนื่อง'
+            },
+            { 
+                id: 'distinction', 
+                name: 'ผลการดำเนินงานดีเด่น', 
+                nameEn: 'Distinction Level Certified', 
+                certTitleEn: 'CERTIFICATE OF DISTINCTION',
+                certSubtitleEn: 'IN SUSTAINABILITY',
+                certThTitle: 'ใบประกาศนียบัตรรับรองมาตรฐานความยั่งยืน (ระดับผลการดำเนินงานดีเด่น)',
+                minScore: 100, 
+                primaryColor: '#B45309',
+                artImgUrl: 'https://lh3.googleusercontent.com/d/1JbX-Z7QSxKPZtplEjC34gbXpbM2MYQ60',
+                desc: 'มีผลงานโดดเด่นและเป็นแบบอย่างในการลดการปนเปื้อนของขยะในสถาบัน'
+            },
+            { 
+                id: 'excellence', 
+                name: 'ความเป็นเลิศขั้นสูงสุด', 
+                nameEn: 'Excellence in Environmental Stewardship', 
+                certTitleEn: 'CERTIFICATE OF EXCELLENCE',
+                certSubtitleEn: 'IN SUSTAINABILITY',
+                certThTitle: 'ใบประกาศนียบัตรรับรองมาตรฐานความยั่งยืน (ระดับความเป็นเลิศ)',
+                minScore: 200, 
+                primaryColor: '#0F172A',
+                artImgUrl: 'https://lh3.googleusercontent.com/d/1cCrATGzkjfR23nyBOQtKeoYlFMmAPd1O',
+                desc: 'ผลงานสูงสุดระดับผู้นำความยั่งยืนด้านการจัดการสิ่งแวดล้อม'
+            }
+        ];
+
+        // ==========================================
+        // 🏫 ลิงก์โลโก้จริงจาก Google Drive
+        // ==========================================
+        const SIAMTECH_LOGO_URL = 'https://lh3.googleusercontent.com/d/1G6ig2gPcZU8WBjNG3txx5OAsKkfxdKU-';
+        const ITM_LOGO_URL = 'https://lh3.googleusercontent.com/d/1hjEuqfrivIxEdaYAcBAXM-4zRSuaiY5W';
+
+        const loadedImagesCache = {};
+
+        function getOrLoadImage(url) {
+            if (!url) return null;
+            if (loadedImagesCache[url]) return loadedImagesCache[url];
+
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = url;
+            loadedImagesCache[url] = img;
+            return img;
+        }
+
+        getOrLoadImage(SIAMTECH_LOGO_URL);
+        getOrLoadImage(ITM_LOGO_URL);
+        RANK_TIERS.forEach(t => getOrLoadImage(t.artImgUrl));
+
+        let model = null;
+        let cocoModel = null;
+        let maxPredictions = 0;
+        let mediaStream = null;
+        let cameraReady = false;
+        let cameraStarting = false;
+        let isAnalyzing = false;
+        let currentUser = null;
+        let userTotalScore = 0;
+        let userDaysInactive = 0;
+        let selectedCertTier = RANK_TIERS[0];
+        let currentDetectedItems = [];
+        const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+
+        window.onload = function() {
+            const saved = localStorage.getItem('smartBinUser');
+            if(saved) { 
+                try {
+                    currentUser = JSON.parse(saved); 
+                    showApp(); 
+                } catch(e) {
+                    localStorage.removeItem('smartBinUser');
+                }
+            }
+
+            // รองรับการกดปุ่ม Enter ในช่องรหัสผ่านเพื่อเข้าสู่ระบบ
+            const passInput = document.getElementById('logPass');
+            if (passInput) {
+                passInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') doLogin();
+                });
+            }
+        };
+
+        // ปิดกล้องเมื่อสลับไปแอปอื่น / เปิดใหม่อัตโนมัติเมื่อกลับมา
+        document.addEventListener('visibilitychange', function() {
+            const appVisible = !document.getElementById('appSection').classList.contains('hidden');
+            if (!appVisible) return;
+            if (document.hidden) {
+                if (cameraReady) stopLiveVideo();
+            } else {
+                const showingCapture = !document.getElementById('captured-image').classList.contains('hidden');
+                if (!showingCapture && !cameraReady) startLiveVideo();
+            }
+        });
+
+        function getRankInfo(score) {
+            let currentTier = null;
+            let nextTier = RANK_TIERS[0];
+            for (let i = 0; i < RANK_TIERS.length; i++) {
+                if (score >= RANK_TIERS[i].minScore) {
+                    currentTier = RANK_TIERS[i];
+                    nextTier = RANK_TIERS[i + 1] || null;
+                }
+            }
+            return { currentTier, nextTier };
+        }
+
+        function refreshCertificateButtons(score, daysInactive) {
+            userTotalScore = score;
+            userDaysInactive = daysInactive || 0;
+
+            const { currentTier, nextTier } = getRankInfo(score);
+            const highestTier = currentTier || RANK_TIERS[0];
+            selectedCertTier = highestTier;
+
+            const flameEl = document.getElementById('dispFlameIcon');
+            if (userDaysInactive >= 3 && score > 0) {
+                flameEl.innerText = '⚪';
+                flameEl.style.filter = 'grayscale(100%)';
+            } else {
+                flameEl.innerText = '🔥';
+                flameEl.style.filter = 'none';
+            }
+
+            const btnLabel = currentTier 
+                ? `ดาวน์โหลดประกาศนียบัตร (${currentTier.name})` 
+                : `ดูเกณฑ์การรับรองมาตรฐาน (ESG Tiers)`;
+
+            document.getElementById('mainCertBtnText').innerText = btnLabel;
+            document.getElementById('modalCertBtnText').innerText = btnLabel;
+
+            const streakCard = document.getElementById('modalStreakCard');
+            const streakIcon = document.getElementById('modalStreakIcon');
+            const streakTitle = document.getElementById('modalStreakTitle');
+            const streakDesc = document.getElementById('modalStreakDesc');
+            const rankTitle = document.getElementById('modalRankTitle');
+            const rankBar = document.getElementById('modalRankBar');
+            const rankSub = document.getElementById('modalRankSub');
+
+            if (userDaysInactive >= 3 && score > 0) {
+                streakCard.classList.remove('active');
+                streakIcon.innerHTML = '<span style="filter:grayscale(100%); opacity:0.65;">🔥</span>';
+                streakTitle.innerText = 'ขาดการบันทึกความต่อเนื่อง';
+                streakDesc.innerText = `ไม่ได้บันทึกมา ${userDaysInactive} วัน — คัดแยกขยะ 1 ชิ้นเพื่อต่ออายุสถานะความต่อเนื่อง`;
+                rankTitle.innerHTML = `ระดับปัจจุบัน: <span class="text-secondary">${highestTier.name} (${highestTier.nameEn})</span>`;
+            } else if (score === 0) {
+                streakCard.classList.remove('active');
+                streakIcon.innerHTML = '<span style="filter:grayscale(100%); opacity:0.65;">🔥</span>';
+                streakTitle.innerText = 'ยังไม่มีประวัติการบันทึก';
+                streakDesc.innerText = 'เริ่มต้นคัดแยกขยะชิ้นแรกเพื่อรับการรับรองมาตรฐานก้าวแรก';
+                rankTitle.innerText = 'ระดับการรับรอง: ยังไม่เข้าเกณฑ์ (ต้องมีอย่างน้อย 1 คะแนน)';
+            } else {
+                streakCard.classList.add('active');
+                streakIcon.innerText = '🔥';
+                streakTitle.innerText = 'ความต่อเนื่องระดับมาตรฐาน (Active)';
+                streakDesc.innerText = 'ท่านรักษามาตรฐานการคัดแยกอย่างสม่ำเสมอตามเกณฑ์ ESG';
+                rankTitle.innerHTML = `ระดับการรับรอง: <span style="color:#0F172A; font-weight:800;">${highestTier.name} (${highestTier.nameEn})</span>`;
+            }
+
+            if (!nextTier && score >= RANK_TIERS[RANK_TIERS.length - 1].minScore) {
+                rankBar.style.width = '100%';
+                rankSub.innerText = 'บรรลุเกณฑ์การรับรองระดับสูงสุด (Excellence Level) เรียบร้อยแล้ว';
+            } else if (nextTier) {
+                const prevMin = currentTier ? currentTier.minScore : 0;
+                const progress = Math.min(100, Math.round(((score - prevMin) / (nextTier.minScore - prevMin)) * 100));
+                rankBar.style.width = `${progress}%`;
+                rankSub.innerText = `ต้องการอีก ${nextTier.minScore - score} คะแนน เพื่อเลื่อนสู่ระดับ "${nextTier.name}" (${nextTier.nameEn})`;
+            }
+        }
+
+        // ==========================================
+        // 🔐 ระบบ AUTHENTICATION & LOGIN
+        // ==========================================
+        function toggleAuth(showReg) { 
+            document.getElementById('loginForm').classList.toggle('hidden', showReg); 
+            document.getElementById('regForm').classList.toggle('hidden', !showReg); 
+        }
+
+        function previewImage(input) { 
+            if (input.files && input.files[0]) { 
+                const reader = new FileReader(); 
+                reader.onload = function(e) { 
+                    document.getElementById('previewAvatar').src = e.target.result; 
+                    document.getElementById('previewAvatar').classList.remove('hidden'); 
+                    document.getElementById('uploadIcon').classList.add('hidden'); 
+                }; 
+                reader.readAsDataURL(input.files[0]); 
+            } 
+        }
+
+        function doLogin() { 
+            const userEl = document.getElementById('logUser');
+            const passEl = document.getElementById('logPass');
+            const u = userEl ? userEl.value.trim() : ''; 
+            const p = passEl ? passEl.value.trim() : ''; 
+            const btn = document.getElementById('btnLoginSubmit') || document.querySelector('#loginForm button');
+
+            if (!u || !p) {
+                alert("กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน");
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>กำลังเข้าสู่ระบบ...';
+            }
+
+            google.script.run
+                .withSuccessHandler(res => { 
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = 'เข้าสู่ระบบ';
+                    }
+
+                    if (res && res.success) { 
+                        currentUser = res; 
+                        localStorage.setItem('smartBinUser', JSON.stringify(res)); 
+                        showApp(); 
+                    } else { 
+                        alert(res && res.message ? res.message : "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"); 
+                    } 
+                })
+                .withFailureHandler(err => {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = 'เข้าสู่ระบบ';
+                    }
+                    alert("❌ เชื่อมต่อกับระบบเซิร์ฟเวอร์ไม่สำเร็จ:\n" + err.message);
+                })
+                .loginUser(u, p); 
+        }
+
+        async function doRegister() { 
+            const btn = document.querySelector('#regForm button'); 
+            btn.disabled = true; 
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>กำลังบันทึก...'; 
+            
+            const fileInput = document.getElementById('regFile'); 
+            let base64Img = ""; 
+            if (fileInput.files.length > 0) {
+                try {
+                    base64Img = await resizeProfileImage(fileInput.files[0], 500);
+                } catch(e) {
+                    base64Img = "";
+                }
+            }
+
+            const data = { 
+                username: document.getElementById('regUser').value.trim(), 
+                password: document.getElementById('regPass').value.trim(), 
+                studentId: document.getElementById('regId').value.trim(), 
+                name: document.getElementById('regName').value.trim(), 
+                profileImage: base64Img 
+            }; 
+
+            if(!data.username || !data.password || !data.studentId || !data.name) { 
+                alert("กรุณากรอกข้อมูลให้ครบทุกช่อง"); 
+                btn.disabled = false; 
+                btn.innerHTML = "ลงทะเบียน"; 
+                return; 
+            } 
+
+            google.script.run
+                .withSuccessHandler(res => { 
+                    alert(res.message); 
+                    btn.disabled = false; 
+                    btn.innerHTML = "ลงทะเบียน"; 
+                    if(res.success) toggleAuth(false); 
+                })
+                .withFailureHandler(err => {
+                    alert("❌ เกิดข้อผิดพลาดในการลงทะเบียน: " + err.message);
+                    btn.disabled = false; 
+                    btn.innerHTML = "ลงทะเบียน"; 
+                })
+                .registerUser(data); 
+        }
+
+        function logout() { 
+            if(confirm("ต้องการออกจากระบบ?")) { 
+                stopLiveVideo();
+                localStorage.removeItem('smartBinUser'); 
+                location.reload(); 
+            } 
+        }
+
+        // =========================================================================
+        // 👤 ฟังก์ชันเปลี่ยนรูปโปรไฟล์
+        // =========================================================================
+        function triggerProfileUpload() { 
+            const fileInput = document.getElementById('editProfileInput');
+            if (fileInput) fileInput.click(); 
+        }
+
+        function resizeProfileImage(file, maxDimension = 500) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let maxDim = maxDimension;
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) {
+                                h = Math.round((h * maxDim) / w);
+                                w = maxDim;
+                            } else {
+                                w = Math.round((w * maxDim) / h);
+                                h = maxDim;
+                            }
+                        }
+                        const cvs = document.createElement('canvas');
+                        cvs.width = w;
+                        cvs.height = h;
+                        const ctx = cvs.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(cvs.toDataURL('image/jpeg', 0.82));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleProfileUpdate(input) { 
+            if (input.files && input.files[0]) { 
+                const file = input.files[0];
+                const modalImg = document.getElementById('modalProfileImg'); 
+                const headerImg = document.getElementById('userAvatar'); 
+                if (modalImg) modalImg.style.opacity = '0.4'; 
+
+                try {
+                    const base64Img = await resizeProfileImage(file, 450);
+
+                    google.script.run
+                        .withSuccessHandler(res => { 
+                            if (modalImg) modalImg.style.opacity = '1'; 
+                            input.value = '';
+                            if (res && res.success) { 
+                                currentUser.avatar = res.newUrl; 
+                                localStorage.setItem('smartBinUser', JSON.stringify(currentUser)); 
+                                if (modalImg) modalImg.src = res.newUrl; 
+                                if (headerImg) headerImg.src = res.newUrl; 
+                                alert("✅ อัปเดตรูปสำเร็จ!"); 
+                            } else { 
+                                alert("❌ " + (res && res.message ? res.message : "อัปโหลดรูปไม่สำเร็จ")); 
+                            } 
+                        })
+                        .withFailureHandler(err => {
+                            if (modalImg) modalImg.style.opacity = '1'; 
+                            input.value = '';
+                            alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: " + err.message);
+                        })
+                        .updateProfileImage(currentUser.studentId, base64Img); 
+
+                } catch (err) {
+                    if (modalImg) modalImg.style.opacity = '1'; 
+                    input.value = '';
+                    alert("❌ ไม่สามารถประมวลผลรูปภาพได้: " + err.message);
+                }
+            } 
+        }
+
+        function openProfileModal() { 
+            new bootstrap.Modal(document.getElementById('profileModal')).show(); 
+            document.getElementById('modalProfileImg').src = currentUser.avatar || defaultAvatar; 
+            document.getElementById('modalProfileName').innerText = currentUser.name; 
+            document.getElementById('modalStudentId').innerText = "รหัสนักศึกษา: " + currentUser.studentId; 
+            document.getElementById('statsContent').innerHTML = '<div class="text-center py-3"><div class="spinner-border text-success" role="status"></div></div>'; 
+            
+            google.script.run.withSuccessHandler(data => { 
+                document.getElementById('modalTotalScore').innerText = data.total; 
+                document.getElementById('dispScore').innerText = data.total; 
+                refreshCertificateButtons(data.total, data.daysInactive);
+
+                let html = ''; 
+                if (!data.breakdown || data.breakdown.length === 0) { 
+                    html = '<div class="text-center text-muted small py-2">ยังไม่มีประวัติการทิ้งขยะ</div>'; 
+                } else { 
+                    data.breakdown.forEach(item => { 
+                        let color = "#999"; 
+                        for(let key in WASTE_MAP) { 
+                            if(WASTE_MAP[key].th === item.category) { color = WASTE_MAP[key].color; break; } 
+                        } 
+                        html += `<div class="stat-bar-container"><div class="stat-label"><span>${item.category}</span><span>${item.count} ชิ้น (${item.percent}%)</span></div><div class="progress"><div class="progress-bar" role="progressbar" style="width: ${item.percent}%; background-color: ${color};"></div></div></div>`; 
+                    }); 
+                } 
+                document.getElementById('statsContent').innerHTML = html; 
+            }).getUserStats(currentUser.studentId); 
+        }
+
+        // --- 🎓 ประกาศนียบัตร ---
+        function handleCertAction() {
+            const { currentTier } = getRankInfo(userTotalScore);
+            if (!currentTier) {
+                alert("ต้องมีประวัติการคัดแยกขยะสะสมอย่างน้อย 1 คะแนน เพื่อรับประกาศนียบัตรรับรองระดับเริ่มต้นครับ");
+                return;
+            }
+            openCertificatePreview(currentTier);
+        }
+
+        function openCertificatePreview(tier) {
+            selectedCertTier = tier;
+            drawCertificateOnCanvas(tier);
+            new bootstrap.Modal(document.getElementById('certPreviewModal')).show();
+        }
+
+        function openMyCertificatesModal() {
+            const body = document.getElementById('myCertsListBody');
+            let html = '';
+            RANK_TIERS.forEach((tier, idx) => {
+                const unlocked = userTotalScore >= tier.minScore;
+                html += `
+                <div class="cert-tier-item ${unlocked ? 'unlocked' : ''}">
+                    <div>
+                        <div class="fw-bold" style="color:#0F172A; font-size:1rem;">
+                            ${tier.name} <span class="badge bg-light text-dark border ms-1" style="font-size:0.75rem;">${tier.nameEn}</span>
+                        </div>
+                        <div class="small text-muted mt-1">${tier.desc}</div>
+                        <div class="small fw-semibold mt-1" style="color:#0284C7;"><i class="fas fa-check-circle me-1"></i>เกณฑ์ขั้นต่ำ: ${tier.minScore} คะแนน</div>
+                    </div>
+                    <div class="ms-3 text-nowrap">
+                        ${unlocked 
+                            ? `<button class="btn btn-sm btn-dark rounded-pill px-3 fw-bold" onclick="openCertFromList(${idx})"><i class="fas fa-eye me-1"></i> ดูใบรับรอง</button>` 
+                            : `<span class="badge bg-secondary rounded-pill py-2 px-3"><i class="fas fa-lock me-1"></i> ยังไม่ถึงเกณฑ์</span>`
+                        }
+                    </div>
+                </div>`;
+            });
+            body.innerHTML = html;
+            new bootstrap.Modal(document.getElementById('myCertsListModal')).show();
+        }
+
+        function openCertFromList(tierIndex) {
+            const listModal = bootstrap.Modal.getInstance(document.getElementById('myCertsListModal'));
+            if (listModal) listModal.hide();
+            openCertificatePreview(RANK_TIERS[tierIndex]);
+        }
+
+        // =========================================================================
+        // 🌐 ฟังก์ชันวาดองค์ประกอบจุดเชื่อมต่อเทคโนโลยี (Tech Network Nodes & Constellation)
+        // =========================================================================
+        function drawTechNetwork(ctx, W, H) {
+            ctx.save();
+            
+            const leftNodes = [
+                [35, 220], [110, 270], [45, 360], [130, 420], [60, 520],
+                [145, 580], [70, 680], [125, 750], [50, 830]
+            ];
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.22)';
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
+            ctx.lineWidth = 1.2;
+
+            for (let i = 0; i < leftNodes.length; i++) {
+                ctx.beginPath();
+                ctx.arc(leftNodes[i][0], leftNodes[i][1], 3.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (i > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftNodes[i - 1][0], leftNodes[i - 1][1]);
+                    ctx.lineTo(leftNodes[i][0], leftNodes[i][1]);
+                    ctx.stroke();
+                }
+                if (i > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftNodes[i - 2][0], leftNodes[i - 2][1]);
+                    ctx.lineTo(leftNodes[i][0], leftNodes[i][1]);
+                    ctx.stroke();
+                }
+            }
+
+            const rightNodes = [
+                [W - 55, 190], [W - 130, 250], [W - 60, 340], [W - 150, 410],
+                [W - 90, 500], [W - 180, 560], [W - 270, 640], [W - 380, 710],
+                [W - 470, 770], [W - 320, 820], [W - 420, 880]
+            ];
+            ctx.strokeStyle = 'rgba(52, 211, 153, 0.28)';
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.6)';
+
+            for (let i = 0; i < rightNodes.length; i++) {
+                ctx.beginPath();
+                ctx.arc(rightNodes[i][0], rightNodes[i][1], 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(rightNodes[i][0], rightNodes[i][1], 8, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(34, 197, 94, 0.18)';
+                ctx.stroke();
+
+                if (i > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(rightNodes[i - 1][0], rightNodes[i - 1][1]);
+                    ctx.lineTo(rightNodes[i][0], rightNodes[i][1]);
+                    ctx.strokeStyle = 'rgba(52, 211, 153, 0.28)';
+                    ctx.stroke();
+                }
+                if (i > 1 && i % 2 === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(rightNodes[i - 2][0], rightNodes[i - 2][1]);
+                    ctx.lineTo(rightNodes[i][0], rightNodes[i][1]);
+                    ctx.stroke();
+                }
+            }
+
+            ctx.strokeStyle = 'rgba(45, 212, 191, 0.22)';
+            ctx.lineWidth = 1;
+            const gx = W - 520, gy = H - 260;
+            for (let r = 0; r <= 5; r++) {
+                ctx.beginPath();
+                ctx.moveTo(gx + r * 35, gy + r * 20);
+                ctx.lineTo(gx + 320 + r * 35, gy + r * 20);
+                ctx.stroke();
+            }
+            for (let c = 0; c <= 6; c++) {
+                ctx.beginPath();
+                ctx.moveTo(gx + c * 50, gy);
+                ctx.lineTo(gx + 175 + c * 50, gy + 100);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // =========================================================================
+        // 🎓 ฟังก์ชันวาดประกาศนียบัตรฉบับสมบูรณ์ (Canvas 1490x1055)
+        // =========================================================================
+        function drawCertificateOnCanvas(tier) {
+            const canvas = document.getElementById('certCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = 1490;
+            const H = 1055;
+            canvas.width = W;
+            canvas.height = H;
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+
+            drawTechNetwork(ctx, W, H);
+
+            ctx.save();
+            ctx.strokeStyle = '#E5C05B';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(36, 36);
+            ctx.lineTo(W - 36, 36);
+            ctx.lineTo(W - 36, H - 320);
+            ctx.lineTo(W - 305, H - 36);
+            ctx.lineTo(36, H - 36);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.save();
+            ctx.fillStyle = '#0B1E36';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(260, 0);
+            ctx.lineTo(0, 210);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(270, 0);
+            ctx.lineTo(0, 220);
+            ctx.stroke();
+
+            ctx.fillStyle = '#1A365D';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(170, 0);
+            ctx.lineTo(0, 135);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            ctx.fillStyle = '#0B1E36';
+            ctx.beginPath();
+            ctx.moveTo(0, H);
+            ctx.lineTo(260, H);
+            ctx.lineTo(0, H - 210);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(270, H);
+            ctx.lineTo(0, H - 220);
+            ctx.stroke();
+
+            ctx.fillStyle = '#1A365D';
+            ctx.beginPath();
+            ctx.moveTo(0, H);
+            ctx.lineTo(170, H);
+            ctx.lineTo(0, H - 135);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            const siamtechImg = getOrLoadImage(SIAMTECH_LOGO_URL);
+            if (siamtechImg && siamtechImg.complete && siamtechImg.naturalWidth > 0) {
+                const maxLW = 150, maxLH = 130;
+                const scaleL = Math.min(maxLW / siamtechImg.naturalWidth, maxLH / siamtechImg.naturalHeight);
+                const lw = siamtechImg.naturalWidth * scaleL;
+                const lh = siamtechImg.naturalHeight * scaleL;
+                ctx.drawImage(siamtechImg, 80, 75, lw, lh);
+            }
+
+            const itmImg = getOrLoadImage(ITM_LOGO_URL);
+            if (itmImg && itmImg.complete && itmImg.naturalWidth > 0) {
+                const maxIW = 150, maxIH = 130;
+                const scaleI = Math.min(maxIW / itmImg.naturalWidth, maxIH / itmImg.naturalHeight);
+                const iw = itmImg.naturalWidth * scaleI;
+                const ih = itmImg.naturalHeight * scaleI;
+                ctx.drawImage(itmImg, W - 80 - iw, 75, iw, ih);
+            }
+
+            const tierArtImg = getOrLoadImage(tier.artImgUrl);
+            if (tierArtImg && tierArtImg.complete && tierArtImg.naturalWidth > 0) {
+                ctx.save();
+                const boxMaxW = 460;
+                const boxMaxH = 440;
+                const imgScale = Math.min(boxMaxW / tierArtImg.naturalWidth, boxMaxH / tierArtImg.naturalHeight);
+                const drawW = tierArtImg.naturalWidth * imgScale;
+                const drawH = tierArtImg.naturalHeight * imgScale;
+                const drawX = W - 50 - drawW;
+                const drawY = H - 55 - drawH;
+
+                ctx.drawImage(tierArtImg, drawX, drawY, drawW, drawH);
+                ctx.restore();
+            }
+
+            ctx.save();
+            ctx.fillStyle = '#0B1E36';
+            ctx.beginPath();
+            ctx.moveTo(W, H);
+            ctx.lineTo(W - 275, H);
+            ctx.lineTo(W, H - 290);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(W - 285, H);
+            ctx.lineTo(W, H - 300);
+            ctx.stroke();
+
+            ctx.fillStyle = '#1A365D';
+            ctx.beginPath();
+            ctx.moveTo(W, H);
+            ctx.lineTo(W - 180, H);
+            ctx.lineTo(W, H - 195);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            function fillGlowingText(text, x, y, font, fillStyle, glowRadius = 30) {
+                ctx.save();
+                ctx.font = font;
+                ctx.fillStyle = fillStyle;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                ctx.shadowBlur = glowRadius;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                ctx.fillText(text, x, y);
+                ctx.shadowBlur = 0;
+                ctx.fillText(text, x, y);
+                ctx.restore();
+            }
+
+            ctx.textAlign = 'center';
+
+            fillGlowingText('วิทยาลัยเทคโนโลยีสยาม (สยามเทค)', W / 2, 105, '800 38px "Prompt", sans-serif', '#0F172A', 8);
+            fillGlowingText('แผนกเทคโนโลยีสารสนเทศและสื่อดิจิทัล (ITM) • โครงการน้องถังช่วยทิ้ง', W / 2, 155, '600 24px "Prompt", sans-serif', '#0284C7', 8);
+
+            fillGlowingText(tier.certTitleEn, W / 2, 250, '800 56px "Cinzel", serif', '#0B1E36', 12);
+            fillGlowingText(tier.certSubtitleEn || 'IN SUSTAINABILITY', W / 2, 305, '700 32px "Cinzel", serif', '#C29B38', 10);
+
+            ctx.save();
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(W / 2 - 240, 295);
+            ctx.lineTo(W / 2 - 160, 295);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(W / 2 + 160, 295);
+            ctx.lineTo(W / 2 + 240, 295);
+            ctx.stroke();
+
+            ctx.fillStyle = '#16A34A';
+            ctx.beginPath();
+            ctx.ellipse(W / 2, 340, 14, 7, -Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            fillGlowingText('ประกาศนียบัตรฉบับนี้ให้ไว้เพื่อรับรองว่า', W / 2, 400, '500 24px "Prompt", sans-serif', '#475569', 10);
+
+            const recipientName = currentUser ? currentUser.name : 'ผู้เข้าร่วมโครงการ';
+            fillGlowingText(recipientName, W / 2, 485, '800 64px "Prompt", sans-serif', '#0B1E36', 20);
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#D4AF37';
+            ctx.beginPath();
+            ctx.moveTo(W / 2, 504);
+            ctx.lineTo(W / 2 + 7, 511);
+            ctx.lineTo(W / 2, 518);
+            ctx.lineTo(W / 2 - 7, 511);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(W * 0.28, 511);
+            ctx.lineTo(W / 2 - 18, 511);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(W / 2 + 18, 511);
+            ctx.lineTo(W * 0.72, 511);
+            ctx.stroke();
+            ctx.restore();
+
+            fillGlowingText(`รหัสนักศึกษา: ${currentUser ? currentUser.studentId : '-'}`, W / 2, 558, '600 26px "Prompt", sans-serif', '#0F172A', 12);
+
+            let nextTextY = 625;
+
+            ctx.save();
+            const whiteBackdrop = ctx.createRadialGradient(W / 2, nextTextY + 45, 60, W / 2, nextTextY + 45, 540);
+            whiteBackdrop.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
+            whiteBackdrop.addColorStop(0.55, 'rgba(255, 255, 255, 0.82)');
+            whiteBackdrop.addColorStop(0.85, 'rgba(255, 255, 255, 0.35)');
+            whiteBackdrop.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = whiteBackdrop;
+            ctx.beginPath();
+            ctx.ellipse(W / 2, nextTextY + 45, 580, 115, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            function fillFadedWhiteBorderText(text, x, y, font, fillStyle, strokeWidth = 10, blurRadius = 20) {
+                ctx.save();
+                ctx.font = font;
+                ctx.lineJoin = 'round';
+                ctx.miterLimit = 2;
+
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                ctx.shadowBlur = blurRadius;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+                ctx.lineWidth = strokeWidth + 4;
+                ctx.strokeText(text, x, y);
+
+                ctx.shadowBlur = Math.round(blurRadius / 2);
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeText(text, x, y);
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = fillStyle;
+                ctx.fillText(text, x, y);
+                ctx.restore();
+            }
+
+            if (tier.id === 'participation') {
+                fillFadedWhiteBorderText(`ผ่านเกณฑ์การประเมินระดับ "${tier.name}" (${tier.nameEn})`, W / 2, nextTextY, '800 32px "Prompt", sans-serif', '#0F172A', 10, 22);
+                nextTextY += 52;
+            } else {
+                fillFadedWhiteBorderText(`ผ่านเกณฑ์การประเมินระดับ "${tier.name}"`, W / 2, nextTextY, '800 33px "Prompt", sans-serif', '#0F172A', 11, 24);
+                fillFadedWhiteBorderText(`(${tier.nameEn})`, W / 2, nextTextY + 42, '700 26px "Cinzel", "Prompt", serif', '#1E3A8A', 9, 20);
+                nextTextY += 94;
+            }
+
+            fillFadedWhiteBorderText(`มีส่วนร่วมในการคัดแยกขยะต้นทางตามเกณฑ์ ESG รวมทั้งสิ้น ${userTotalScore} หน่วยบันทึก`, W / 2, nextTextY, '500 24px "Prompt", sans-serif', '#1E293B', 8, 18);
+
+            const todayStr = new Date().toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+            fillGlowingText(`ให้ไว้ ณ วันที่ ${todayStr}`, W / 2, nextTextY + 65, '600 22px "Prompt", sans-serif', '#0F172A', 12);
+
+            ctx.save();
+            ctx.textAlign = 'center';
+
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+            ctx.shadowBlur = 10;
+            ctx.strokeStyle = '#0B1E36';
+            ctx.lineWidth = 3.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(655, 865);
+            ctx.bezierCurveTo(685, 810, 645, 800, 665, 845);
+            ctx.bezierCurveTo(685, 885, 735, 830, 765, 840);
+            ctx.bezierCurveTo(795, 850, 845, 835, 875, 845);
+            ctx.moveTo(715, 855);
+            ctx.lineTo(865, 855);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#64748B';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(605, 885);
+            ctx.lineTo(885, 885);
+            ctx.stroke();
+            ctx.restore();
+
+            fillGlowingText('(อาจารย์ศักดิ์ดา ฟักขาว)', W / 2, 925, '700 22px "Prompt", sans-serif', '#0F172A', 10);
+            fillGlowingText('หัวหน้าแผนกเทคโนโลยีสารสนเทศและสื่อดิจิทัล', W / 2, 955, '500 17px "Prompt", sans-serif', '#475569', 10);
+        }
+
+        function downloadCanvasAsPNG() {
+            const canvas = document.getElementById('certCanvas');
+            const link = document.createElement('a');
+            const safeName = (currentUser && currentUser.studentId) ? currentUser.studentId : 'user';
+            link.download = `Certificate_ESG_${selectedCertTier.id}_${safeName}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // --- SHOW APP & CAMERA ---
+        function showApp() { 
+            document.getElementById('authSection').classList.add('hidden'); 
+            document.getElementById('appSection').classList.remove('hidden'); 
+            document.getElementById('dispName').innerText = currentUser.name; 
+            document.getElementById('userAvatar').src = currentUser.avatar || defaultAvatar; 
+            updateScore(); 
+            loadAIModel();
+            startLiveVideo();
+        }
+
+        async function loadAIModel() {
+            try {
+                const promises = [];
+                if (!model) {
+                    promises.push(
+                        tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json").then(m => {
+                            model = m;
+                            maxPredictions = model.getTotalClasses();
+                        })
+                    );
+                }
+                if (!cocoModel && typeof cocoSsd !== 'undefined') {
+                    promises.push(
+                        cocoSsd.load({ base: 'lite_mobilenet_v2' }).then(cm => {
+                            cocoModel = cm;
+                        })
+                    );
+                }
+                await Promise.all(promises);
+            } catch(e) {
+                console.warn("Model loading error:", e);
+            }
+        }
+
+        // =========================================================================
+        // 📷 ระบบกล้องสด (Live Camera)
+        // =========================================================================
+        function isInAppBrowser() {
+            const ua = navigator.userAgent || '';
+            return /Line\/|FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|TikTok/i.test(ua);
+        }
+
+        function setCameraUI(state, message, detail) {
+            const statusBox = document.getElementById('camStatus');
+            const spinner = document.getElementById('camSpinner');
+            const errIcon = document.getElementById('camErrIcon');
+            const statusTextEl = document.getElementById('camStatusText');
+            const detailEl = document.getElementById('camStatusDetail');
+            const retryBtn = document.getElementById('btnCamRetry');
+            const altBtn = document.getElementById('btnCamAlt');
+            const overlay = document.getElementById('overlayGrid');
+            const liveBadge = document.getElementById('liveBadge');
+            const snapBtn = document.getElementById('btnSnap');
+            const lidText = document.getElementById('statusText');
+
+            if (state === 'live') {
+                statusBox.classList.add('hidden');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('is-live');
+                liveBadge.classList.remove('hidden');
+                snapBtn.disabled = false;
+                lidText.innerText = "กดชัตเตอร์เพื่อสแกน";
+                lidText.style.color = "#333";
+                return;
+            }
+
+            statusBox.classList.remove('hidden');
+            overlay.classList.add('hidden');
+            liveBadge.classList.add('hidden');
+            snapBtn.disabled = true;
+
+            spinner.classList.toggle('hidden', state !== 'loading');
+            errIcon.classList.toggle('hidden', state !== 'error');
+            retryBtn.classList.toggle('hidden', state !== 'error');
+            altBtn.classList.toggle('hidden', !(state === 'error' && ALLOW_CAMERA_APP_FALLBACK));
+            statusTextEl.innerText = message || (state === 'loading' ? 'กำลังเปิดกล้อง...' : '');
+
+            if (detail) {
+                detailEl.innerText = detail;
+                detailEl.classList.remove('hidden');
+            } else {
+                detailEl.classList.add('hidden');
+            }
+
+            lidText.innerText = state === 'loading' ? 'กำลังเปิดกล้อง...' : 'ต้องเปิดกล้องก่อนสแกน';
+            lidText.style.color = "#333";
+        }
+
+        function cameraErrorMessage(err) {
+            const name = err && err.name ? err.name : '';
+            const msg = err && err.message ? err.message : '';
+
+            if (isInAppBrowser()) {
+                return 'เบราว์เซอร์ในแอป (LINE / Facebook) ใช้กล้องไม่ได้\nกดเมนู ⋮ หรือ ⋯ แล้วเลือก "เปิดใน Chrome / Safari"';
+            }
+            if (/by system/i.test(msg)) {
+                return 'ระบบเครื่องปิดสิทธิ์กล้องของเบราว์เซอร์ไว้\nMac: System Settings > Privacy > Camera > เปิด Chrome\nWindows: Settings > Privacy > Camera > เปิดให้แอปใช้กล้อง';
+            }
+            if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
+                return 'ยังไม่ได้อนุญาตให้ใช้กล้อง\nกดไอคอน 🔒 หรือไอคอนกล้องข้างช่องที่อยู่เว็บ\n> อนุญาต "กล้อง" แล้วกดปุ่มด้านล่าง';
+            }
+            if (name === 'NotFoundError' || name === 'DevicesNotFoundError' || name === 'OverconstrainedError') {
+                return 'ไม่พบกล้องบนอุปกรณ์นี้';
+            }
+            if (name === 'NotReadableError' || name === 'TrackStartError') {
+                return 'กล้องกำลังถูกใช้งานโดยแอปอื่น\nปิดแอปนั้นก่อน แล้วกดปุ่มด้านล่าง';
+            }
+            return 'เปิดกล้องไม่สำเร็จ\nกดปุ่มด้านล่างเพื่อลองใหม่';
+        }
+
+        function waitForVideoReady(video, timeoutMs = 8000) {
+            return new Promise((resolve, reject) => {
+                if (video.videoWidth > 0) return resolve();
+                const timer = setTimeout(() => { cleanup(); reject(new Error('VideoTimeout')); }, timeoutMs);
+                function onReady() {
+                    if (video.videoWidth > 0) { cleanup(); resolve(); }
+                }
+                function cleanup() {
+                    clearTimeout(timer);
+                    video.removeEventListener('loadedmetadata', onReady);
+                    video.removeEventListener('playing', onReady);
+                }
+                video.addEventListener('loadedmetadata', onReady);
+                video.addEventListener('playing', onReady);
+            });
+        }
+
+        function stopLiveVideo() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(t => t.stop());
+            }
+            mediaStream = null;
+            cameraReady = false;
+            const video = document.getElementById('webcam-video');
+            if (video) video.srcObject = null;
+        }
+
+        async function startLiveVideo() {
+            if (cameraStarting) return;
+            cameraStarting = true;
+
+            const video = document.getElementById('webcam-video');
+            stopLiveVideo();
+            setCameraUI('loading');
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                setCameraUI('error', isInAppBrowser()
+                    ? cameraErrorMessage({})
+                    : 'เบราว์เซอร์นี้ไม่รองรับกล้อง\nกรุณาเปิดลิงก์ด้วย Chrome หรือ Safari',
+                    window.isSecureContext ? 'mediaDevices unavailable' : 'not a secure context');
+                cameraStarting = false;
+                return;
+            }
+
+            try {
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: { ideal: "environment" },
+                            width: { ideal: 1280 },
+                            height: { ideal: 960 }
+                        },
+                        audio: false
+                    });
+                } catch (e1) {
+                    if (e1 && (e1.name === 'NotAllowedError' || e1.name === 'SecurityError')) throw e1;
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                }
+
+                video.srcObject = mediaStream;
+                video.setAttribute('playsinline', '');
+                video.muted = true;
+
+                try {
+                    await video.play();
+                } catch (playErr) {
+                    cameraReady = false;
+                    setCameraUI('error', 'แตะปุ่ม "เปิดกล้องอีกครั้ง" เพื่อเริ่มแสดงภาพจากกล้อง', playErr.name + ': ' + playErr.message);
+                    return;
+                }
+
+                await waitForVideoReady(video);
+                cameraReady = true;
+
+                const showingCapture = !document.getElementById('captured-image').classList.contains('hidden');
+                if (!showingCapture) setCameraUI('live');
+            } catch (err) {
+                console.warn("Camera error:", err);
+                stopLiveVideo();
+                const detail = (err && err.name ? err.name : 'Error') + (err && err.message ? ': ' + err.message : '');
+                setCameraUI('error', cameraErrorMessage(err), detail);
+            } finally {
+                cameraStarting = false;
+            }
+        }
+
+        function onCameraFrameTap() {
+            if (!document.getElementById('ctrlAction').classList.contains('hidden')) return;
+            if (isAnalyzing) return;
+            if (!cameraReady) {
+                startLiveVideo();
+                return;
+            }
+            snapCurrentFrame();
+        }
+
+        // =========================================================================
+        // 📱 ทางสำรอง: ถ่ายด้วยแอปกล้อง (ปิดอยู่ ตามค่า ALLOW_CAMERA_APP_FALLBACK)
+        // =========================================================================
+        function openCameraApp() {
+            if (!ALLOW_CAMERA_APP_FALLBACK) return;
+            const input = document.getElementById('cameraAppInput');
+            input.value = '';
+            input.click();
+        }
+
+        function handleCameraAppFile(input) {
+            const file = input.files && input.files[0];
+            input.value = '';
+            if (!file || !ALLOW_CAMERA_APP_FALLBACK) return;
+
+            const ageMs = Date.now() - (file.lastModified || 0);
+            if (!file.lastModified || ageMs > FRESH_PHOTO_MAX_AGE_MS || ageMs < -60000) {
+                alert("⛔ ต้องเป็นรูปที่เพิ่งถ่ายจากกล้องเท่านั้น (ไม่เกิน 2 นาที)\nไม่สามารถใช้รูปเก่าจากแกลลอรี่ได้ครับ");
+                return;
+            }
+
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = async function() {
+                URL.revokeObjectURL(url);
+                const maxDim = 1280;
+                let w = img.naturalWidth, h = img.naturalHeight;
+                if (w > maxDim || h > maxDim) {
+                    const s = Math.min(maxDim / w, maxDim / h);
+                    w = Math.round(w * s);
+                    h = Math.round(h * s);
+                }
+                const fullCanvas = document.createElement('canvas');
+                fullCanvas.width = w;
+                fullCanvas.height = h;
+                fullCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+                isAnalyzing = true;
+                try {
+                    const startTime = performance.now();
+                    displayCapturedImage(fullCanvas.toDataURL('image/jpeg', 0.85));
+                    await analyzeMultiWasteFrame(fullCanvas, startTime);
+                } catch (err) {
+                    console.warn("Analyze error:", err);
+                    renderMultiWasteResult([], false, '0');
+                } finally {
+                    isAnalyzing = false;
+                }
+            };
+            img.onerror = function() {
+                URL.revokeObjectURL(url);
+                alert("❌ อ่านรูปไม่สำเร็จ ลองถ่ายใหม่อีกครั้งครับ");
+            };
+            img.src = url;
+        }
+
+        function cropRegionToCanvas(sourceCanvas, x, y, w, h) {
+            const pad = 0.08;
+            const sx = Math.max(0, x - w * pad);
+            const sy = Math.max(0, y - h * pad);
+            const sw = Math.min(sourceCanvas.width - sx, w * (1 + pad * 2));
+            const sh = Math.min(sourceCanvas.height - sy, h * (1 + pad * 2));
+
+            const out = document.createElement('canvas');
+            out.width = 224;
+            out.height = 224;
+            out.getContext('2d').drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, 224, 224);
+            return out;
+        }
+
+        function drawBoundingBoxesOnCanvas(canvas, items) {
+            const ctx = canvas.getContext('2d');
+            const scale = Math.max(1, canvas.width / 500);
+            const lineWidth = Math.round(5 * scale);
+            const fontSize = Math.round(18 * scale);
+
+            ctx.font = `bold ${fontSize}px Prompt, sans-serif`;
+
+            items.forEach((item, index) => {
+                const info = WASTE_MAP[item.className] || WASTE_MAP["General Waste"];
+                const [x, y, w, h] = item.bbox;
+
+                ctx.fillStyle = info.color + "28";
+                ctx.fillRect(x, y, w, h);
+
+                ctx.strokeStyle = info.color;
+                ctx.lineWidth = lineWidth;
+                ctx.strokeRect(x, y, w, h);
+
+                const label = `#${index + 1} ${info.th} (${info.binText})`;
+                const textWidth = ctx.measureText(label).width;
+                const padX = 10 * scale;
+                const boxH = fontSize + 12 * scale;
+                const labelY = Math.max(boxH, y);
+
+                ctx.fillStyle = info.color;
+                ctx.fillRect(x, labelY - boxH, Math.min(canvas.width - x, textWidth + padX * 2), boxH);
+
+                ctx.fillStyle = (item.className === "Recyclable Waste") ? "#212121" : "#FFFFFF";
+                ctx.fillText(label, x + padX, labelY - (4 * scale));
+            });
+        }
+
+        function getIoU(boxA, boxB) {
+            const xA = Math.max(boxA[0], boxB[0]);
+            const yA = Math.max(boxA[1], boxB[1]);
+            const xB = Math.min(boxA[0] + boxA[2], boxB[0] + boxB[2]);
+            const yB = Math.min(boxA[1] + boxA[3], boxB[1] + boxB[3]);
+            const interArea = Math.max(0, xB - xA) * Math.max(0, yB - yA);
+            const boxAArea = boxA[2] * boxA[3];
+            const boxBArea = boxB[2] * boxB[3];
+            return interArea / (boxAArea + boxBArea - interArea + 0.0001);
+        }
+
+        async function analyzeMultiWasteFrame(fullCanvas, startTime) {
+            const W = fullCanvas.width;
+            const H = fullCanvas.height;
+
+            if (!model) await loadAIModel();
+            if (!cocoModel && typeof cocoSsd !== 'undefined') {
+                try { cocoModel = await cocoSsd.load({ base: 'lite_mobilenet_v2' }); } catch(e) {}
+            }
+
+            // (ไม่บังคับ) วิเคราะห์ด้วย Gemini ฝั่งเซิร์ฟเวอร์ — เปิดใช้เมื่อเพิ่ม analyzeWithGemini ใน Code.gs และ doPost แล้ว
+            if (USE_GEMINI) {
+                const smallCanvas = cropRegionToCanvas(fullCanvas, 0, 0, W, H);
+                const geminiRes = await new Promise((resolve) => {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(() => resolve({ success: false }))
+                        .analyzeWithGemini(smallCanvas.toDataURL('image/jpeg', 0.75));
+                });
+
+                if (geminiRes && geminiRes.success) {
+                    if (geminiRes.isLivingBeing) {
+                        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+                        renderMultiWasteResult([], true, `ตรวจพบ: ${geminiRes.livingName || 'สิ่งมีชีวิต/หน้าคน'} (${elapsed}s)`);
+                        return;
+                    }
+                    if (geminiRes.items && geminiRes.items.length > 0) {
+                        const detectedItems = geminiRes.items.slice(0, 6).map(it => {
+                            const [ymin, xmin, ymax, xmax] = it.box_2d || [150, 150, 850, 850];
+                            const safeClass = WASTE_MAP[it.className] ? it.className : "General Waste";
+                            return {
+                                className: safeClass,
+                                itemName: it.itemName || WASTE_MAP[safeClass].th,
+                                bbox: [
+                                    (xmin / 1000) * W,
+                                    (ymin / 1000) * H,
+                                    ((xmax - xmin) / 1000) * W,
+                                    ((ymax - ymin) / 1000) * H
+                                ]
+                            };
+                        });
+                        drawBoundingBoxesOnCanvas(fullCanvas, detectedItems);
+                        document.getElementById('captured-image').src = fullCanvas.toDataURL('image/jpeg', 0.88);
+                        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+                        renderMultiWasteResult(detectedItems, false, elapsed);
+                        return;
+                    }
+                }
+            }
+
+            let cocoDetections = [];
+            if (cocoModel) {
+                try { cocoDetections = await cocoModel.detect(fullCanvas, 10, 0.35); } catch(e) {}
+            }
+
+            let foundLiving = null;
+            let candidateBoxes = [];
+
+            for (let d of cocoDetections) {
+                const [bx, by, bw, bh] = d.bbox;
+                const areaRatio = (bw * bh) / (W * H);
+
+                if (LIVING_CLASSES[d.class] && d.score > 0.45) {
+                    if (d.class !== 'person' || areaRatio > 0.12) {
+                        foundLiving = LIVING_CLASSES[d.class];
+                    }
+                } else if (d.class !== 'person' && areaRatio > 0.02 && areaRatio < 0.90) {
+                    candidateBoxes.push({
+                        bbox: [bx, by, bw, bh],
+                        cocoClass: d.class,
+                        cocoScore: d.score
+                    });
+                }
+            }
+
+            if (foundLiving && candidateBoxes.length === 0) {
+                const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+                renderMultiWasteResult([], true, `ตรวจพบ: ${foundLiving} • ถ่ายขยะจริงๆ มานะ (${elapsed}s)`);
+                return;
+            }
+
+            let finalItems = [];
+
+            if (candidateBoxes.length > 0 && model) {
+                let filteredBoxes = [];
+                for (let c of candidateBoxes) {
+                    if (!filteredBoxes.some(f => getIoU(f.bbox, c.bbox) > 0.45)) {
+                        filteredBoxes.push(c);
+                    }
+                }
+
+                const boxPromises = filteredBoxes.slice(0, 5).map(async (c) => {
+                    const cropCanv = cropRegionToCanvas(fullCanvas, c.bbox[0], c.bbox[1], c.bbox[2], c.bbox[3]);
+                    const preds = await model.predict(cropCanv);
+                    let best = { className: "General Waste", probability: 0 };
+                    preds.forEach(p => { if (p.probability > best.probability) best = p; });
+
+                    const hintObj = COCO_WASTE_HINT[c.cocoClass];
+                    if ((best.className === "Non Waste" || best.probability < 0.55) && hintObj) {
+                        return {
+                            className: hintObj.className,
+                            itemName: hintObj.itemName,
+                            bbox: c.bbox,
+                            prob: 0.85
+                        };
+                    }
+                    if (best.className !== "Non Waste" && best.probability >= 0.45 && WASTE_MAP[best.className]) {
+                        return {
+                            className: best.className,
+                            itemName: hintObj ? hintObj.itemName : WASTE_MAP[best.className].th,
+                            bbox: c.bbox,
+                            prob: best.probability
+                        };
+                    }
+                    return null;
+                });
+
+                const resolvedBoxes = await Promise.all(boxPromises);
+                finalItems = resolvedBoxes.filter(Boolean);
+            }
+
+            if (finalItems.length === 0 && model) {
+                const zones = [
+                    { name: 'left',   bbox: [W * 0.04, H * 0.18, W * 0.44, H * 0.55] },
+                    { name: 'right',  bbox: [W * 0.52, H * 0.18, W * 0.44, H * 0.55] },
+                    { name: 'center', bbox: [W * 0.15, H * 0.15, W * 0.70, H * 0.62] }
+                ];
+
+                const zonePreds = await Promise.all(
+                    zones.map(async z => {
+                        const crop = cropRegionToCanvas(fullCanvas, z.bbox[0], z.bbox[1], z.bbox[2], z.bbox[3]);
+                        const p = await model.predict(crop);
+                        let best = { className: "Non Waste", probability: 0 };
+                        p.forEach(item => { if (item.probability > best.probability) best = item; });
+                        return { ...z, best };
+                    })
+                );
+
+                const leftZone = zonePreds[0];
+                const rightZone = zonePreds[1];
+                const centerZone = zonePreds[2];
+
+                const leftValid = leftZone.best.className !== "Non Waste" && leftZone.best.probability > 0.72 && WASTE_MAP[leftZone.best.className];
+                const rightValid = rightZone.best.className !== "Non Waste" && rightZone.best.probability > 0.72 && WASTE_MAP[rightZone.best.className];
+
+                if (leftValid && rightValid && leftZone.best.className !== rightZone.best.className) {
+                    finalItems.push({
+                        className: leftZone.best.className,
+                        itemName: WASTE_MAP[leftZone.best.className].th,
+                        bbox: leftZone.bbox,
+                        prob: leftZone.best.probability
+                    });
+                    finalItems.push({
+                        className: rightZone.best.className,
+                        itemName: WASTE_MAP[rightZone.best.className].th,
+                        bbox: rightZone.bbox,
+                        prob: rightZone.best.probability
+                    });
+                } else if (centerZone.best.className !== "Non Waste" && centerZone.best.probability > 0.48 && WASTE_MAP[centerZone.best.className]) {
+                    finalItems.push({
+                        className: centerZone.best.className,
+                        itemName: WASTE_MAP[centerZone.best.className].th,
+                        bbox: centerZone.bbox,
+                        prob: centerZone.best.probability
+                    });
+                }
+            }
+
+            const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+
+            if (finalItems.length > 0) {
+                drawBoundingBoxesOnCanvas(fullCanvas, finalItems);
+                document.getElementById('captured-image').src = fullCanvas.toDataURL('image/jpeg', 0.88);
+                renderMultiWasteResult(finalItems, false, elapsed);
+            } else {
+                renderMultiWasteResult([], false, elapsed);
+            }
+        }
+
+        // 📸 ถ่ายภาพจากกล้องสด
+        async function snapCurrentFrame() {
+            if (isAnalyzing) return;
+            const video = document.getElementById('webcam-video');
+
+            if (!cameraReady || !mediaStream || video.videoWidth === 0) {
+                startLiveVideo();
+                return;
+            }
+
+            isAnalyzing = true;
+            document.getElementById('btnSnap').disabled = true;
+
+            try {
+                const startTime = performance.now();
+                const fullCanvas = document.createElement('canvas');
+                fullCanvas.width = video.videoWidth;
+                fullCanvas.height = video.videoHeight;
+                const ctx = fullCanvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, fullCanvas.width, fullCanvas.height);
+
+                const dataUrl = fullCanvas.toDataURL('image/jpeg', 0.85);
+                displayCapturedImage(dataUrl);
+
+                await analyzeMultiWasteFrame(fullCanvas, startTime);
+            } catch (err) {
+                console.warn("Analyze error:", err);
+                renderMultiWasteResult([], false, '0');
+            } finally {
+                isAnalyzing = false;
+                document.getElementById('btnSnap').disabled = !cameraReady;
+            }
+        }
+
+        function displayCapturedImage(src) {
+            const video = document.getElementById('webcam-video');
+            const capImg = document.getElementById('captured-image');
+            const overlay = document.getElementById('overlayGrid');
+
+            capImg.src = src;
+            capImg.classList.remove('hidden');
+            video.classList.add('hidden');
+            overlay.classList.add('hidden');
+            document.getElementById('camStatus').classList.add('hidden');
+            document.getElementById('liveBadge').classList.add('hidden');
+            document.getElementById('statusText').innerText = "กำลังสแกนและตีกรอบขยะ...";
+        }
+
+        function renderMultiWasteResult(items, isLivingBeing, extraInfo) {
+            currentDetectedItems = items || [];
+
+            const badge = document.getElementById('statusText');
+            const hint = document.getElementById('hintText');
+            const lid = document.getElementById('binLid');
+            const confirmBtn = document.getElementById('btnConfirm');
+            const pointsBadge = document.getElementById('confirmPointsBadge');
+            const colorBar = document.getElementById('colorBar');
+
+            if (isLivingBeing || currentDetectedItems.length === 0) {
+                badge.innerText = "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ";
+                badge.style.color = "#D32F2F";
+                lid.style.backgroundColor = isLivingBeing ? "#E91E63" : "#9E9E9E";
+
+                colorBar.style.backgroundColor = "#D32F2F";
+                colorBar.innerText = "❌ ไม่ใช่ขยะ ห้ามทิ้งลงถัง";
+                colorBar.classList.remove('hidden');
+
+                hint.innerText = isLivingBeing 
+                    ? `⛔ แหน่ะ! อย่าแกล้งกันสิ (${extraInfo})` 
+                    : `⛔ ไม่พบขยะในภาพ ลองวางขยะให้ชัดแล้วถ่ายใหม่นะครับ`;
+                confirmBtn.disabled = true;
+                pointsBadge.classList.add('hidden');
+            } else if (currentDetectedItems.length === 1) {
+                const item = currentDetectedItems[0];
+                const info = WASTE_MAP[item.className];
+
+                badge.innerText = `${info.th} (+1 คะแนน)`;
+                badge.style.color = info.color;
+                lid.style.backgroundColor = info.color;
+
+                colorBar.style.backgroundColor = info.color;
+                colorBar.innerText = `ทิ้งลง${info.binText}`;
+                colorBar.classList.remove('hidden');
+
+                hint.innerText = `ตรวจพบ 1 ชิ้น: ${item.itemName} • ${info.hint} (${extraInfo}s)`;
+                confirmBtn.disabled = false;
+                pointsBadge.innerText = "+1";
+                pointsBadge.classList.remove('hidden');
+            } else {
+                const count = currentDetectedItems.length;
+                const firstInfo = WASTE_MAP[currentDetectedItems[0].className];
+
+                badge.innerText = `พบขยะ ${count} ชิ้น! (+${count} คะแนน)`;
+                badge.style.color = "#15803D";
+                lid.style.backgroundColor = firstInfo.color;
+
+                const summaryList = currentDetectedItems.map((it, idx) => {
+                    const inf = WASTE_MAP[it.className];
+                    return `#${idx + 1} ${inf.th}`;
+                }).join(' | ');
+
+                colorBar.style.backgroundColor = "#1E293B";
+                colorBar.innerText = `🎯 แยกทิ้งตามกรอบสีทั้ง ${count} ชิ้น`;
+                colorBar.classList.remove('hidden');
+
+                hint.innerText = `${summaryList} (${extraInfo}s)`;
+                confirmBtn.disabled = false;
+                pointsBadge.innerText = `+${count}`;
+                pointsBadge.classList.remove('hidden');
+            }
+
+            document.getElementById('ctrlScan').style.display = 'none';
+            document.getElementById('ctrlAction').style.display = 'flex';
+            document.getElementById('ctrlAction').classList.remove('hidden');
+        }
+
+        function resetCamera() {
+            currentDetectedItems = [];
+            document.getElementById('captured-image').classList.add('hidden'); 
+            document.getElementById('webcam-video').classList.remove('hidden');
+            
+            document.getElementById('statusText').style.color = "#333";
+            document.getElementById('binLid').style.backgroundColor = "#4CAF50";
+            document.getElementById('hintText').innerText = "วางขยะ 1 หรือหลายชิ้น แล้วกดถ่ายเลย!";
+            document.getElementById('colorBar').classList.add('hidden');
+            document.getElementById('confirmPointsBadge').classList.add('hidden');
+            
+            document.getElementById('ctrlAction').style.display = 'none'; 
+            document.getElementById('ctrlAction').classList.add('hidden');
+            document.getElementById('ctrlScan').style.display = 'flex';
+            document.getElementById('cameraAppInput').value = '';
+
+            if (cameraReady && mediaStream) {
+                setCameraUI('live');
+            } else {
+                startLiveVideo();
+            }
+        }
+
+        function confirmSave() {
+            if (!currentDetectedItems || currentDetectedItems.length === 0) { 
+                alert("อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ!"); 
+                return; 
+            }
+            const btn = document.getElementById('btnConfirm'); 
+            btn.disabled = true; 
+            
+            const addedPoints = currentDetectedItems.length;
+            const categoriesToSave = currentDetectedItems.map(it => WASTE_MAP[it.className].th);
+
+            const scoreEl = document.getElementById('dispScore');
+            const badgeBox = document.getElementById('userBadgeBox');
+            let currentVal = parseInt(scoreEl.innerText) || 0;
+            scoreEl.innerText = currentVal + addedPoints;
+            
+            badgeBox.classList.remove('score-pop');
+            void badgeBox.offsetWidth;
+            badgeBox.classList.add('score-pop');
+
+            const imgData = document.getElementById('captured-image').src;
+            google.script.run
+                .withSuccessHandler(res => {
+                    btn.disabled = false;
+                    if(res && res.success) { 
+                        if (typeof res.newScore !== 'undefined') {
+                            scoreEl.innerText = res.newScore;
+                            refreshCertificateButtons(res.newScore, 0);
+                        } else {
+                            updateScore();
+                        }
+                        alert(res.message); 
+                        resetCamera(); 
+                    } else { 
+                        scoreEl.innerText = currentVal;
+                        alert(res && res.message ? res.message : "❌ บันทึกไม่สำเร็จ"); 
+                    }
+                })
+                .withFailureHandler(err => {
+                    btn.disabled = false;
+                    scoreEl.innerText = currentVal;
+                    alert("❌ บันทึกไม่สำเร็จ: " + err.message);
+                })
+                .logWasteData(currentUser.studentId, categoriesToSave, imgData);
+        }
+
+        function updateScore() { 
+            google.script.run.withSuccessHandler(stats => {
+                document.getElementById('dispScore').innerText = stats.total;
+                const modalScore = document.getElementById('modalTotalScore');
+                if (modalScore) modalScore.innerText = stats.total;
+                refreshCertificateButtons(stats.total, stats.daysInactive);
+            }).getUserStats(currentUser.studentId); 
+        }
+
+        function openHistory() { 
+            new bootstrap.Modal(document.getElementById('historyModal')).show(); 
+            document.getElementById('historyList').innerHTML = 'Loading...'; 
+            google.script.run.withSuccessHandler(d => { 
+                let h = ''; 
+                if(d && d.length > 0) {
+                    d.forEach(i => h += `<div class="p-2 border-bottom d-flex justify-content-between"><span>${i.category}</span><small class="text-muted">${i.time}</small></div>`); 
+                }
+                document.getElementById('historyList').innerHTML = h || '<div class="text-center p-3 text-muted">ยังไม่มีประวัติการทิ้งขยะ</div>'; 
+            }).getUserHistory(currentUser.studentId); 
+        }
+        
+        function openLeaderboard() { 
+            new bootstrap.Modal(document.getElementById('leaderModal')).show(); 
+            document.getElementById('leaderList').innerHTML = 'Loading...'; 
+            google.script.run.withSuccessHandler(data => { 
+                if(!data || data.length === 0) { document.getElementById('leaderList').innerHTML = "<div class='text-center p-4'>ยังไม่มีข้อมูล</div>"; return; }
+                let html = '';
+                if(data.length > 0) {
+                    html += '<div class="podium-container">';
+                    if(data[1]) html += createPodium(data[1], 2);
+                    if(data[0]) html += createPodium(data[0], 1);
+                    if(data[2]) html += createPodium(data[2], 3);
+                    html += '</div>';
+                }
+                if(data.length > 3) {
+                    html += '<div class="bg-white p-2">';
+                    data.slice(3).forEach((u, i) => {
+                        html += `<div class="normal-rank-item"><div class="rank-num">${i+4}</div><div class="flex-grow-1 ms-3" style="font-weight:600; color:#555;">${u.name}</div><div style="font-weight:bold; color:#f57c00;">🔥 ${u.score}</div></div>`;
+                    });
+                    html += '</div>';
+                }
+                document.getElementById('leaderList').innerHTML = html; 
+            }).getLeaderboard(); 
+        }
+
+        function createPodium(u, rank) {
+            let icon = '';
+            if (rank === 1) icon = '<div class="rank-status-icon">👑</div>';
+            if (rank === 2) icon = '<div class="rank-status-icon">🥈</div>';
+            if (rank === 3) icon = '<div class="rank-status-icon">🥉</div>';
+            return `<div class="podium-rank rank-${rank}"><div class="avatar-wrapper"><img src="${u.avatar || defaultAvatar}" class="rank-avatar" onerror="this.src='${defaultAvatar}'">${icon}</div><div class="rank-name">${u.name}</div><div class="rank-score">🔥 ${u.score}</div></div>`;
+        }
+    </script>
+</body>
+</html>
