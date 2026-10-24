@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- TensorFlow.js, Teachable Machine & COCO-SSD -->
+    <!-- TensorFlow.js, Teachable Machine & COCO-SSD (ใช้เป็นตัวสำรองเมื่อ Gemini ไม่ตอบ) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
@@ -137,6 +137,7 @@
         .btn-confirm { background: #C8E6C9; color: #2E7D32; width: 70px; height: 70px; transition: 0.3s; position: relative; }
         .btn-confirm:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; opacity: 0.6; }
         .btn-retry { background: #FFCCBC; color: #D84315; width: 70px; height: 70px; }
+        .btn-fix { background: #EDE7F6; color: #5E35B1; }
 
         .points-badge {
             position: absolute; top: -6px; right: -6px;
@@ -144,6 +145,10 @@
             padding: 3px 8px; border-radius: 20px; border: 2px solid white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.25);
         }
+
+        /* --- แก้ประเภทขยะ --- */
+        .fix-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #eee; }
+        .fix-swatch { width: 14px; height: 14px; border-radius: 4px; margin-top: 6px; flex-shrink: 0; }
 
         /* --- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG --- */
         .btn-cert-corporate {
@@ -373,9 +378,10 @@
                 <button class="btn-circle btn-snap" id="btnSnap" onclick="snapCurrentFrame()" disabled><i class="fas fa-camera"></i></button>
                 <button class="btn-circle btn-rank" onclick="openLeaderboard()"><i class="fas fa-trophy"></i></button>
             </div>
-            <div id="ctrlAction" class="hidden" style="display:flex; gap:30px; align-items:center;">
-                <button class="btn-circle btn-retry" onclick="resetCamera()"><i class="fas fa-undo"></i></button>
-                <button class="btn-circle btn-confirm" id="btnConfirm" onclick="confirmSave()">
+            <div id="ctrlAction" class="hidden" style="display:flex; gap:22px; align-items:center;">
+                <button class="btn-circle btn-retry" onclick="resetCamera()" title="ถ่ายใหม่"><i class="fas fa-undo"></i></button>
+                <button class="btn-circle btn-fix hidden" id="btnFix" onclick="openFixModal()" title="แก้ประเภท"><i class="fas fa-pen"></i></button>
+                <button class="btn-circle btn-confirm" id="btnConfirm" onclick="confirmSave()" title="ยืนยันบันทึก">
                     <i class="fas fa-check"></i>
                     <span id="confirmPointsBadge" class="points-badge hidden">+1</span>
                 </button>
@@ -387,6 +393,26 @@
             <i class="fas fa-award"></i>
             <span id="mainCertBtnText">ดาวน์โหลดประกาศนียบัตรรับรอง</span>
         </button>
+    </div>
+
+    <!-- MODAL: แก้ประเภทขยะ -->
+    <div class="modal fade" id="fixModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="color:#5E35B1;"><i class="fas fa-pen me-2"></i>แก้ประเภทขยะ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">AI ทายผิด? เลือกประเภทที่ถูกต้อง หรือลบชิ้นที่ไม่ใช่ขยะออก<br>(เพิ่มชิ้นใหม่ไม่ได้ ถ้าขาดชิ้นไหนให้ถ่ายใหม่)</p>
+                    <div id="fixList"></div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn rounded-pill fw-bold text-white px-3" style="background:#5E35B1;" onclick="applyFixes()">บันทึกการแก้ไข</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL: โปรไฟล์ของฉัน -->
@@ -512,13 +538,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // =========================================================================
-        // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — แก้บรรทัดนี้บรรทัดเดียว
+        // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — ใส่ลิงก์ /exec ของคุณตรงนี้
         // =========================================================================
-        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbyEcPPk18qNXLefEw_PyeWadDWkkAkku09vaBILTSOjoTQuU69dWJf4wuq9pMshnAJb/exec';
+        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbwROtxDn_kHJIEgYeyXielAA5JM1cn_1qcaM8RTnKYgRdryocDYWp_Y9D8iWwRLdktJ/exec';
 
         // =========================================================================
         // 🔌 ตัวแปลง google.script.run -> fetch
-        // ทำให้โค้ดเดิม google.script.run.withSuccessHandler(...).ชื่อฟังก์ชัน(...) ใช้ได้เหมือนเดิม
         // =========================================================================
         async function callApi(action, args) {
             if (!API_URL || API_URL.indexOf('ใส่_ID') !== -1) {
@@ -559,9 +584,12 @@
         const MODEL_URL = "https://teachablemachine.withgoogle.com/models/F8hAM3mgz/";
 
         // ⚙️ ตั้งค่าระบบ
-        const USE_GEMINI = false;                       // ยังไม่มี analyzeWithGemini ใน Code.gs จึงปิดไว้
+        const USE_GEMINI = true;                        // ใช้ Gemini เป็นตัววิเคราะห์หลัก
+        const GEMINI_TIMEOUT_MS = 4500;                 // รอ Gemini ไม่เกินเท่านี้ ถ้าช้ากว่าใช้ผลจากโมเดลในเครื่องแทน
+        const GEMINI_IMAGE_MAX = 640;                   // ย่อภาพก่อนส่ง Gemini (ยิ่งเล็กยิ่งเร็ว)
         const ALLOW_CAMERA_APP_FALLBACK = false;        // ปิดไว้ = รับภาพจากกล้องสดในแอปเท่านั้น
         const FRESH_PHOTO_MAX_AGE_MS = 2 * 60 * 1000;   // (ใช้เมื่อเปิดทางสำรอง) รูปต้องถ่ายไม่เกิน 2 นาที
+        const AVATAR_SIZE = 200;                        // ขนาดรูปโปรไฟล์ (px) ที่เก็บใน Sheet
         
         const WASTE_MAP = {
             "General Waste": { th: "ขยะทั่วไป", binText: "ถังสีน้ำเงิน", color: "#2196F3", hint: "ย่อยสลายยาก/เปื้อน" },
@@ -571,6 +599,9 @@
             "Non Waste": { th: "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ", binText: "ห้ามทิ้ง", color: "#9E9E9E", hint: "⛔ นี่ไม่ใช่ขยะ ถ่ายขยะจริงๆ มานะครับ" },
             "Living Being": { th: "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ", binText: "ห้ามทิ้ง", color: "#E91E63", hint: "⛔ แหน่ะ! อย่าแกล้งถ่ายคนหรือสัตว์สิ ถ่ายขยะจริงๆ มานะ" }
         };
+
+        // ประเภทที่ผู้ใช้เลือกได้ตอนแก้ไข
+        const FIX_CLASSES = ["General Waste", "Compostable Waste", "Recyclable Waste", "Hazardous Waste"];
 
         const LIVING_CLASSES = {
             "person": "คน (เพื่อน/ครู)",
@@ -712,7 +743,17 @@
         let userDaysInactive = 0;
         let selectedCertTier = RANK_TIERS[0];
         let currentDetectedItems = [];
+        let lastRawCanvas = null;        // ภาพต้นฉบับ (ไม่มีกรอบสี) ของการสแกนล่าสุด
+        let lastAnalysisSource = 'local';
+        let lastElapsed = '0';
+        let itemsCorrected = false;
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
 
         window.onload = function() {
             const saved = localStorage.getItem('smartBinUser');
@@ -892,7 +933,7 @@
             let base64Img = ""; 
             if (fileInput.files.length > 0) {
                 try {
-                    base64Img = await resizeProfileImage(fileInput.files[0], 500);
+                    base64Img = await resizeProfileImage(fileInput.files[0], AVATAR_SIZE);
                 } catch(e) {
                     base64Img = "";
                 }
@@ -937,14 +978,14 @@
         }
 
         // =========================================================================
-        // 👤 ฟังก์ชันเปลี่ยนรูปโปรไฟล์
+        // 👤 ฟังก์ชันเปลี่ยนรูปโปรไฟล์ (ย่อเหลือ 200px เก็บใน Sheet ได้ แสดงผลได้เสมอ)
         // =========================================================================
         function triggerProfileUpload() { 
             const fileInput = document.getElementById('editProfileInput');
             if (fileInput) fileInput.click(); 
         }
 
-        function resizeProfileImage(file, maxDimension = 500) {
+        function resizeProfileImage(file, maxDimension = AVATAR_SIZE) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -967,7 +1008,7 @@
                         cvs.height = h;
                         const ctx = cvs.getContext('2d');
                         ctx.drawImage(img, 0, 0, w, h);
-                        resolve(cvs.toDataURL('image/jpeg', 0.82));
+                        resolve(cvs.toDataURL('image/jpeg', 0.8));
                     };
                     img.onerror = reject;
                     img.src = e.target.result;
@@ -985,7 +1026,7 @@
                 if (modalImg) modalImg.style.opacity = '0.4'; 
 
                 try {
-                    const base64Img = await resizeProfileImage(file, 450);
+                    const base64Img = await resizeProfileImage(file, AVATAR_SIZE);
 
                     google.script.run
                         .withSuccessHandler(res => { 
@@ -1037,7 +1078,7 @@
                         for(let key in WASTE_MAP) { 
                             if(WASTE_MAP[key].th === item.category) { color = WASTE_MAP[key].color; break; } 
                         } 
-                        html += `<div class="stat-bar-container"><div class="stat-label"><span>${item.category}</span><span>${item.count} ชิ้น (${item.percent}%)</span></div><div class="progress"><div class="progress-bar" role="progressbar" style="width: ${item.percent}%; background-color: ${color};"></div></div></div>`; 
+                        html += `<div class="stat-bar-container"><div class="stat-label"><span>${escapeHtml(item.category)}</span><span>${item.count} ชิ้น (${item.percent}%)</span></div><div class="progress"><div class="progress-bar" role="progressbar" style="width: ${item.percent}%; background-color: ${color};"></div></div></div>`; 
                     }); 
                 } 
                 document.getElementById('statsContent').innerHTML = html; 
@@ -1711,26 +1752,16 @@
             const img = new Image();
             img.onload = async function() {
                 URL.revokeObjectURL(url);
-                const maxDim = 1280;
-                let w = img.naturalWidth, h = img.naturalHeight;
-                if (w > maxDim || h > maxDim) {
-                    const s = Math.min(maxDim / w, maxDim / h);
-                    w = Math.round(w * s);
-                    h = Math.round(h * s);
-                }
-                const fullCanvas = document.createElement('canvas');
-                fullCanvas.width = w;
-                fullCanvas.height = h;
-                fullCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                const fullCanvas = makeCanvasCopy(img, 1280);
 
                 isAnalyzing = true;
                 try {
                     const startTime = performance.now();
                     displayCapturedImage(fullCanvas.toDataURL('image/jpeg', 0.85));
-                    await analyzeMultiWasteFrame(fullCanvas, startTime);
+                    await analyzeFrame(fullCanvas, startTime);
                 } catch (err) {
                     console.warn("Analyze error:", err);
-                    renderMultiWasteResult([], false, '0');
+                    renderMultiWasteResult([], false, '0s');
                 } finally {
                     isAnalyzing = false;
                 }
@@ -1742,17 +1773,45 @@
             img.src = url;
         }
 
+        // =========================================================================
+        // 🧠 การวิเคราะห์ภาพ: Gemini (หลัก) + โมเดลในเครื่อง (สำรอง) ทำงานพร้อมกัน
+        // =========================================================================
+        function makeCanvasCopy(src, maxDim) {
+            let w = src.naturalWidth || src.width;
+            let h = src.naturalHeight || src.height;
+            if (maxDim && (w > maxDim || h > maxDim)) {
+                const s = Math.min(maxDim / w, maxDim / h);
+                w = Math.round(w * s);
+                h = Math.round(h * s);
+            }
+            const c = document.createElement('canvas');
+            c.width = w;
+            c.height = h;
+            c.getContext('2d').drawImage(src, 0, 0, w, h);
+            return c;
+        }
+
+        function withTimeout(promise, ms) {
+            return Promise.race([
+                promise,
+                new Promise(resolve => setTimeout(() => resolve(null), ms))
+            ]);
+        }
+
+        // ครอปเป็นสี่เหลี่ยมจัตุรัสรอบวัตถุ (ไม่บีบภาพ) ก่อนส่งให้ Teachable Machine
         function cropRegionToCanvas(sourceCanvas, x, y, w, h) {
             const pad = 0.08;
-            const sx = Math.max(0, x - w * pad);
-            const sy = Math.max(0, y - h * pad);
-            const sw = Math.min(sourceCanvas.width - sx, w * (1 + pad * 2));
-            const sh = Math.min(sourceCanvas.height - sy, h * (1 + pad * 2));
+            const cx = x + w / 2;
+            const cy = y + h / 2;
+            let side = Math.max(w, h) * (1 + pad * 2);
+            side = Math.min(side, sourceCanvas.width, sourceCanvas.height);
+            const sx = Math.min(Math.max(0, cx - side / 2), sourceCanvas.width - side);
+            const sy = Math.min(Math.max(0, cy - side / 2), sourceCanvas.height - side);
 
             const out = document.createElement('canvas');
             out.width = 224;
             out.height = 224;
-            out.getContext('2d').drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, 224, 224);
+            out.getContext('2d').drawImage(sourceCanvas, sx, sy, side, side, 0, 0, 224, 224);
             return out;
         }
 
@@ -1800,53 +1859,53 @@
             return interArea / (boxAArea + boxBArea - interArea + 0.0001);
         }
 
-        async function analyzeMultiWasteFrame(fullCanvas, startTime) {
+        // ส่งภาพย่อไปให้ Gemini ผ่าน Apps Script — คืน null ถ้าใช้ไม่ได้ (ไม่มี key / โควตาหมด / error)
+        function detectWithGemini(rawCanvas) {
+            if (!USE_GEMINI) return Promise.resolve(null);
+            const W = rawCanvas.width;
+            const H = rawCanvas.height;
+            const small = makeCanvasCopy(rawCanvas, GEMINI_IMAGE_MAX);
+            const dataUrl = small.toDataURL('image/jpeg', 0.7);
+
+            return callApi('analyzeWithGemini', [dataUrl])
+                .then(res => {
+                    if (!res || !res.success) {
+                        if (res && res.reason) console.info('Gemini ไม่พร้อม:', res.reason, res.detail || '');
+                        return null;
+                    }
+                    if (res.isLivingBeing) {
+                        return { living: res.livingName || 'สิ่งมีชีวิต/หน้าคน', items: [] };
+                    }
+                    const items = (res.items || []).slice(0, 6).map(it => {
+                        const [ymin, xmin, ymax, xmax] = it.box_2d || [150, 150, 850, 850];
+                        const safeClass = WASTE_MAP[it.className] ? it.className : "General Waste";
+                        return {
+                            className: safeClass,
+                            itemName: it.itemName || WASTE_MAP[safeClass].th,
+                            bbox: [
+                                (xmin / 1000) * W,
+                                (ymin / 1000) * H,
+                                (Math.max(0, xmax - xmin) / 1000) * W,
+                                (Math.max(0, ymax - ymin) / 1000) * H
+                            ]
+                        };
+                    }).filter(it => it.bbox[2] > 4 && it.bbox[3] > 4);
+                    return { living: null, items: items };
+                })
+                .catch(err => {
+                    console.warn('Gemini error:', err);
+                    return null;
+                });
+        }
+
+        // โมเดลในเครื่อง: COCO-SSD หาตำแหน่งวัตถุ + Teachable Machine จำแนกประเภท
+        async function detectLocal(fullCanvas) {
             const W = fullCanvas.width;
             const H = fullCanvas.height;
 
             if (!model) await loadAIModel();
             if (!cocoModel && typeof cocoSsd !== 'undefined') {
                 try { cocoModel = await cocoSsd.load({ base: 'lite_mobilenet_v2' }); } catch(e) {}
-            }
-
-            // (ไม่บังคับ) วิเคราะห์ด้วย Gemini ฝั่งเซิร์ฟเวอร์ — เปิดใช้เมื่อเพิ่ม analyzeWithGemini ใน Code.gs และ doPost แล้ว
-            if (USE_GEMINI) {
-                const smallCanvas = cropRegionToCanvas(fullCanvas, 0, 0, W, H);
-                const geminiRes = await new Promise((resolve) => {
-                    google.script.run
-                        .withSuccessHandler(resolve)
-                        .withFailureHandler(() => resolve({ success: false }))
-                        .analyzeWithGemini(smallCanvas.toDataURL('image/jpeg', 0.75));
-                });
-
-                if (geminiRes && geminiRes.success) {
-                    if (geminiRes.isLivingBeing) {
-                        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-                        renderMultiWasteResult([], true, `ตรวจพบ: ${geminiRes.livingName || 'สิ่งมีชีวิต/หน้าคน'} (${elapsed}s)`);
-                        return;
-                    }
-                    if (geminiRes.items && geminiRes.items.length > 0) {
-                        const detectedItems = geminiRes.items.slice(0, 6).map(it => {
-                            const [ymin, xmin, ymax, xmax] = it.box_2d || [150, 150, 850, 850];
-                            const safeClass = WASTE_MAP[it.className] ? it.className : "General Waste";
-                            return {
-                                className: safeClass,
-                                itemName: it.itemName || WASTE_MAP[safeClass].th,
-                                bbox: [
-                                    (xmin / 1000) * W,
-                                    (ymin / 1000) * H,
-                                    ((xmax - xmin) / 1000) * W,
-                                    ((ymax - ymin) / 1000) * H
-                                ]
-                            };
-                        });
-                        drawBoundingBoxesOnCanvas(fullCanvas, detectedItems);
-                        document.getElementById('captured-image').src = fullCanvas.toDataURL('image/jpeg', 0.88);
-                        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-                        renderMultiWasteResult(detectedItems, false, elapsed);
-                        return;
-                    }
-                }
             }
 
             let cocoDetections = [];
@@ -1875,9 +1934,7 @@
             }
 
             if (foundLiving && candidateBoxes.length === 0) {
-                const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-                renderMultiWasteResult([], true, `ตรวจพบ: ${foundLiving} • ถ่ายขยะจริงๆ มานะ (${elapsed}s)`);
-                return;
+                return { living: foundLiving, items: [] };
             }
 
             let finalItems = [];
@@ -1967,15 +2024,51 @@
                 }
             }
 
-            const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-
-            if (finalItems.length > 0) {
-                drawBoundingBoxesOnCanvas(fullCanvas, finalItems);
-                document.getElementById('captured-image').src = fullCanvas.toDataURL('image/jpeg', 0.88);
-                renderMultiWasteResult(finalItems, false, elapsed);
-            } else {
-                renderMultiWasteResult([], false, elapsed);
+            if (finalItems.length === 0 && foundLiving) {
+                return { living: foundLiving, items: [] };
             }
+            return { living: null, items: finalItems };
+        }
+
+        function sourceLabel() {
+            const src = lastAnalysisSource === 'gemini' ? 'Gemini AI' : 'AI ในเครื่อง';
+            return `${lastElapsed}s • ${src}${itemsCorrected ? ' • แก้ไขแล้ว' : ''}`;
+        }
+
+        // วาดกรอบบนสำเนาของภาพต้นฉบับ แล้วแสดงผล
+        function showDetectionResult(items) {
+            if (lastRawCanvas) {
+                const boxed = makeCanvasCopy(lastRawCanvas);
+                if (items.length > 0) drawBoundingBoxesOnCanvas(boxed, items);
+                document.getElementById('captured-image').src = boxed.toDataURL('image/jpeg', 0.88);
+            }
+            renderMultiWasteResult(items, false, sourceLabel());
+        }
+
+        async function analyzeFrame(rawCanvas, startTime) {
+            lastRawCanvas = rawCanvas;
+            itemsCorrected = false;
+
+            // เริ่มโมเดลในเครื่องรอไว้พร้อมกัน (ใช้เมื่อ Gemini ไม่ตอบทันเวลา)
+            const localPromise = detectLocal(rawCanvas).catch(err => {
+                console.warn('Local model error:', err);
+                return { living: null, items: [] };
+            });
+
+            let result = await withTimeout(detectWithGemini(rawCanvas), GEMINI_TIMEOUT_MS);
+            lastAnalysisSource = 'gemini';
+            if (!result) {
+                lastAnalysisSource = 'local';
+                result = await localPromise;
+            }
+
+            lastElapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+
+            if (result.living && (!result.items || result.items.length === 0)) {
+                renderMultiWasteResult([], true, `ตรวจพบ: ${result.living} • ${sourceLabel()}`);
+                return;
+            }
+            showDetectionResult(result.items || []);
         }
 
         // 📸 ถ่ายภาพจากกล้องสด
@@ -1999,13 +2092,11 @@
                 const ctx = fullCanvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, fullCanvas.width, fullCanvas.height);
 
-                const dataUrl = fullCanvas.toDataURL('image/jpeg', 0.85);
-                displayCapturedImage(dataUrl);
-
-                await analyzeMultiWasteFrame(fullCanvas, startTime);
+                displayCapturedImage(fullCanvas.toDataURL('image/jpeg', 0.85));
+                await analyzeFrame(fullCanvas, startTime);
             } catch (err) {
                 console.warn("Analyze error:", err);
-                renderMultiWasteResult([], false, '0');
+                renderMultiWasteResult([], false, '0s');
             } finally {
                 isAnalyzing = false;
                 document.getElementById('btnSnap').disabled = !cameraReady;
@@ -2033,6 +2124,7 @@
             const hint = document.getElementById('hintText');
             const lid = document.getElementById('binLid');
             const confirmBtn = document.getElementById('btnConfirm');
+            const fixBtn = document.getElementById('btnFix');
             const pointsBadge = document.getElementById('confirmPointsBadge');
             const colorBar = document.getElementById('colorBar');
 
@@ -2047,8 +2139,9 @@
 
                 hint.innerText = isLivingBeing 
                     ? `⛔ แหน่ะ! อย่าแกล้งกันสิ (${extraInfo})` 
-                    : `⛔ ไม่พบขยะในภาพ ลองวางขยะให้ชัดแล้วถ่ายใหม่นะครับ`;
+                    : `⛔ ไม่พบขยะในภาพ ลองวางขยะให้ชัดแล้วถ่ายใหม่นะครับ (${extraInfo})`;
                 confirmBtn.disabled = true;
+                fixBtn.classList.add('hidden');
                 pointsBadge.classList.add('hidden');
             } else if (currentDetectedItems.length === 1) {
                 const item = currentDetectedItems[0];
@@ -2062,8 +2155,9 @@
                 colorBar.innerText = `ทิ้งลง${info.binText}`;
                 colorBar.classList.remove('hidden');
 
-                hint.innerText = `ตรวจพบ 1 ชิ้น: ${item.itemName} • ${info.hint} (${extraInfo}s)`;
+                hint.innerText = `ตรวจพบ 1 ชิ้น: ${item.itemName} • ${info.hint} (${extraInfo})`;
                 confirmBtn.disabled = false;
+                fixBtn.classList.remove('hidden');
                 pointsBadge.innerText = "+1";
                 pointsBadge.classList.remove('hidden');
             } else {
@@ -2083,8 +2177,9 @@
                 colorBar.innerText = `🎯 แยกทิ้งตามกรอบสีทั้ง ${count} ชิ้น`;
                 colorBar.classList.remove('hidden');
 
-                hint.innerText = `${summaryList} (${extraInfo}s)`;
+                hint.innerText = `${summaryList} (${extraInfo})`;
                 confirmBtn.disabled = false;
+                fixBtn.classList.remove('hidden');
                 pointsBadge.innerText = `+${count}`;
                 pointsBadge.classList.remove('hidden');
             }
@@ -2094,8 +2189,61 @@
             document.getElementById('ctrlAction').classList.remove('hidden');
         }
 
+        // =========================================================================
+        // ✏️ แก้ประเภทขยะ (เปลี่ยนประเภท / ลบชิ้นได้ แต่เพิ่มชิ้นไม่ได้)
+        // =========================================================================
+        function openFixModal() {
+            if (!currentDetectedItems || currentDetectedItems.length === 0) return;
+            const list = document.getElementById('fixList');
+            let html = '';
+            currentDetectedItems.forEach((it, idx) => {
+                const info = WASTE_MAP[it.className] || WASTE_MAP["General Waste"];
+                let options = FIX_CLASSES.map(cls => {
+                    const inf = WASTE_MAP[cls];
+                    return `<option value="${cls}" ${cls === it.className ? 'selected' : ''}>${inf.th} (${inf.binText})</option>`;
+                }).join('');
+                options += `<option value="__remove">❌ ไม่ใช่ขยะ (ลบออก)</option>`;
+                html += `
+                <div class="fix-row">
+                    <div class="fix-swatch" style="background:${info.color};"></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold small">#${idx + 1} ${escapeHtml(it.itemName)}</div>
+                        <select class="form-select form-select-sm mt-1 rounded-3" id="fixSel_${idx}">${options}</select>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+            new bootstrap.Modal(document.getElementById('fixModal')).show();
+        }
+
+        function applyFixes() {
+            const newItems = [];
+            let changed = false;
+            currentDetectedItems.forEach((it, idx) => {
+                const sel = document.getElementById('fixSel_' + idx);
+                const v = sel ? sel.value : it.className;
+                if (v === '__remove') { changed = true; return; }
+                if (v !== it.className) {
+                    changed = true;
+                    newItems.push({ ...it, className: v });
+                } else {
+                    newItems.push(it);
+                }
+            });
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('fixModal'));
+            if (modal) modal.hide();
+
+            if (changed) {
+                itemsCorrected = true;
+                showDetectionResult(newItems);
+            }
+        }
+
         function resetCamera() {
             currentDetectedItems = [];
+            lastRawCanvas = null;
+            itemsCorrected = false;
             document.getElementById('captured-image').classList.add('hidden'); 
             document.getElementById('webcam-video').classList.remove('hidden');
             
@@ -2104,6 +2252,7 @@
             document.getElementById('hintText').innerText = "วางขยะ 1 หรือหลายชิ้น แล้วกดถ่ายเลย!";
             document.getElementById('colorBar').classList.add('hidden');
             document.getElementById('confirmPointsBadge').classList.add('hidden');
+            document.getElementById('btnFix').classList.add('hidden');
             
             document.getElementById('ctrlAction').style.display = 'none'; 
             document.getElementById('ctrlAction').classList.add('hidden');
@@ -2127,6 +2276,11 @@
             
             const addedPoints = currentDetectedItems.length;
             const categoriesToSave = currentDetectedItems.map(it => WASTE_MAP[it.className].th);
+            const meta = {
+                source: lastAnalysisSource,
+                corrected: itemsCorrected,
+                itemNames: currentDetectedItems.map(it => it.itemName || '')
+            };
 
             const scoreEl = document.getElementById('dispScore');
             const badgeBox = document.getElementById('userBadgeBox');
@@ -2137,7 +2291,11 @@
             void badgeBox.offsetWidth;
             badgeBox.classList.add('score-pop');
 
-            const imgData = document.getElementById('captured-image').src;
+            // บันทึกรูปต้นฉบับ (ไม่มีกรอบสี) ไว้ใช้เทรนโมเดลต่อได้
+            const imgData = lastRawCanvas
+                ? makeCanvasCopy(lastRawCanvas, 1024).toDataURL('image/jpeg', 0.8)
+                : document.getElementById('captured-image').src;
+
             google.script.run
                 .withSuccessHandler(res => {
                     btn.disabled = false;
@@ -2160,7 +2318,7 @@
                     scoreEl.innerText = currentVal;
                     alert("❌ บันทึกไม่สำเร็จ: " + err.message);
                 })
-                .logWasteData(currentUser.studentId, categoriesToSave, imgData);
+                .logWasteData(currentUser.studentId, categoriesToSave, imgData, meta);
         }
 
         function updateScore() { 
@@ -2178,7 +2336,7 @@
             google.script.run.withSuccessHandler(d => { 
                 let h = ''; 
                 if(d && d.length > 0) {
-                    d.forEach(i => h += `<div class="p-2 border-bottom d-flex justify-content-between"><span>${i.category}</span><small class="text-muted">${i.time}</small></div>`); 
+                    d.forEach(i => h += `<div class="p-2 border-bottom d-flex justify-content-between"><span>${escapeHtml(i.category)}</span><small class="text-muted">${escapeHtml(i.time)}</small></div>`); 
                 }
                 document.getElementById('historyList').innerHTML = h || '<div class="text-center p-3 text-muted">ยังไม่มีประวัติการทิ้งขยะ</div>'; 
             }).getUserHistory(currentUser.studentId); 
@@ -2200,7 +2358,7 @@
                 if(data.length > 3) {
                     html += '<div class="bg-white p-2">';
                     data.slice(3).forEach((u, i) => {
-                        html += `<div class="normal-rank-item"><div class="rank-num">${i+4}</div><div class="flex-grow-1 ms-3" style="font-weight:600; color:#555;">${u.name}</div><div style="font-weight:bold; color:#f57c00;">🔥 ${u.score}</div></div>`;
+                        html += `<div class="normal-rank-item"><div class="rank-num">${i+4}</div><div class="flex-grow-1 ms-3" style="font-weight:600; color:#555;">${escapeHtml(u.name)}</div><div style="font-weight:bold; color:#f57c00;">🔥 ${u.score}</div></div>`;
                     });
                     html += '</div>';
                 }
@@ -2213,7 +2371,7 @@
             if (rank === 1) icon = '<div class="rank-status-icon">👑</div>';
             if (rank === 2) icon = '<div class="rank-status-icon">🥈</div>';
             if (rank === 3) icon = '<div class="rank-status-icon">🥉</div>';
-            return `<div class="podium-rank rank-${rank}"><div class="avatar-wrapper"><img src="${u.avatar || defaultAvatar}" class="rank-avatar" onerror="this.src='${defaultAvatar}'">${icon}</div><div class="rank-name">${u.name}</div><div class="rank-score">🔥 ${u.score}</div></div>`;
+            return `<div class="podium-rank rank-${rank}"><div class="avatar-wrapper"><img src="${escapeHtml(u.avatar || defaultAvatar)}" class="rank-avatar" onerror="this.src='${defaultAvatar}'">${icon}</div><div class="rank-name">${escapeHtml(u.name)}</div><div class="rank-score">🔥 ${u.score}</div></div>`;
         }
     </script>
 </body>
