@@ -47,6 +47,10 @@
         .auth-card { background: white; width: 100%; max-width: 390px; padding: 32px 28px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 3px solid #81C784; }
         .profile-upload { width: 100px; height: 100px; background: #eee; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer; border: 3px solid #4CAF50; }
         .profile-upload img { width: 100%; height: 100%; object-fit: cover; }
+        .auth-links { display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; }
+        .auth-link { color: #64748B; cursor: pointer; background: none; border: none; padding: 0; }
+        .auth-link:hover { color: #2E7D32; text-decoration: underline; }
+        .auth-note { font-size: 0.78rem; color: #64748B; background: #F8FAFC; border-radius: 12px; padding: 8px 12px; text-align: left; }
 
         /* --- App Layout --- */
         .app-container { width: 100%; max-width: 450px; min-height: 100vh; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; }
@@ -400,20 +404,20 @@
         .tour-skip { background: none; border: none; color: #94A3B8; font-size: 0.82rem; }
         .tour-next { background: #22C55E; color: #fff; border: none; border-radius: 20px; padding: 6px 16px; font-weight: 700; font-size: 0.85rem; }
 
-        /* --- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG --- */
+        /* --- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG (2 บรรทัด) --- */
         .btn-cert-corporate {
             background: linear-gradient(135deg, #0A192F 0%, #173865 50%, #047857 100%);
             color: white;
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 50px;
-            padding: 13px 26px;
+            padding: 11px 26px;
             font-weight: 700;
             font-size: 0.95rem;
             box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             width: 85%;
             max-width: 360px;
             margin-top: 18px;
@@ -423,6 +427,10 @@
         }
         .btn-cert-corporate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35); color: #fff; }
         .btn-cert-corporate:active { transform: scale(0.97); }
+        .btn-cert-corporate > i { font-size: 1.25rem; flex-shrink: 0; }
+        .cert-btn-text { display: flex; flex-direction: column; align-items: flex-start; text-align: left; line-height: 1.25; min-width: 0; }
+        .cert-line1 { font-weight: 700; font-size: 0.95rem; white-space: nowrap; }
+        .cert-line2 { font-weight: 500; font-size: 0.78rem; opacity: 0.88; }
 
         .btn-my-certs {
             background: #1E293B;
@@ -551,12 +559,19 @@
             <div class="mb-3" style="font-size:3rem;">♻️</div>
             <h3 class="fw-bold text-success mb-1">น้องถังช่วยทิ้ง</h3>
             <p class="text-muted small mb-3">วิทยาลัยเทคโนโลยีสยาม (สยามเทค) • ITM</p>
+
+            <!-- เข้าสู่ระบบ -->
             <div id="loginForm">
-                <input type="text" id="logUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้">
-                <input type="password" id="logPass" class="form-control mb-3 rounded-pill" placeholder="รหัสผ่าน">
+                <input type="text" id="logUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้" autocomplete="username">
+                <input type="password" id="logPass" class="form-control mb-3 rounded-pill" placeholder="รหัสผ่าน" autocomplete="current-password">
                 <button type="button" id="btnLoginSubmit" class="btn btn-success w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doLogin()">เข้าสู่ระบบ</button>
-                <small class="text-muted" style="cursor:pointer;" onclick="toggleAuth(true)">สมัครสมาชิกใหม่</small>
+                <div class="auth-links">
+                    <button type="button" class="auth-link" onclick="showAuthForm('forgot')">ลืมรหัสผ่าน?</button>
+                    <button type="button" class="auth-link" onclick="showAuthForm('register')">สมัครสมาชิกใหม่</button>
+                </div>
             </div>
+
+            <!-- สมัครสมาชิก -->
             <div id="regForm" class="hidden">
                 <div class="profile-upload" onclick="document.getElementById('regFile').click()">
                     <img id="previewAvatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="hidden" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
@@ -564,12 +579,25 @@
                 </div>
                 <input type="file" id="regFile" class="hidden" accept="image/*" onchange="previewImage(this)">
                 <div class="small text-muted mb-3">แตะเพื่อใส่รูปโปรไฟล์ (ถ้ามี)</div>
-                <input type="text" id="regUser" class="form-control mb-2 rounded-pill" placeholder="ตั้งชื่อผู้ใช้">
-                <input type="password" id="regPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่าน">
+                <input type="text" id="regUser" class="form-control mb-2 rounded-pill" placeholder="ตั้งชื่อผู้ใช้" autocomplete="username">
+                <input type="password" id="regPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)" autocomplete="new-password">
                 <input type="text" id="regId" class="form-control mb-2 rounded-pill" placeholder="รหัสนักศึกษา">
                 <input type="text" id="regName" class="form-control mb-3 rounded-pill" placeholder="ชื่อ-นามสกุล">
-                <button type="button" class="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doRegister()">ลงทะเบียน</button>
-                <small class="text-muted" style="cursor:pointer;" onclick="toggleAuth(false)">กลับไปเข้าสู่ระบบ</small>
+                <button type="button" id="btnRegSubmit" class="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doRegister()">ลงทะเบียน</button>
+                <button type="button" class="auth-link" onclick="showAuthForm('login')">กลับไปเข้าสู่ระบบ</button>
+            </div>
+
+            <!-- ลืมรหัสผ่าน -->
+            <div id="forgotForm" class="hidden">
+                <h5 class="fw-bold mb-2" style="color:#0F172A;">🔑 ตั้งรหัสผ่านใหม่</h5>
+                <div class="auth-note mb-3">กรอกข้อมูลให้ตรงกับตอนสมัครสมาชิกทั้ง 3 ช่อง เพื่อยืนยันว่าเป็นเจ้าของบัญชี</div>
+                <input type="text" id="fgUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้" autocomplete="username">
+                <input type="text" id="fgId" class="form-control mb-2 rounded-pill" placeholder="รหัสนักศึกษา">
+                <input type="text" id="fgName" class="form-control mb-3 rounded-pill" placeholder="ชื่อ-นามสกุล (ตามที่สมัครไว้)">
+                <input type="password" id="fgPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)" autocomplete="new-password">
+                <input type="password" id="fgPass2" class="form-control mb-3 rounded-pill" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="new-password">
+                <button type="button" id="btnResetSubmit" class="btn btn-warning w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doResetPassword()">ตั้งรหัสผ่านใหม่</button>
+                <button type="button" class="auth-link" onclick="showAuthForm('login')">กลับไปเข้าสู่ระบบ</button>
             </div>
         </div>
     </div>
@@ -690,10 +718,13 @@
             <div class="mission-bar"><div class="mission-fill" id="missionFill"></div></div>
         </div>
 
-        <!-- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG หน้าหลัก -->
+        <!-- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG หน้าหลัก (2 บรรทัด) -->
         <button id="mainCertBtn" class="btn-cert-corporate" onclick="handleCertAction()">
             <i class="fas fa-award"></i>
-            <span id="mainCertBtnText">ดาวน์โหลดประกาศนียบัตรรับรอง</span>
+            <span class="cert-btn-text">
+                <span class="cert-line1" id="mainCertLine1">ดาวน์โหลดประกาศนียบัตร</span>
+                <span class="cert-line2" id="mainCertLine2">กำลังโหลด...</span>
+            </span>
         </button>
     </div>
 
@@ -711,6 +742,27 @@
             <div class="d-flex align-items-center gap-1">
                 <button class="tour-skip" onclick="endTour()">ข้าม</button>
                 <button class="tour-next" id="tourNext" onclick="nextTourStep()">ถัดไป</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🔑 เปลี่ยนรหัสผ่าน -->
+    <div class="modal fade" id="changePwModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="color:#B45309;">🔑 เปลี่ยนรหัสผ่าน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="password" id="cpOld" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่านเดิม" autocomplete="current-password">
+                    <input type="password" id="cpNew" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)" autocomplete="new-password">
+                    <input type="password" id="cpNew2" class="form-control mb-1 rounded-pill" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="new-password">
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" id="btnChangePw" class="btn btn-warning rounded-pill fw-bold px-3" onclick="doChangePassword()">บันทึกรหัสผ่านใหม่</button>
+                </div>
             </div>
         </div>
     </div>
@@ -793,9 +845,14 @@
                     <h5 class="fw-bold mb-0" id="modalProfileName">...</h5>
                     <p class="text-muted small mb-1" id="modalStudentId">...</p>
                     <div class="mb-2"><span class="badge bg-light text-dark border">วิทยาลัยเทคโนโลยีสยาม (สยามเทค) • ITM</span></div>
-                    <button class="btn btn-outline-secondary btn-sm rounded-pill mb-3 px-3" onclick="triggerProfileUpload()">
-                        <i class="fas fa-camera me-1"></i> เปลี่ยนรูปโปรไฟล์
-                    </button>
+                    <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
+                        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="triggerProfileUpload()">
+                            <i class="fas fa-camera me-1"></i> เปลี่ยนรูปโปรไฟล์
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="openChangePassword()">
+                            <i class="fas fa-key me-1"></i> เปลี่ยนรหัสผ่าน
+                        </button>
+                    </div>
 
                     <!-- กล่องคะแนนสะสม -->
                     <div class="score-box-green">
@@ -822,10 +879,13 @@
                         <div class="rank-sub-text" id="modalRankSub">...</div>
                     </div>
 
-                    <!-- ปุ่มดาวน์โหลดประกาศนียบัตร -->
-                    <button id="modalCertBtn" class="btn-cert-corporate w-100 max-w-100 mt-1 mb-2" style="max-width:100%;" onclick="handleCertAction()">
+                    <!-- ปุ่มดาวน์โหลดประกาศนียบัตร (2 บรรทัด) -->
+                    <button id="modalCertBtn" class="btn-cert-corporate w-100 mt-1 mb-2" style="max-width:100%;" onclick="handleCertAction()">
                         <i class="fas fa-file-contract"></i>
-                        <span id="modalCertBtnText">ดาวน์โหลดประกาศนียบัตรระดับปัจจุบัน</span>
+                        <span class="cert-btn-text">
+                            <span class="cert-line1" id="modalCertLine1">ดาวน์โหลดประกาศนียบัตร</span>
+                            <span class="cert-line2" id="modalCertLine2">กำลังโหลด...</span>
+                        </span>
                     </button>
                     <button class="btn-my-certs mb-4" onclick="openMyCertificatesModal()">
                         <i class="fas fa-folder-open"></i> รายการประกาศนียบัตรทั้งหมดของฉัน
@@ -906,7 +966,7 @@
         // =========================================================================
         // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — ใส่ลิงก์ /exec ของคุณตรงนี้
         // =========================================================================
-        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbz-egaiBKSGHmRiAovWXm8qXjWRm7mHilwvxa-wBI3FHxdeeNJmsACSr8ZKAQ7TYM7A/exec';
+        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbySBX0l6itdFFZ83-yNYhiOJ0ddCe17HwPUK9yIqcxrVM51zbE7j6ih8lbWe35rBfJk/exec';
 
         // =========================================================================
         // 🔌 ตัวแปลง google.script.run -> fetch
@@ -956,6 +1016,7 @@
         const ALLOW_CAMERA_APP_FALLBACK = false;        // ปิดไว้ = รับภาพจากกล้องสดในแอปเท่านั้น
         const FRESH_PHOTO_MAX_AGE_MS = 2 * 60 * 1000;   // (ใช้เมื่อเปิดทางสำรอง) รูปต้องถ่ายไม่เกิน 2 นาที
         const AVATAR_SIZE = 200;                        // ขนาดรูปโปรไฟล์ (px) ที่เก็บใน Sheet
+        const MIN_PASSWORD_LENGTH = 6;                  // ต้องตรงกับค่าใน Code.gs
         const CAMPUS_REFRESH_MS = 45000;                // อัปเดตตัวเลขทั้งวิทยาลัย/ภารกิจทุก 45 วินาที
         const TIP_INTERVAL_MS = 5000;                   // สลับข้อความ/เคล็ดลับบนฝาถังทุก 5 วินาที
         const LEAF_COUNT = 9;                           // จำนวนใบไม้ลอยพื้นหลัง
@@ -1196,6 +1257,18 @@
 
         function isAppVisible() {
             return !document.getElementById('appSection').classList.contains('hidden');
+        }
+
+        function setBtnLoading(btn, loading, label) {
+            if (!btn) return;
+            if (loading) {
+                btn.dataset.label = btn.dataset.label || btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>' + (label || 'กำลังดำเนินการ...');
+            } else {
+                btn.disabled = false;
+                if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+            }
         }
 
         window.onload = function() {
@@ -1632,7 +1705,7 @@
             { el: 'btnRank', title: 'อันดับ', body: 'ดูว่าใครเป็นนักแยกขยะตัวท็อปของวิทยาลัย' },
             { el: 'campusTicker', title: 'ทั้งวิทยาลัยช่วยกัน', body: 'ตัวเลขนี้คือขยะที่ชาวสยามเทคแยกรวมกันวันนี้ อัปเดตเองเรื่อย ๆ' },
             { el: 'missionCard', title: 'ภารกิจประจำวัน', body: 'แยกขยะอย่างน้อย 1 ครั้งทุกวัน ประเภทไหนก็ได้ ภารกิจเริ่มใหม่ทุกเที่ยงคืน' },
-            { el: 'userBadgeBox', title: 'โปรไฟล์และคะแนน', body: 'แตะเพื่อดูคะแนน สถิติ และเปลี่ยนรูปโปรไฟล์ ไฟ 🔥 จะมอดถ้าไม่ได้แยกขยะเกิน 3 วัน' },
+            { el: 'userBadgeBox', title: 'โปรไฟล์และคะแนน', body: 'แตะเพื่อดูคะแนน สถิติ เปลี่ยนรูปโปรไฟล์ หรือเปลี่ยนรหัสผ่าน ไฟ 🔥 จะมอดถ้าไม่ได้แยกขยะเกิน 3 วัน' },
             { el: 'mainCertBtn', title: 'ประกาศนียบัตร', body: 'สะสมคะแนนถึงเกณฑ์ ดาวน์โหลดประกาศนียบัตรได้ทันที พร้อมแล้วไปแยกขยะกันเลย!' }
         ];
 
@@ -1748,12 +1821,13 @@
             flameEl.classList.add('flame');
             flameEl.classList.toggle('flame-out', flameOut);
 
-            const btnLabel = currentTier 
-                ? `ดาวน์โหลดประกาศนียบัตร (${currentTier.name})` 
-                : `ดูเกณฑ์การรับรองมาตรฐาน (ESG Tiers)`;
-
-            document.getElementById('mainCertBtnText').innerText = btnLabel;
-            document.getElementById('modalCertBtnText').innerText = btnLabel;
+            // ปุ่มประกาศนียบัตร 2 บรรทัด
+            const line1 = currentTier ? 'ดาวน์โหลดประกาศนียบัตร' : 'ดูเกณฑ์การรับรองมาตรฐาน';
+            const line2 = currentTier ? `ระดับ${currentTier.name}` : 'ESG Tiers • แยกขยะชิ้นแรกเพื่อปลดล็อก';
+            ['main', 'modal'].forEach(prefix => {
+                document.getElementById(prefix + 'CertLine1').textContent = line1;
+                document.getElementById(prefix + 'CertLine2').textContent = line2;
+            });
 
             const streakCard = document.getElementById('modalStreakCard');
             const streakIcon = document.getElementById('modalStreakIcon');
@@ -1798,10 +1872,15 @@
         // ==========================================
         // 🔐 ระบบ AUTHENTICATION & LOGIN
         // ==========================================
-        function toggleAuth(showReg) { 
-            document.getElementById('loginForm').classList.toggle('hidden', showReg); 
-            document.getElementById('regForm').classList.toggle('hidden', !showReg); 
+        function showAuthForm(which) {
+            const map = { login: 'loginForm', register: 'regForm', forgot: 'forgotForm' };
+            Object.keys(map).forEach(k => {
+                document.getElementById(map[k]).classList.toggle('hidden', k !== which);
+            });
         }
+
+        // (เก็บชื่อเดิมไว้ เผื่อมีจุดที่ยังเรียกใช้)
+        function toggleAuth(showReg) { showAuthForm(showReg ? 'register' : 'login'); }
 
         function previewImage(input) { 
             if (input.files && input.files[0]) { 
@@ -1816,29 +1895,20 @@
         }
 
         function doLogin() { 
-            const userEl = document.getElementById('logUser');
-            const passEl = document.getElementById('logPass');
-            const u = userEl ? userEl.value.trim() : ''; 
-            const p = passEl ? passEl.value.trim() : ''; 
-            const btn = document.getElementById('btnLoginSubmit') || document.querySelector('#loginForm button');
+            const u = document.getElementById('logUser').value.trim(); 
+            const p = document.getElementById('logPass').value.trim(); 
+            const btn = document.getElementById('btnLoginSubmit');
 
             if (!u || !p) {
                 alert("กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน");
                 return;
             }
 
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>กำลังเข้าสู่ระบบ...';
-            }
+            setBtnLoading(btn, true, 'กำลังเข้าสู่ระบบ...');
 
             google.script.run
                 .withSuccessHandler(res => { 
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = 'เข้าสู่ระบบ';
-                    }
-
+                    setBtnLoading(btn, false);
                     if (res && res.success) { 
                         currentUser = res; 
                         localStorage.setItem('smartBinUser', JSON.stringify(res)); 
@@ -1848,58 +1918,133 @@
                     } 
                 })
                 .withFailureHandler(err => {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = 'เข้าสู่ระบบ';
-                    }
+                    setBtnLoading(btn, false);
                     alert("❌ เชื่อมต่อกับระบบเซิร์ฟเวอร์ไม่สำเร็จ:\n" + err.message);
                 })
                 .loginUser(u, p); 
         }
 
         async function doRegister() { 
-            const btn = document.querySelector('#regForm button'); 
-            btn.disabled = true; 
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>กำลังบันทึก...'; 
-            
-            const fileInput = document.getElementById('regFile'); 
-            let base64Img = ""; 
-            if (fileInput.files.length > 0) {
-                try {
-                    base64Img = await resizeProfileImage(fileInput.files[0], AVATAR_SIZE);
-                } catch(e) {
-                    base64Img = "";
-                }
-            }
+            const btn = document.getElementById('btnRegSubmit'); 
 
             const data = { 
                 username: document.getElementById('regUser').value.trim(), 
                 password: document.getElementById('regPass').value.trim(), 
                 studentId: document.getElementById('regId').value.trim(), 
                 name: document.getElementById('regName').value.trim(), 
-                profileImage: base64Img 
+                profileImage: '' 
             }; 
 
             if(!data.username || !data.password || !data.studentId || !data.name) { 
                 alert("กรุณากรอกข้อมูลให้ครบทุกช่อง"); 
-                btn.disabled = false; 
-                btn.innerHTML = "ลงทะเบียน"; 
                 return; 
             } 
+            if (data.password.length < MIN_PASSWORD_LENGTH) {
+                alert(`รหัสผ่านต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`);
+                return;
+            }
+
+            setBtnLoading(btn, true, 'กำลังบันทึก...');
+
+            const fileInput = document.getElementById('regFile'); 
+            if (fileInput.files.length > 0) {
+                try {
+                    data.profileImage = await resizeProfileImage(fileInput.files[0], AVATAR_SIZE);
+                } catch(e) {
+                    data.profileImage = "";
+                }
+            }
 
             google.script.run
                 .withSuccessHandler(res => { 
+                    setBtnLoading(btn, false);
                     alert(res.message); 
-                    btn.disabled = false; 
-                    btn.innerHTML = "ลงทะเบียน"; 
-                    if(res.success) toggleAuth(false); 
+                    if(res.success) {
+                        document.getElementById('logUser').value = data.username;
+                        showAuthForm('login');
+                    }
                 })
                 .withFailureHandler(err => {
+                    setBtnLoading(btn, false);
                     alert("❌ เกิดข้อผิดพลาดในการลงทะเบียน: " + err.message);
-                    btn.disabled = false; 
-                    btn.innerHTML = "ลงทะเบียน"; 
                 })
                 .registerUser(data); 
+        }
+
+        // 🔑 ลืมรหัสผ่าน: ยืนยันตัวตนด้วยข้อมูลที่ลงทะเบียนไว้ แล้วตั้งรหัสใหม่
+        function doResetPassword() {
+            const u = document.getElementById('fgUser').value.trim();
+            const sid = document.getElementById('fgId').value.trim();
+            const name = document.getElementById('fgName').value.trim();
+            const p1 = document.getElementById('fgPass').value;
+            const p2 = document.getElementById('fgPass2').value;
+            const btn = document.getElementById('btnResetSubmit');
+
+            if (!u || !sid || !name || !p1 || !p2) { alert('กรุณากรอกข้อมูลให้ครบทุกช่อง'); return; }
+            if (p1.length < MIN_PASSWORD_LENGTH) { alert(`รหัสผ่านใหม่ต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`); return; }
+            if (p1 !== p2) { alert('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
+
+            setBtnLoading(btn, true, 'กำลังตรวจสอบ...');
+            google.script.run
+                .withSuccessHandler(res => {
+                    setBtnLoading(btn, false);
+                    alert(res && res.message ? res.message : '❌ ดำเนินการไม่สำเร็จ');
+                    if (res && res.success) {
+                        ['fgUser', 'fgId', 'fgName', 'fgPass', 'fgPass2'].forEach(id => document.getElementById(id).value = '');
+                        document.getElementById('logUser').value = u;
+                        document.getElementById('logPass').value = '';
+                        showAuthForm('login');
+                        document.getElementById('logPass').focus();
+                    }
+                })
+                .withFailureHandler(err => {
+                    setBtnLoading(btn, false);
+                    alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + err.message);
+                })
+                .resetPassword(u, sid, name, p1);
+        }
+
+        // 🔑 เปลี่ยนรหัสผ่าน (จากหน้าโปรไฟล์)
+        function openChangePassword() {
+            ['cpOld', 'cpNew', 'cpNew2'].forEach(id => document.getElementById(id).value = '');
+            const profileEl = document.getElementById('profileModal');
+            const pm = bootstrap.Modal.getInstance(profileEl);
+            const showCp = () => new bootstrap.Modal(document.getElementById('changePwModal')).show();
+            if (pm) {
+                profileEl.addEventListener('hidden.bs.modal', showCp, { once: true });
+                pm.hide();
+            } else {
+                showCp();
+            }
+        }
+
+        function doChangePassword() {
+            const oldPw = document.getElementById('cpOld').value;
+            const p1 = document.getElementById('cpNew').value;
+            const p2 = document.getElementById('cpNew2').value;
+            const btn = document.getElementById('btnChangePw');
+
+            if (!oldPw || !p1 || !p2) { alert('กรุณากรอกข้อมูลให้ครบทุกช่อง'); return; }
+            if (p1.length < MIN_PASSWORD_LENGTH) { alert(`รหัสผ่านใหม่ต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`); return; }
+            if (p1 !== p2) { alert('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
+
+            setBtnLoading(btn, true, 'กำลังบันทึก...');
+            google.script.run
+                .withSuccessHandler(res => {
+                    setBtnLoading(btn, false);
+                    if (res && res.success) {
+                        const m = bootstrap.Modal.getInstance(document.getElementById('changePwModal'));
+                        if (m) m.hide();
+                        showToast(res.message);
+                    } else {
+                        alert(res && res.message ? res.message : '❌ เปลี่ยนรหัสผ่านไม่สำเร็จ');
+                    }
+                })
+                .withFailureHandler(err => {
+                    setBtnLoading(btn, false);
+                    alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + err.message);
+                })
+                .changePassword(currentUser.studentId, oldPw, p1);
         }
 
         function logout() { 
@@ -2024,7 +2169,10 @@
         function handleCertAction() {
             const { currentTier } = getRankInfo(userTotalScore);
             if (!currentTier) {
-                alert("ต้องมีประวัติการคัดแยกขยะสะสมอย่างน้อย 1 คะแนน เพื่อรับประกาศนียบัตรรับรองระดับเริ่มต้นครับ");
+                // ยังไม่มีคะแนน -> เปิดหน้าเกณฑ์การรับรองให้ดูแทน
+                const pm = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+                if (pm) pm.hide();
+                openMyCertificatesModal();
                 return;
             }
             openCertificatePreview(currentTier);
