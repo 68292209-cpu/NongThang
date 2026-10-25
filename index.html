@@ -50,7 +50,10 @@
         .auth-links { display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; }
         .auth-link { color: #64748B; cursor: pointer; background: none; border: none; padding: 0; }
         .auth-link:hover { color: #2E7D32; text-decoration: underline; }
+        .auth-link:disabled { opacity: 0.55; cursor: not-allowed; text-decoration: none; color: #64748B; }
         .auth-note { font-size: 0.78rem; color: #64748B; background: #F8FAFC; border-radius: 12px; padding: 8px 12px; text-align: left; }
+        .otp-input { text-align: center; letter-spacing: 10px; font-size: 1.35rem; font-weight: 800; }
+        .otp-input::placeholder { letter-spacing: normal; font-size: 0.9rem; font-weight: 400; }
 
         /* --- App Layout --- */
         .app-container { width: 100%; max-width: 450px; min-height: 100vh; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; }
@@ -453,6 +456,8 @@
 
         /* --- Profile Modal Cards --- */
         .profile-img-large { width: 105px; height: 105px; border-radius: 50%; object-fit: cover; border: 4px solid #4CAF50; box-shadow: 0 5px 15px rgba(0,0,0,0.12); margin-bottom: 10px; }
+        .profile-email { font-size: 0.8rem; margin-bottom: 6px; }
+        .profile-email.missing { color: #B45309; font-weight: 600; }
         
         .score-box-green {
             background: #EFFDF5;
@@ -582,21 +587,38 @@
                 <input type="text" id="regUser" class="form-control mb-2 rounded-pill" placeholder="ตั้งชื่อผู้ใช้" autocomplete="username">
                 <input type="password" id="regPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)" autocomplete="new-password">
                 <input type="text" id="regId" class="form-control mb-2 rounded-pill" placeholder="รหัสนักศึกษา">
-                <input type="text" id="regName" class="form-control mb-3 rounded-pill" placeholder="ชื่อ-นามสกุล">
+                <input type="text" id="regName" class="form-control mb-2 rounded-pill" placeholder="ชื่อ-นามสกุล">
+                <input type="email" id="regEmail" class="form-control mb-1 rounded-pill" placeholder="อีเมลวิทยาลัย (@siamtech.ac.th)" autocomplete="email">
+                <div class="small text-muted mb-3 text-start px-2">ใช้รับรหัส OTP ตอนลืมรหัสผ่าน</div>
                 <button type="button" id="btnRegSubmit" class="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doRegister()">ลงทะเบียน</button>
                 <button type="button" class="auth-link" onclick="showAuthForm('login')">กลับไปเข้าสู่ระบบ</button>
             </div>
 
-            <!-- ลืมรหัสผ่าน -->
+            <!-- ลืมรหัสผ่าน (OTP ทางอีเมล) -->
             <div id="forgotForm" class="hidden">
-                <h5 class="fw-bold mb-2" style="color:#0F172A;">🔑 ตั้งรหัสผ่านใหม่</h5>
-                <div class="auth-note mb-3">กรอกข้อมูลให้ตรงกับตอนสมัครสมาชิกทั้ง 3 ช่อง เพื่อยืนยันว่าเป็นเจ้าของบัญชี</div>
-                <input type="text" id="fgUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้" autocomplete="username">
-                <input type="text" id="fgId" class="form-control mb-2 rounded-pill" placeholder="รหัสนักศึกษา">
-                <input type="text" id="fgName" class="form-control mb-3 rounded-pill" placeholder="ชื่อ-นามสกุล (ตามที่สมัครไว้)">
-                <input type="password" id="fgPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)" autocomplete="new-password">
-                <input type="password" id="fgPass2" class="form-control mb-3 rounded-pill" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="new-password">
-                <button type="button" id="btnResetSubmit" class="btn btn-warning w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doResetPassword()">ตั้งรหัสผ่านใหม่</button>
+                <h5 class="fw-bold mb-2" style="color:#0F172A;">🔑 ลืมรหัสผ่าน</h5>
+
+                <!-- ขั้นที่ 1: ขอรหัส OTP -->
+                <div id="fgStep1">
+                    <div class="auth-note mb-3">กรอกชื่อผู้ใช้และอีเมล @siamtech.ac.th ที่ผูกกับบัญชีไว้ ระบบจะส่งรหัส OTP 6 หลักไปทางอีเมล</div>
+                    <input type="text" id="fgUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้" autocomplete="username">
+                    <input type="email" id="fgEmail" class="form-control mb-3 rounded-pill" placeholder="อีเมล (@siamtech.ac.th)" autocomplete="email">
+                    <button type="button" id="btnSendOtp" class="btn btn-warning w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doRequestOtp(false)">📧 ส่งรหัส OTP ไปที่อีเมล</button>
+                </div>
+
+                <!-- ขั้นที่ 2: กรอก OTP + ตั้งรหัสใหม่ -->
+                <div id="fgStep2" class="hidden">
+                    <div class="auth-note mb-3" id="fgOtpInfo"></div>
+                    <input type="text" id="fgOtp" class="form-control mb-2 rounded-pill otp-input" inputmode="numeric" maxlength="6" placeholder="รหัส OTP 6 หลัก" autocomplete="one-time-code">
+                    <input type="password" id="fgPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)" autocomplete="new-password">
+                    <input type="password" id="fgPass2" class="form-control mb-3 rounded-pill" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="new-password">
+                    <button type="button" id="btnResetSubmit" class="btn btn-success w-100 py-2 mb-2 rounded-pill fw-bold" onclick="doResetWithOtp()">ตั้งรหัสผ่านใหม่</button>
+                    <div class="auth-links mb-3">
+                        <button type="button" class="auth-link" id="btnResendOtp" onclick="doRequestOtp(true)">ส่งรหัสอีกครั้ง</button>
+                        <button type="button" class="auth-link" onclick="backToOtpStep1()">แก้ชื่อผู้ใช้/อีเมล</button>
+                    </div>
+                </div>
+
                 <button type="button" class="auth-link" onclick="showAuthForm('login')">กลับไปเข้าสู่ระบบ</button>
             </div>
         </div>
@@ -767,6 +789,27 @@
         </div>
     </div>
 
+    <!-- MODAL: 📧 ตั้งค่าอีเมล -->
+    <div class="modal fade" id="emailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="color:#1565C0;">📧 ตั้งค่าอีเมลสำหรับกู้รหัสผ่าน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">ใช้อีเมลของวิทยาลัย (@siamtech.ac.th) เท่านั้น ระบบจะส่งรหัส OTP ไปที่อีเมลนี้เมื่อคุณลืมรหัสผ่าน</p>
+                    <input type="email" id="emInput" class="form-control mb-2 rounded-pill" placeholder="อีเมล (@siamtech.ac.th)" autocomplete="email">
+                    <input type="password" id="emPass" class="form-control mb-1 rounded-pill" placeholder="รหัสผ่านปัจจุบัน (เพื่อยืนยันตัวตน)" autocomplete="current-password">
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" id="btnSaveEmail" class="btn btn-primary rounded-pill fw-bold px-3" onclick="doUpdateEmail()">บันทึกอีเมล</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: 📘 คู่มือแยกขยะ -->
     <div class="modal fade" id="guideModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -844,6 +887,7 @@
                     <img id="modalProfileImg" src="" class="profile-img-large" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
                     <h5 class="fw-bold mb-0" id="modalProfileName">...</h5>
                     <p class="text-muted small mb-1" id="modalStudentId">...</p>
+                    <div class="profile-email" id="modalEmail"></div>
                     <div class="mb-2"><span class="badge bg-light text-dark border">วิทยาลัยเทคโนโลยีสยาม (สยามเทค) • ITM</span></div>
                     <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
                         <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="triggerProfileUpload()">
@@ -851,6 +895,9 @@
                         </button>
                         <button class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="openChangePassword()">
                             <i class="fas fa-key me-1"></i> เปลี่ยนรหัสผ่าน
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="openEmailSettings()">
+                            <i class="fas fa-envelope me-1"></i> ตั้งค่าอีเมล
                         </button>
                     </div>
 
@@ -966,7 +1013,7 @@
         // =========================================================================
         // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — ใส่ลิงก์ /exec ของคุณตรงนี้
         // =========================================================================
-        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbySBX0l6itdFFZ83-yNYhiOJ0ddCe17HwPUK9yIqcxrVM51zbE7j6ih8lbWe35rBfJk/exec';
+        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbxld4iLkJxlJvgY8OnZ_HLe3bFKro5AOYLsOonmPqbsZGH02oAgR7_A1r0a4mIQK6tv/exec';
 
         // =========================================================================
         // 🔌 ตัวแปลง google.script.run -> fetch
@@ -1017,6 +1064,7 @@
         const FRESH_PHOTO_MAX_AGE_MS = 2 * 60 * 1000;   // (ใช้เมื่อเปิดทางสำรอง) รูปต้องถ่ายไม่เกิน 2 นาที
         const AVATAR_SIZE = 200;                        // ขนาดรูปโปรไฟล์ (px) ที่เก็บใน Sheet
         const MIN_PASSWORD_LENGTH = 6;                  // ต้องตรงกับค่าใน Code.gs
+        const EMAIL_REGEX = /^[a-z0-9._%+\-]+@siamtech\.ac\.th$/i;  // รับเฉพาะอีเมลวิทยาลัย
         const CAMPUS_REFRESH_MS = 45000;                // อัปเดตตัวเลขทั้งวิทยาลัย/ภารกิจทุก 45 วินาที
         const TIP_INTERVAL_MS = 5000;                   // สลับข้อความ/เคล็ดลับบนฝาถังทุก 5 วินาที
         const LEAF_COUNT = 9;                           // จำนวนใบไม้ลอยพื้นหลัง
@@ -1240,6 +1288,9 @@
         let guideActiveClass = FIX_CLASSES[0];
         let guideReturnToFix = false;
         let fixDraft = null;             // ค่าที่เลือกค้างไว้ในหน้าแก้ประเภท (ตอนสลับไปดูคู่มือ)
+        let otpUser = '';                // ชื่อผู้ใช้ที่กำลังขอ OTP
+        let otpEmail = '';               // อีเมลที่กำลังขอ OTP
+        let otpCooldownTimer = null;
         const countAnims = new WeakMap();
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -1271,6 +1322,18 @@
             }
         }
 
+        // ปิดโปรไฟล์ก่อน แล้วค่อยเปิดหน้าต่างใหม่ (กันหน้าต่างซ้อนกัน)
+        function swapFromProfile(showFn) {
+            const profileEl = document.getElementById('profileModal');
+            const pm = bootstrap.Modal.getInstance(profileEl);
+            if (pm && profileEl.classList.contains('show')) {
+                profileEl.addEventListener('hidden.bs.modal', showFn, { once: true });
+                pm.hide();
+            } else {
+                showFn();
+            }
+        }
+
         window.onload = function() {
             initLeaves();
 
@@ -1284,11 +1347,23 @@
                 }
             }
 
-            // รองรับการกดปุ่ม Enter ในช่องรหัสผ่านเพื่อเข้าสู่ระบบ
+            // รองรับการกดปุ่ม Enter
             const passInput = document.getElementById('logPass');
             if (passInput) {
                 passInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') doLogin();
+                });
+            }
+            const otpInput = document.getElementById('fgOtp');
+            if (otpInput) {
+                otpInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                });
+            }
+            const fgEmail = document.getElementById('fgEmail');
+            if (fgEmail) {
+                fgEmail.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') doRequestOtp(false);
                 });
             }
         };
@@ -1480,12 +1555,12 @@
         // =========================================================================
         // ✨ เอฟเฟกต์: แจ้งเตือน, ตัวเลขนับขึ้น, +N ลอย, พลุ
         // =========================================================================
-        function showToast(msg) {
+        function showToast(msg, ms) {
             const t = document.getElementById('appToast');
             t.textContent = msg;
             t.classList.add('show');
             clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+            toastTimer = setTimeout(() => t.classList.remove('show'), ms || 2600);
         }
 
         function countUp(el, from, to, dur = 700, fmt) {
@@ -1705,7 +1780,7 @@
             { el: 'btnRank', title: 'อันดับ', body: 'ดูว่าใครเป็นนักแยกขยะตัวท็อปของวิทยาลัย' },
             { el: 'campusTicker', title: 'ทั้งวิทยาลัยช่วยกัน', body: 'ตัวเลขนี้คือขยะที่ชาวสยามเทคแยกรวมกันวันนี้ อัปเดตเองเรื่อย ๆ' },
             { el: 'missionCard', title: 'ภารกิจประจำวัน', body: 'แยกขยะอย่างน้อย 1 ครั้งทุกวัน ประเภทไหนก็ได้ ภารกิจเริ่มใหม่ทุกเที่ยงคืน' },
-            { el: 'userBadgeBox', title: 'โปรไฟล์และคะแนน', body: 'แตะเพื่อดูคะแนน สถิติ เปลี่ยนรูปโปรไฟล์ หรือเปลี่ยนรหัสผ่าน ไฟ 🔥 จะมอดถ้าไม่ได้แยกขยะเกิน 3 วัน' },
+            { el: 'userBadgeBox', title: 'โปรไฟล์และคะแนน', body: 'แตะเพื่อดูคะแนน สถิติ เปลี่ยนรูปโปรไฟล์ เปลี่ยนรหัสผ่าน หรือผูกอีเมลไว้กู้รหัสผ่าน ไฟ 🔥 จะมอดถ้าไม่ได้แยกขยะเกิน 3 วัน' },
             { el: 'mainCertBtn', title: 'ประกาศนียบัตร', body: 'สะสมคะแนนถึงเกณฑ์ ดาวน์โหลดประกาศนียบัตรได้ทันที พร้อมแล้วไปแยกขยะกันเลย!' }
         ];
 
@@ -1790,7 +1865,14 @@
         function maybeStartFirstTour() {
             let seen = false;
             try { seen = !!localStorage.getItem(TOUR_KEY); } catch (e) {}
-            if (!seen) setTimeout(() => { if (!tourActive && isAppVisible()) startTour(); }, 1200);
+            if (!seen) {
+                setTimeout(() => { if (!tourActive && isAppVisible()) startTour(); }, 1200);
+            } else if (currentUser && !currentUser.email) {
+                // เตือนบัญชีที่ยังไม่ผูกอีเมล
+                setTimeout(() => {
+                    if (!tourActive && isAppVisible()) showToast('📧 แตะรูปโปรไฟล์ > ตั้งค่าอีเมล เพื่อใช้กู้รหัสผ่านได้', 4500);
+                }, 3500);
+            }
         }
 
         function getRankInfo(score) {
@@ -1877,6 +1959,11 @@
             Object.keys(map).forEach(k => {
                 document.getElementById(map[k]).classList.toggle('hidden', k !== which);
             });
+            if (which === 'forgot') {
+                backToOtpStep1();
+                const lu = document.getElementById('logUser').value.trim();
+                if (lu && !document.getElementById('fgUser').value) document.getElementById('fgUser').value = lu;
+            }
         }
 
         // (เก็บชื่อเดิมไว้ เผื่อมีจุดที่ยังเรียกใช้)
@@ -1932,15 +2019,20 @@
                 password: document.getElementById('regPass').value.trim(), 
                 studentId: document.getElementById('regId').value.trim(), 
                 name: document.getElementById('regName').value.trim(), 
+                email: document.getElementById('regEmail').value.trim().toLowerCase(),
                 profileImage: '' 
             }; 
 
-            if(!data.username || !data.password || !data.studentId || !data.name) { 
+            if(!data.username || !data.password || !data.studentId || !data.name || !data.email) { 
                 alert("กรุณากรอกข้อมูลให้ครบทุกช่อง"); 
                 return; 
             } 
             if (data.password.length < MIN_PASSWORD_LENGTH) {
                 alert(`รหัสผ่านต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`);
+                return;
+            }
+            if (!EMAIL_REGEX.test(data.email)) {
+                alert("กรุณาใช้อีเมลของวิทยาลัย (ลงท้ายด้วย @siamtech.ac.th)");
                 return;
             }
 
@@ -1971,16 +2063,92 @@
                 .registerUser(data); 
         }
 
-        // 🔑 ลืมรหัสผ่าน: ยืนยันตัวตนด้วยข้อมูลที่ลงทะเบียนไว้ แล้วตั้งรหัสใหม่
-        function doResetPassword() {
-            const u = document.getElementById('fgUser').value.trim();
-            const sid = document.getElementById('fgId').value.trim();
-            const name = document.getElementById('fgName').value.trim();
+        // =========================================================================
+        // 🔑 ลืมรหัสผ่าน: OTP ทางอีเมล @siamtech.ac.th
+        // =========================================================================
+        function backToOtpStep1() {
+            document.getElementById('fgStep1').classList.remove('hidden');
+            document.getElementById('fgStep2').classList.add('hidden');
+            ['fgOtp', 'fgPass', 'fgPass2'].forEach(id => document.getElementById(id).value = '');
+            clearInterval(otpCooldownTimer);
+            const rb = document.getElementById('btnResendOtp');
+            rb.disabled = false;
+            rb.textContent = 'ส่งรหัสอีกครั้ง';
+        }
+
+        function startOtpCooldown(sec) {
+            const b = document.getElementById('btnResendOtp');
+            let s = Math.max(1, Math.round(sec || 60));
+            clearInterval(otpCooldownTimer);
+            b.disabled = true;
+            const tick = () => {
+                if (s <= 0) {
+                    clearInterval(otpCooldownTimer);
+                    b.disabled = false;
+                    b.textContent = 'ส่งรหัสอีกครั้ง';
+                    return;
+                }
+                b.textContent = `ส่งรหัสอีกครั้งได้ใน ${s} วิ`;
+                s--;
+            };
+            tick();
+            otpCooldownTimer = setInterval(tick, 1000);
+        }
+
+        function doRequestOtp(isResend) {
+            const u = isResend ? otpUser : document.getElementById('fgUser').value.trim();
+            const em = isResend ? otpEmail : document.getElementById('fgEmail').value.trim().toLowerCase();
+
+            if (!u || !em) { alert('กรุณากรอกชื่อผู้ใช้และอีเมล'); return; }
+            if (!EMAIL_REGEX.test(em)) { alert('อีเมลต้องลงท้ายด้วย @siamtech.ac.th'); return; }
+
+            const sendBtn = document.getElementById('btnSendOtp');
+            const resendBtn = document.getElementById('btnResendOtp');
+            if (isResend) {
+                resendBtn.disabled = true;
+                resendBtn.textContent = 'กำลังส่ง...';
+            } else {
+                setBtnLoading(sendBtn, true, 'กำลังส่งอีเมล...');
+            }
+
+            google.script.run
+                .withSuccessHandler(res => {
+                    if (!isResend) setBtnLoading(sendBtn, false);
+                    if (res && res.success) {
+                        otpUser = u;
+                        otpEmail = em;
+                        document.getElementById('fgStep1').classList.add('hidden');
+                        document.getElementById('fgStep2').classList.remove('hidden');
+                        const mins = Math.round((res.expiresIn || 600) / 60);
+                        document.getElementById('fgOtpInfo').innerHTML =
+                            `📧 ส่งรหัส OTP ไปที่ <b>${escapeHtml(res.maskedEmail)}</b> แล้ว (ใช้ได้ ${mins} นาที)<br>ถ้าไม่เจอในกล่องจดหมาย ลองดูในโฟลเดอร์ <b>สแปม / จดหมายขยะ</b>`;
+                        document.getElementById('fgOtp').value = '';
+                        document.getElementById('fgOtp').focus();
+                        startOtpCooldown(res.cooldown || 60);
+                        if (isResend) showToast('📧 ส่งรหัสใหม่แล้ว');
+                    } else {
+                        alert(res && res.message ? res.message : '❌ ส่งรหัสไม่สำเร็จ');
+                        if (isResend) {
+                            if (res && res.cooldown) startOtpCooldown(res.cooldown);
+                            else { resendBtn.disabled = false; resendBtn.textContent = 'ส่งรหัสอีกครั้ง'; }
+                        }
+                    }
+                })
+                .withFailureHandler(err => {
+                    if (!isResend) setBtnLoading(sendBtn, false);
+                    else { resendBtn.disabled = false; resendBtn.textContent = 'ส่งรหัสอีกครั้ง'; }
+                    alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + err.message);
+                })
+                .requestPasswordOtp(u, em);
+        }
+
+        function doResetWithOtp() {
+            const otp = document.getElementById('fgOtp').value.trim();
             const p1 = document.getElementById('fgPass').value;
             const p2 = document.getElementById('fgPass2').value;
             const btn = document.getElementById('btnResetSubmit');
 
-            if (!u || !sid || !name || !p1 || !p2) { alert('กรุณากรอกข้อมูลให้ครบทุกช่อง'); return; }
+            if (!/^\d{6}$/.test(otp)) { alert('กรุณากรอกรหัส OTP 6 หลักจากอีเมล'); return; }
             if (p1.length < MIN_PASSWORD_LENGTH) { alert(`รหัสผ่านใหม่ต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`); return; }
             if (p1 !== p2) { alert('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
 
@@ -1990,32 +2158,34 @@
                     setBtnLoading(btn, false);
                     alert(res && res.message ? res.message : '❌ ดำเนินการไม่สำเร็จ');
                     if (res && res.success) {
-                        ['fgUser', 'fgId', 'fgName', 'fgPass', 'fgPass2'].forEach(id => document.getElementById(id).value = '');
+                        const u = otpUser;
+                        otpUser = '';
+                        otpEmail = '';
+                        ['fgUser', 'fgEmail'].forEach(id => document.getElementById(id).value = '');
+                        backToOtpStep1();
                         document.getElementById('logUser').value = u;
                         document.getElementById('logPass').value = '';
                         showAuthForm('login');
                         document.getElementById('logPass').focus();
+                    } else if (res && res.expired) {
+                        document.getElementById('fgOtp').value = '';
+                        clearInterval(otpCooldownTimer);
+                        const rb = document.getElementById('btnResendOtp');
+                        rb.disabled = false;
+                        rb.textContent = 'ส่งรหัสอีกครั้ง';
                     }
                 })
                 .withFailureHandler(err => {
                     setBtnLoading(btn, false);
                     alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + err.message);
                 })
-                .resetPassword(u, sid, name, p1);
+                .resetPasswordWithOtp(otpUser, otp, p1);
         }
 
         // 🔑 เปลี่ยนรหัสผ่าน (จากหน้าโปรไฟล์)
         function openChangePassword() {
             ['cpOld', 'cpNew', 'cpNew2'].forEach(id => document.getElementById(id).value = '');
-            const profileEl = document.getElementById('profileModal');
-            const pm = bootstrap.Modal.getInstance(profileEl);
-            const showCp = () => new bootstrap.Modal(document.getElementById('changePwModal')).show();
-            if (pm) {
-                profileEl.addEventListener('hidden.bs.modal', showCp, { once: true });
-                pm.hide();
-            } else {
-                showCp();
-            }
+            swapFromProfile(() => new bootstrap.Modal(document.getElementById('changePwModal')).show());
         }
 
         function doChangePassword() {
@@ -2045,6 +2215,42 @@
                     alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + err.message);
                 })
                 .changePassword(currentUser.studentId, oldPw, p1);
+        }
+
+        // 📧 ตั้งค่าอีเมล (จากหน้าโปรไฟล์)
+        function openEmailSettings() {
+            document.getElementById('emInput').value = (currentUser && currentUser.email) || '';
+            document.getElementById('emPass').value = '';
+            swapFromProfile(() => new bootstrap.Modal(document.getElementById('emailModal')).show());
+        }
+
+        function doUpdateEmail() {
+            const em = document.getElementById('emInput').value.trim().toLowerCase();
+            const pw = document.getElementById('emPass').value;
+            const btn = document.getElementById('btnSaveEmail');
+
+            if (!em || !pw) { alert('กรุณากรอกอีเมลและรหัสผ่านปัจจุบัน'); return; }
+            if (!EMAIL_REGEX.test(em)) { alert('อีเมลต้องลงท้ายด้วย @siamtech.ac.th'); return; }
+
+            setBtnLoading(btn, true, 'กำลังบันทึก...');
+            google.script.run
+                .withSuccessHandler(res => {
+                    setBtnLoading(btn, false);
+                    if (res && res.success) {
+                        currentUser.email = res.email;
+                        localStorage.setItem('smartBinUser', JSON.stringify(currentUser));
+                        const m = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
+                        if (m) m.hide();
+                        showToast(res.message);
+                    } else {
+                        alert(res && res.message ? res.message : '❌ บันทึกอีเมลไม่สำเร็จ');
+                    }
+                })
+                .withFailureHandler(err => {
+                    setBtnLoading(btn, false);
+                    alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + err.message);
+                })
+                .updateEmail(currentUser.studentId, pw, em);
         }
 
         function logout() { 
@@ -2142,6 +2348,18 @@
             document.getElementById('modalProfileImg').src = currentUser.avatar || defaultAvatar; 
             document.getElementById('modalProfileName').innerText = currentUser.name; 
             document.getElementById('modalStudentId').innerText = "รหัสนักศึกษา: " + currentUser.studentId; 
+
+            const emailEl = document.getElementById('modalEmail');
+            if (currentUser.email) {
+                emailEl.textContent = '📧 ' + currentUser.email;
+                emailEl.classList.remove('missing');
+                emailEl.classList.add('text-muted');
+            } else {
+                emailEl.textContent = '⚠️ ยังไม่ได้ผูกอีเมล (ต้องใช้ตอนลืมรหัสผ่าน)';
+                emailEl.classList.add('missing');
+                emailEl.classList.remove('text-muted');
+            }
+
             document.getElementById('statsContent').innerHTML = '<div class="text-center py-3"><div class="spinner-border text-success" role="status"></div></div>'; 
             
             google.script.run.withSuccessHandler(data => { 
