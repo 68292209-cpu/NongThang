@@ -55,9 +55,10 @@
         .header-bar { width: 90%; display: flex; justify-content: space-between; align-items: center; z-index: 20; margin-bottom: 5px; }
         .user-badge { background: white; padding: 5px 15px 5px 5px; border-radius: 30px; font-size: 0.85rem; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s; }
         .user-avatar-small { width: 38px; height: 38px; border-radius: 50%; background: #ddd; object-fit: cover; border: 2px solid #4CAF50; }
-        .btn-logout-top, .btn-help-top { border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-logout-top, .btn-help-top, .btn-guide-top { border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn-logout-top { background: #ffebee; color: #c62828; }
         .btn-help-top { background: #E8F5E9; color: #2E7D32; font-weight: 800; font-size: 1rem; }
+        .btn-guide-top { background: #E3F2FD; color: #1565C0; }
 
         @keyframes popScore {
             0% { transform: scale(1); }
@@ -179,7 +180,7 @@
         .det-box.label-inside .det-label { top: 2px; left: 2px; border-radius: 8px; }
         @keyframes boxPop { to { opacity: 1; transform: scale(1); } }
 
-        /* 🔦 เลเซอร์สแกนระหว่างวิเคราะห์ (ใช้ transform ให้ลื่นบนมือถือ) */
+        /* 🔦 เลเซอร์สแกนระหว่างวิเคราะห์ */
         .scan-overlay { position: absolute; inset: 0; z-index: 7; pointer-events: none; overflow: hidden; }
         .scan-overlay::before {
             content: ''; position: absolute; inset: 0;
@@ -279,6 +280,13 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.25);
         }
 
+        /* ปุ่ม "ไม่แน่ใจ? ดูคู่มือ" ใต้ผลสแกน */
+        .guide-hint-btn {
+            margin-top: 12px; background: #fff; border: 2px dashed #90CAF9; color: #1565C0;
+            border-radius: 30px; padding: 7px 18px; font-weight: 600; font-size: 0.85rem; z-index: 10;
+        }
+        .guide-hint-btn:active { transform: scale(0.97); }
+
         /* --- 🎯 ภารกิจประจำวัน --- */
         .mission-card {
             width: 85%; max-width: 360px; margin-top: 18px; background: #fff; border: 2px solid #FDE68A;
@@ -340,6 +348,30 @@
         /* --- แก้ประเภทขยะ --- */
         .fix-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #eee; }
         .fix-swatch { width: 14px; height: 14px; border-radius: 4px; margin-top: 6px; flex-shrink: 0; }
+        .fix-guide-link { background: #E3F2FD; color: #1565C0; border: none; border-radius: 12px; padding: 8px 12px; font-size: 0.82rem; font-weight: 600; width: 100%; text-align: left; margin-bottom: 6px; }
+
+        /* --- 📘 คู่มือแยกขยะ --- */
+        .guide-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+        .guide-tab {
+            border: 2px solid var(--c); background: #fff; color: #0F172A; border-radius: 12px;
+            padding: 7px 2px 6px; font-size: 0.72rem; font-weight: 700; line-height: 1.2; transition: background 0.2s, color 0.2s;
+        }
+        .guide-tab .gt-dot { width: 16px; height: 16px; border-radius: 5px; background: var(--c); display: block; margin: 0 auto 4px; }
+        .guide-tab.active { background: var(--c); color: var(--fg); }
+        .guide-tab.active .gt-dot { background: rgba(255,255,255,0.7); }
+        .guide-head { border-radius: 14px; padding: 12px 14px; background: var(--c); color: var(--fg); margin-bottom: 4px; }
+        .guide-head .gh-title { font-weight: 800; font-size: 1.05rem; }
+        .guide-head .gh-desc { font-size: 0.8rem; opacity: 0.95; margin-top: 2px; }
+        .guide-sec-title { font-size: 0.82rem; font-weight: 800; margin: 12px 0 6px; color: #0F172A; }
+        .guide-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .guide-chip { background: #F1F5F9; border-radius: 20px; padding: 3px 10px; font-size: 0.78rem; color: #1E293B; }
+        .guide-list { padding-left: 18px; margin: 0; font-size: 0.82rem; color: #334155; }
+        .guide-list li { margin-bottom: 3px; }
+        .guide-mistake { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; padding: 8px 12px; }
+        .gs-row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-bottom: 1px solid #eee; font-size: 0.86rem; cursor: pointer; }
+        .gs-row:hover { background: #F8FAFC; }
+        .gs-bin { margin-left: auto; font-size: 0.74rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; background: var(--c); color: var(--fg); white-space: nowrap; }
+        .gs-empty { font-size: 0.82rem; color: #64748B; padding: 8px 4px; }
 
         /* --- 🧭 ทัวร์แนะนำการใช้งาน --- */
         .tour-block { position: fixed; inset: 0; z-index: 4000; background: transparent; }
@@ -493,8 +525,7 @@
         .cert-tier-item { border: 2px solid #E2E8F0; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
         .cert-tier-item.unlocked { border-color: #0284C7; background: #F0F9FF; }
 
-        /* เครื่องที่ตั้ง "ลดการเคลื่อนไหว": ปิดเฉพาะเอฟเฟกต์ตกแต่งชิ้นใหญ่
-           (ตัวบอกสถานะ เช่น เลเซอร์สแกน ตะกร้อ จุด LIVE ไฟ 🔥 ยังทำงานตามปกติ) */
+        /* เครื่องที่ตั้ง "ลดการเคลื่อนไหว": ปิดเฉพาะเอฟเฟกต์ตกแต่งชิ้นใหญ่ */
         .rm .leaf-layer, .rm .fly-points { display: none !important; }
         .rm .det-box { animation: none !important; opacity: 1 !important; transform: none !important; }
         .rm .face, .rm .bin-body, .rm .capture-wrap, .rm .mini-bin, .rm .tierup-badge { animation: none !important; }
@@ -554,6 +585,7 @@
                 </div>
             </div>
             <div class="d-flex gap-2">
+                <button class="btn-guide-top" id="btnGuide" onclick="openGuide()" title="คู่มือแยกขยะ"><i class="fas fa-book-open"></i></button>
                 <button class="btn-help-top" id="btnHelp" onclick="startTour()" title="วิธีใช้งาน">?</button>
                 <button class="btn-logout-top" onclick="logout()" title="ออกจากระบบ"><i class="fas fa-sign-out-alt"></i></button>
             </div>
@@ -640,6 +672,11 @@
             </div>
         </div>
 
+        <!-- 📘 ปุ่มดูคู่มือ (แสดงเฉพาะตอนมีผลสแกน) -->
+        <button type="button" class="guide-hint-btn hidden" id="guideHintBtn" onclick="openGuideForResult()">
+            📘 ไม่แน่ใจว่า AI ถูกไหม? ดูคู่มือแยกขยะ
+        </button>
+
         <!-- 🎯 ภารกิจประจำวัน -->
         <div class="mission-card" id="missionCard">
             <div class="mission-top">
@@ -678,6 +715,31 @@
         </div>
     </div>
 
+    <!-- MODAL: 📘 คู่มือแยกขยะ -->
+    <div class="modal fade" id="guideModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="color:#1565C0;">📘 คู่มือแยกขยะ 4 ถัง</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <p class="small text-muted mb-2">AI ทายผิด? เช็กจากคู่มือนี้ แล้วกด ✏️ แก้ประเภทได้เลย</p>
+                    <input type="search" id="guideSearch" class="form-control rounded-pill mb-2" placeholder="🔍 พิมพ์ชื่อขยะ เช่น ขวด, ถ่าน, ถุงขนม" oninput="renderGuideSearch(this.value)">
+                    <div id="guideSearchResults" class="hidden mb-2"></div>
+                    <div class="guide-tabs" id="guideTabs"></div>
+                    <div id="guidePanel"></div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn rounded-pill fw-bold text-white px-3 hidden" id="guideBackToFix" style="background:#5E35B1;" data-bs-dismiss="modal">
+                        <i class="fas fa-pen me-1"></i> กลับไปแก้ประเภท
+                    </button>
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ปิด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: ฉลองขึ้นระดับใหม่ -->
     <div class="modal fade" id="tierUpModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -707,6 +769,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted mb-2">AI ทายผิด? เลือกประเภทที่ถูกต้อง หรือลบชิ้นที่ไม่ใช่ขยะออก<br>(เพิ่มชิ้นใหม่ไม่ได้ ถ้าขาดชิ้นไหนให้ถ่ายใหม่)</p>
+                    <button type="button" class="fix-guide-link" onclick="openGuideFromFix()">📘 ไม่แน่ใจว่าถังไหน? เปิดคู่มือแยกขยะ</button>
                     <div id="fixList"></div>
                 </div>
                 <div class="modal-footer border-0">
@@ -843,7 +906,7 @@
         // =========================================================================
         // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — ใส่ลิงก์ /exec ของคุณตรงนี้
         // =========================================================================
-        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbzsVpt6IBk66r8vqpZu6fOWehT__ZbiNDLKpLXdFCdnXM4lz2MUAOBQj3mOHzq8B14x/exec';
+        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbz-egaiBKSGHmRiAovWXm8qXjWRm7mHilwvxa-wBI3FHxdeeNJmsACSr8ZKAQ7TYM7A/exec';
 
         // =========================================================================
         // 🔌 ตัวแปลง google.script.run -> fetch
@@ -926,8 +989,36 @@
             "Living Being": { th: "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ", binText: "ห้ามทิ้ง", color: "#E91E63", hint: "⛔ แหน่ะ! อย่าแกล้งถ่ายคนหรือสัตว์สิ ถ่ายขยะจริงๆ มานะ" }
         };
 
-        // ประเภทที่ผู้ใช้เลือกได้ตอนแก้ไข
+        // ประเภทที่ผู้ใช้เลือกได้ตอนแก้ไข (และแท็บในคู่มือ)
         const FIX_CLASSES = ["General Waste", "Compostable Waste", "Recyclable Waste", "Hazardous Waste"];
+
+        // 📘 ข้อมูลคู่มือแยกขยะ 4 ถัง
+        const WASTE_GUIDE = {
+            "General Waste": {
+                desc: 'ขยะที่ย่อยสลายยาก ไม่คุ้มค่าการรีไซเคิล หรือปนเปื้อนจนนำกลับมาใช้ไม่ได้',
+                examples: ['ถุงขนม', 'ซองบะหมี่กึ่งสำเร็จรูป', 'ซองกาแฟ 3in1', 'ถุงพลาสติกเปื้อน', 'กล่องโฟม', 'หลอดดูด', 'ช้อนส้อมพลาสติก', 'ทิชชู่', 'กระดาษเปื้อนน้ำมัน', 'ฟอยล์เปื้อนอาหาร', 'ไม้เสียบลูกชิ้น', 'แก้วกระดาษเคลือบ'],
+                prep: ['เขี่ยเศษอาหารออกไปถังเขียวก่อน', 'มัดปากถุงให้แน่น', 'กดกล่อง/ถุงให้แบน ประหยัดพื้นที่ถัง'],
+                mistakes: ['ถุงขนม/ซองฟอยล์ ไม่ใช่ขยะรีไซเคิล', 'ทิชชู่เปียกไม่ใช่ขยะเปียก ลงถังน้ำเงิน', 'กล่องที่ยังมีเศษอาหาร ต้องเทเศษอาหารออกก่อน']
+            },
+            "Compostable Waste": {
+                desc: 'ขยะอินทรีย์ที่ย่อยสลายได้เร็ว นำไปทำปุ๋ยหมักหรือน้ำหมักชีวภาพได้',
+                examples: ['เศษข้าว', 'เศษอาหาร', 'เปลือกผลไม้', 'เปลือกกล้วย', 'เศษผัก', 'ใบไม้', 'กิ่งไม้เล็ก', 'กากกาแฟ', 'เปลือกไข่'],
+                prep: ['เทน้ำแกง/น้ำซุปออกก่อน', 'แยกถุง กล่อง ช้อน ไม้เสียบออกให้หมด', 'ใส่ถุงหรือภาชนะที่มีฝาปิด กันกลิ่นและแมลง'],
+                mistakes: ['กล่องข้าว/ถุงที่ใส่อาหาร ไม่ใช่ขยะเปียก', 'ไม้เสียบลูกชิ้น/ไม้จิ้มฟัน ลงถังน้ำเงิน']
+            },
+            "Recyclable Waste": {
+                desc: 'ขยะที่นำกลับไปผลิตใหม่ได้ ยิ่งสะอาดและแยกดี ยิ่งรีไซเคิลได้จริง',
+                examples: ['ขวดน้ำพลาสติกใส (PET)', 'ขวดพลาสติกขุ่น (HDPE)', 'กระป๋องอะลูมิเนียม', 'ขวดแก้ว', 'กระดาษ A4', 'หนังสือพิมพ์', 'ลังกระดาษ', 'กล่องนม UHT', 'โลหะ'],
+                prep: ['เทของเหลวออกให้หมด', 'ล้างคร่าว ๆ ให้ไม่มีเศษอาหาร', 'บีบขวด/กระป๋องให้แบน', 'พับลังกระดาษให้แบน'],
+                mistakes: ['กระดาษเปื้อนน้ำมัน/เปียก รีไซเคิลไม่ได้ ลงถังน้ำเงิน', 'ขวดที่ยังมีน้ำค้าง ต้องเทออกก่อน', 'ถุงขนมที่มีชั้นฟอยล์ ไม่ใช่รีไซเคิล']
+            },
+            "Hazardous Waste": {
+                desc: 'ขยะที่มีสารพิษ ติดไฟ ระเบิดได้ หรือติดเชื้อ อันตรายต่อคนและสิ่งแวดล้อม ห้ามทิ้งรวมกับขยะอื่น',
+                examples: ['ถ่านไฟฉาย', 'แบตเตอรี่มือถือ', 'หลอดไฟ', 'กระป๋องสเปรย์', 'สายชาร์จ', 'อุปกรณ์อิเล็กทรอนิกส์เสีย', 'ยาหมดอายุ', 'ขวดน้ำยาเคมี', 'หน้ากากอนามัยใช้แล้ว'],
+                prep: ['ห้ามทุบ เจาะ หรือเผา', 'ห่อหลอดไฟด้วยกระดาษ กันแตก', 'ใส่ถุงแยกและมัดปากถุงให้แน่น', 'หน้ากากอนามัย พับเก็บด้านที่สัมผัสหน้าไว้ด้านใน'],
+                mistakes: ['ถ่าน/แบตเตอรี่ ห้ามทิ้งถังน้ำเงินเด็ดขาด', 'กระป๋องสเปรย์ แม้ใช้หมดแล้วก็ยังเป็นขยะอันตราย']
+            }
+        };
 
         const LIVING_CLASSES = {
             "person": "คน (เพื่อน/ครู)",
@@ -1085,6 +1176,9 @@
         let campusLoading = false;
         let tourActive = false;
         let tourIndex = 0;
+        let guideActiveClass = FIX_CLASSES[0];
+        let guideReturnToFix = false;
+        let fixDraft = null;             // ค่าที่เลือกค้างไว้ในหน้าแก้ประเภท (ตอนสลับไปดูคู่มือ)
         const countAnims = new WeakMap();
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -1146,6 +1240,14 @@
             if (tourActive) positionTour();
         }, { passive: true });
 
+        // ปิดคู่มือแล้ว ถ้าเปิดมาจากหน้าแก้ประเภท ให้กลับไปหน้าแก้ประเภท
+        document.getElementById('guideModal').addEventListener('hidden.bs.modal', function() {
+            if (guideReturnToFix) {
+                guideReturnToFix = false;
+                openFixModal();
+            }
+        });
+
         // =========================================================================
         // 🍃 ใบไม้ลอยพื้นหลัง
         // =========================================================================
@@ -1177,7 +1279,7 @@
             tipTimer = setInterval(() => {
                 badge.classList.add('fade');
                 setTimeout(() => {
-                    if (!tipTimer) return; // ถูกหยุดระหว่างเฟด
+                    if (!tipTimer) return;
                     if (tipShowing) {
                         badge.classList.remove('tip-mode');
                         badge.textContent = 'กดชัตเตอร์เพื่อสแกน';
@@ -1201,12 +1303,104 @@
         }
 
         // =========================================================================
+        // 📘 คู่มือแยกขยะ
+        // =========================================================================
+        function textColorFor(cls) { return cls === 'Recyclable Waste' ? '#212121' : '#FFFFFF'; }
+
+        function renderGuideTabs() {
+            document.getElementById('guideTabs').innerHTML = FIX_CLASSES.map(cls => {
+                const info = WASTE_MAP[cls];
+                return `<button type="button" class="guide-tab ${cls === guideActiveClass ? 'active' : ''}" style="--c:${info.color}; --fg:${textColorFor(cls)};" onclick="selectGuideTab('${cls}')"><span class="gt-dot"></span>${info.th}</button>`;
+            }).join('');
+        }
+
+        function renderGuidePanel() {
+            const cls = guideActiveClass;
+            const info = WASTE_MAP[cls];
+            const g = WASTE_GUIDE[cls];
+            const li = arr => arr.map(x => `<li>${escapeHtml(x)}</li>`).join('');
+            document.getElementById('guidePanel').innerHTML = `
+                <div class="guide-head" style="--c:${info.color}; --fg:${textColorFor(cls)};">
+                    <div class="gh-title">${info.th} • ${info.binText}</div>
+                    <div class="gh-desc">${escapeHtml(g.desc)}</div>
+                </div>
+                <div class="guide-sec-title">✅ ตัวอย่างขยะประเภทนี้</div>
+                <div class="guide-chips">${g.examples.map(x => `<span class="guide-chip">${escapeHtml(x)}</span>`).join('')}</div>
+                <div class="guide-sec-title">🧽 เตรียมก่อนทิ้ง</div>
+                <ul class="guide-list">${li(g.prep)}</ul>
+                <div class="guide-sec-title">⚠️ มักแยกผิด</div>
+                <div class="guide-mistake"><ul class="guide-list">${li(g.mistakes)}</ul></div>`;
+        }
+
+        function selectGuideTab(cls) {
+            if (!WASTE_GUIDE[cls]) return;
+            guideActiveClass = cls;
+            renderGuideTabs();
+            renderGuidePanel();
+        }
+
+        function renderGuideSearch(q) {
+            const box = document.getElementById('guideSearchResults');
+            const query = String(q || '').trim().toLowerCase();
+            if (!query) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+
+            const hits = [];
+            FIX_CLASSES.forEach(cls => {
+                WASTE_GUIDE[cls].examples.forEach(name => {
+                    if (name.toLowerCase().indexOf(query) !== -1) hits.push({ cls, name });
+                });
+            });
+
+            box.classList.remove('hidden');
+            if (hits.length === 0) {
+                box.innerHTML = '<div class="gs-empty">ไม่พบในคู่มือ ลองพิมพ์คำอื่น หรือดูจากแท็บด้านล่าง</div>';
+                return;
+            }
+            box.innerHTML = hits.slice(0, 8).map(h => {
+                const info = WASTE_MAP[h.cls];
+                return `<div class="gs-row" onclick="selectGuideTab('${h.cls}')"><span>${escapeHtml(h.name)}</span><span class="gs-bin" style="--c:${info.color}; --fg:${textColorFor(h.cls)};">${info.binText}</span></div>`;
+            }).join('');
+        }
+
+        function openGuide(cls, fromFix) {
+            guideReturnToFix = !!fromFix;
+            selectGuideTab(WASTE_GUIDE[cls] ? cls : (guideActiveClass || FIX_CLASSES[0]));
+            const search = document.getElementById('guideSearch');
+            search.value = '';
+            renderGuideSearch('');
+            document.getElementById('guideBackToFix').classList.toggle('hidden', !fromFix);
+            new bootstrap.Modal(document.getElementById('guideModal')).show();
+        }
+
+        function openGuideForResult() {
+            const first = currentDetectedItems && currentDetectedItems[0];
+            openGuide(first ? first.className : null, false);
+        }
+
+        // เปิดคู่มือจากหน้าแก้ประเภท: จำค่าที่เลือกไว้ ปิดหน้าแก้ไข แล้วค่อยเปิดคู่มือ
+        function openGuideFromFix() {
+            fixDraft = currentDetectedItems.map((it, idx) => {
+                const s = document.getElementById('fixSel_' + idx);
+                return s ? s.value : it.className;
+            });
+            const firstReal = fixDraft.find(v => WASTE_GUIDE[v]);
+            const fixEl = document.getElementById('fixModal');
+            const fm = bootstrap.Modal.getInstance(fixEl);
+            if (fm) {
+                fixEl.addEventListener('hidden.bs.modal', () => openGuide(firstReal, true), { once: true });
+                fm.hide();
+            } else {
+                openGuide(firstReal, true);
+            }
+        }
+
+        // =========================================================================
         // 😊 อารมณ์ของน้องถัง: idle | thinking | happy | sad | angry
         // =========================================================================
         function setMood(mood) {
             const lid = document.getElementById('binLid');
             lid.classList.remove('mood-idle', 'mood-thinking', 'mood-happy', 'mood-sad', 'mood-angry');
-            void lid.offsetWidth; // ให้แอนิเมชันเล่นซ้ำได้
+            void lid.offsetWidth;
             lid.classList.add('mood-' + mood);
         }
 
@@ -1377,7 +1571,7 @@
             const pct = Math.min(100, Math.round((m.progress / m.target) * 100));
             document.getElementById('missionIcon').textContent = m.done ? '✅' : (m.icon || '🎯');
             document.getElementById('missionLabel').textContent = m.done ? 'ภารกิจวันนี้สำเร็จแล้ว! 🎉' : 'ภารกิจวันนี้';
-            document.getElementById('missionText').textContent = m.text;
+            document.getElementById('missionText').textContent = m.done ? 'เก่งมาก! พรุ่งนี้มาแยกขยะกันอีกนะ' : m.text;
             document.getElementById('missionCount').textContent = `${m.progress}/${m.target}`;
             document.getElementById('missionFill').style.width = pct + '%';
             card.classList.toggle('done', !!m.done);
@@ -1433,10 +1627,11 @@
             { el: 'binLid', title: 'สวัสดี! เราชื่อน้องถัง', body: 'เราจะช่วยดูว่าขยะชิ้นไหนต้องทิ้งลงถังสีอะไร เคล็ดลับแยกขยะดี ๆ จะขึ้นในป้ายตรงนี้ด้วยนะ' },
             { el: 'cameraFrame', title: 'กล้องของน้องถัง', body: 'วางขยะให้อยู่ในกรอบ จะวางหลายชิ้นพร้อมกันก็ได้ แค่วางห่างกันนิดนึง' },
             { el: 'btnSnap', title: 'กดชัตเตอร์', body: 'กดปุ่มนี้ (หรือแตะที่ภาพ) แล้วรอ 2–5 วินาที ถ้า AI ทายผิด กด ✏️ แก้ได้ แล้วกด ✔️ เพื่อเก็บคะแนน' },
+            { el: 'btnGuide', title: 'คู่มือแยกขยะ', body: 'ไม่แน่ใจว่าขยะชิ้นไหนลงถังอะไร? เปิดคู่มือนี้ ค้นหาชื่อขยะได้ด้วย' },
             { el: 'btnHistory', title: 'ประวัติ', body: 'ดูว่าเคยแยกขยะอะไรไปแล้วบ้าง' },
             { el: 'btnRank', title: 'อันดับ', body: 'ดูว่าใครเป็นนักแยกขยะตัวท็อปของวิทยาลัย' },
             { el: 'campusTicker', title: 'ทั้งวิทยาลัยช่วยกัน', body: 'ตัวเลขนี้คือขยะที่ชาวสยามเทคแยกรวมกันวันนี้ อัปเดตเองเรื่อย ๆ' },
-            { el: 'missionCard', title: 'ภารกิจประจำวัน', body: 'ทุกคนได้ภารกิจเดียวกัน ทำให้สำเร็จก่อนเที่ยงคืน แล้วพรุ่งนี้มาลุยภารกิจใหม่!' },
+            { el: 'missionCard', title: 'ภารกิจประจำวัน', body: 'แยกขยะอย่างน้อย 1 ครั้งทุกวัน ประเภทไหนก็ได้ ภารกิจเริ่มใหม่ทุกเที่ยงคืน' },
             { el: 'userBadgeBox', title: 'โปรไฟล์และคะแนน', body: 'แตะเพื่อดูคะแนน สถิติ และเปลี่ยนรูปโปรไฟล์ ไฟ 🔥 จะมอดถ้าไม่ได้แยกขยะเกิน 3 วัน' },
             { el: 'mainCertBtn', title: 'ประกาศนียบัตร', body: 'สะสมคะแนนถึงเกณฑ์ ดาวน์โหลดประกาศนียบัตรได้ทันที พร้อมแล้วไปแยกขยะกันเลย!' }
         ];
@@ -1453,7 +1648,6 @@
         }
 
         async function showTourStep(i) {
-            // ข้ามขั้นที่หาองค์ประกอบไม่เจอหรือถูกซ่อนอยู่
             while (i < TOUR_STEPS.length) {
                 const t = document.getElementById(TOUR_STEPS[i].el);
                 if (t && t.offsetParent !== null) break;
@@ -1496,8 +1690,8 @@
             const tw = tip.offsetWidth;
             const th = tip.offsetHeight;
             let top = r.bottom + pad + 12;
-            if (top + th > vh - 12) top = r.top - pad - 12 - th;          // ไม่พอด้านล่าง -> วางด้านบน
-            if (top < 12) top = Math.min(vh - th - 12, r.bottom - th - 12); // ไม่พอทั้งคู่ -> วางทับด้านล่างของเป้าหมาย
+            if (top + th > vh - 12) top = r.top - pad - 12 - th;
+            if (top < 12) top = Math.min(vh - th - 12, r.bottom - th - 12);
             top = Math.max(12, top);
             let left = r.left + r.width / 2 - tw / 2;
             left = Math.max(12, Math.min(vw - tw - 12, left));
@@ -1547,7 +1741,6 @@
             const highestTier = currentTier || RANK_TIERS[0];
             selectedCertTier = highestTier;
 
-            // 🔥 ไฟ streak: ไหวเมื่อยัง active / มอดเป็นสีเทาเมื่อขาดเกิน 3 วันหรือยังไม่มีคะแนน
             const flameOut = score === 0 || (userDaysInactive >= 3 && score > 0);
             const flameEl = document.getElementById('dispFlameIcon');
             flameEl.textContent = '🔥';
@@ -1962,6 +2155,7 @@
 
         // =========================================================================
         // 🎓 ฟังก์ชันวาดประกาศนียบัตรฉบับสมบูรณ์ (Canvas 1490x1055)
+        // ลำดับการวาด: พื้นหลัง → ลวดลาย/โลโก้/รูปประกอบ → พื้นขาวเบลอ → ข้อความทั้งหมด (อยู่บนสุดเสมอ)
         // =========================================================================
         function drawCertificateOnCanvas(tier) {
             const canvas = document.getElementById('certCanvas');
@@ -2072,6 +2266,20 @@
                 ctx.restore();
             }
 
+            // พื้นขาวเบลอด้านหลังข้อความระดับ (วาดก่อนข้อความทั้งหมด จะได้ไม่บังรหัสนักศึกษา)
+            const backdropCY = 670;
+            ctx.save();
+            const whiteBackdrop = ctx.createRadialGradient(W / 2, backdropCY, 60, W / 2, backdropCY, 540);
+            whiteBackdrop.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
+            whiteBackdrop.addColorStop(0.55, 'rgba(255, 255, 255, 0.82)');
+            whiteBackdrop.addColorStop(0.85, 'rgba(255, 255, 255, 0.35)');
+            whiteBackdrop.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = whiteBackdrop;
+            ctx.beginPath();
+            ctx.ellipse(W / 2, backdropCY, 580, 115, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
             ctx.save();
             ctx.fillStyle = '#0B1E36';
             ctx.beginPath();
@@ -2107,6 +2315,29 @@
                 ctx.shadowOffsetY = 0;
                 ctx.fillText(text, x, y);
                 ctx.shadowBlur = 0;
+                ctx.fillText(text, x, y);
+                ctx.restore();
+            }
+
+            function fillFadedWhiteBorderText(text, x, y, font, fillStyle, strokeWidth = 10, blurRadius = 20) {
+                ctx.save();
+                ctx.font = font;
+                ctx.lineJoin = 'round';
+                ctx.miterLimit = 2;
+
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                ctx.shadowBlur = blurRadius;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+                ctx.lineWidth = strokeWidth + 4;
+                ctx.strokeText(text, x, y);
+
+                ctx.shadowBlur = Math.round(blurRadius / 2);
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeText(text, x, y);
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = fillStyle;
                 ctx.fillText(text, x, y);
                 ctx.restore();
             }
@@ -2171,41 +2402,6 @@
             fillGlowingText(`รหัสนักศึกษา: ${currentUser ? currentUser.studentId : '-'}`, W / 2, 558, '600 26px "Prompt", sans-serif', '#0F172A', 12);
 
             let nextTextY = 625;
-
-            ctx.save();
-            const whiteBackdrop = ctx.createRadialGradient(W / 2, nextTextY + 45, 60, W / 2, nextTextY + 45, 540);
-            whiteBackdrop.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
-            whiteBackdrop.addColorStop(0.55, 'rgba(255, 255, 255, 0.82)');
-            whiteBackdrop.addColorStop(0.85, 'rgba(255, 255, 255, 0.35)');
-            whiteBackdrop.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = whiteBackdrop;
-            ctx.beginPath();
-            ctx.ellipse(W / 2, nextTextY + 45, 580, 115, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            function fillFadedWhiteBorderText(text, x, y, font, fillStyle, strokeWidth = 10, blurRadius = 20) {
-                ctx.save();
-                ctx.font = font;
-                ctx.lineJoin = 'round';
-                ctx.miterLimit = 2;
-
-                ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
-                ctx.shadowBlur = blurRadius;
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-                ctx.lineWidth = strokeWidth + 4;
-                ctx.strokeText(text, x, y);
-
-                ctx.shadowBlur = Math.round(blurRadius / 2);
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineWidth = strokeWidth;
-                ctx.strokeText(text, x, y);
-
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = fillStyle;
-                ctx.fillText(text, x, y);
-                ctx.restore();
-            }
 
             if (tier.id === 'participation') {
                 fillFadedWhiteBorderText(`ผ่านเกณฑ์การประเมินระดับ "${tier.name}" (${tier.nameEn})`, W / 2, nextTextY, '800 32px "Prompt", sans-serif', '#0F172A', 10, 22);
@@ -2572,7 +2768,6 @@
             if (!fw || !fh) return;
             const iw = lastRawCanvas.width;
             const ih = lastRawCanvas.height;
-            // ภาพแสดงแบบ object-fit: cover → คำนวณสเกลและส่วนที่ถูกตัด
             const s = Math.max(fw / iw, fh / ih);
             const ox = (fw - iw * s) / 2;
             const oy = (fh - ih * s) / 2;
@@ -2596,7 +2791,7 @@
                 el.style.height = (b - t) + 'px';
                 el.style.setProperty('--c', info.color);
                 el.style.setProperty('--bg', info.color + '22');
-                el.style.setProperty('--fg', it.className === 'Recyclable Waste' ? '#212121' : '#FFFFFF');
+                el.style.setProperty('--fg', textColorFor(it.className));
                 if (animate) {
                     el.style.animationDelay = (i * 180) + 'ms';
                 } else {
@@ -2809,7 +3004,6 @@
             lastRawCanvas = rawCanvas;
             itemsCorrected = false;
 
-            // เริ่มโมเดลในเครื่องรอไว้พร้อมกัน (ใช้เมื่อ Gemini ไม่ตอบทันเวลา)
             const localPromise = detectLocal(rawCanvas).catch(err => {
                 console.warn('Local model error:', err);
                 return { living: null, items: [] };
@@ -2903,6 +3097,7 @@
 
             document.getElementById('btnRetry').disabled = false;
             fixBtn.disabled = false;
+            document.getElementById('guideHintBtn').classList.remove('hidden');
 
             if (isLivingBeing || currentDetectedItems.length === 0) {
                 badge.innerText = "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ";
@@ -2973,15 +3168,19 @@
         // =========================================================================
         function openFixModal() {
             if (!currentDetectedItems || currentDetectedItems.length === 0) return;
+            const draft = fixDraft;
+            fixDraft = null;
+
             const list = document.getElementById('fixList');
             let html = '';
             currentDetectedItems.forEach((it, idx) => {
+                const chosen = (draft && draft[idx]) ? draft[idx] : it.className;
                 const info = WASTE_MAP[it.className] || WASTE_MAP["General Waste"];
                 let options = FIX_CLASSES.map(cls => {
                     const inf = WASTE_MAP[cls];
-                    return `<option value="${cls}" ${cls === it.className ? 'selected' : ''}>${inf.th} (${inf.binText})</option>`;
+                    return `<option value="${cls}" ${cls === chosen ? 'selected' : ''}>${inf.th} (${inf.binText})</option>`;
                 }).join('');
-                options += `<option value="__remove">❌ ไม่ใช่ขยะ (ลบออก)</option>`;
+                options += `<option value="__remove" ${chosen === '__remove' ? 'selected' : ''}>❌ ไม่ใช่ขยะ (ลบออก)</option>`;
                 html += `
                 <div class="fix-row">
                     <div class="fix-swatch" style="background:${info.color};"></div>
@@ -3023,6 +3222,7 @@
             currentDetectedItems = [];
             lastRawCanvas = null;
             itemsCorrected = false;
+            fixDraft = null;
             stopScanFx();
 
             const wrap = document.getElementById('captureWrap');
@@ -3038,6 +3238,7 @@
             document.getElementById('colorBar').classList.add('hidden');
             document.getElementById('confirmPointsBadge').classList.add('hidden');
             document.getElementById('btnFix').classList.add('hidden');
+            document.getElementById('guideHintBtn').classList.add('hidden');
             setActionButtonsDisabled(false);
             
             document.getElementById('ctrlAction').style.display = 'none'; 
@@ -3075,7 +3276,6 @@
             const prevTierScore = userTotalScore;
             const wasLoaded = scoreLoaded;
 
-            // บันทึกรูปต้นฉบับ (ไม่มีกรอบสี) ไว้ใช้เทรนโมเดลต่อได้
             const imgData = lastRawCanvas
                 ? makeCanvasCopy(lastRawCanvas, 1024).toDataURL('image/jpeg', 0.8)
                 : document.getElementById('captured-image').src;
@@ -3104,7 +3304,6 @@
                     countUp(scoreEl, parseInt(scoreEl.textContent) || 0, newScore);
                 }
 
-                // 🌏 เพิ่มตัวเลขทั้งวิทยาลัยทันที แล้วค่อยดึงค่าจริง + ตรวจภารกิจ
                 const campusEl = document.getElementById('campusCount');
                 setCampusCount(Number(campusEl.dataset.val || 0) + addedPoints);
                 refreshCampus(true);
