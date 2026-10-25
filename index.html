@@ -28,6 +28,20 @@
         }
         .hidden { display: none !important; }
 
+        /* --- 🍃 ใบไม้ลอยพื้นหลัง --- */
+        .leaf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .leaf {
+            position: absolute; top: -8%; left: var(--x); font-size: var(--size); opacity: var(--op);
+            animation: leafFall var(--dur) linear var(--delay) infinite; will-change: transform;
+        }
+        @keyframes leafFall {
+            0%   { transform: translate3d(0, -10vh, 0) rotate(0deg); }
+            25%  { transform: translate3d(var(--sway), 22vh, 0) rotate(80deg); }
+            50%  { transform: translate3d(calc(var(--sway) * -1), 50vh, 0) rotate(170deg); }
+            75%  { transform: translate3d(var(--sway), 80vh, 0) rotate(260deg); }
+            100% { transform: translate3d(0, 115vh, 0) rotate(360deg); }
+        }
+
         /* --- Auth Screen --- */
         .auth-container { min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 999; background: #FEFDF5; position: fixed; top:0; left:0; overflow-y: auto; }
         .auth-card { background: white; width: 100%; max-width: 390px; padding: 32px 28px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 3px solid #81C784; }
@@ -35,13 +49,15 @@
         .profile-upload img { width: 100%; height: 100%; object-fit: cover; }
 
         /* --- App Layout --- */
-        .app-container { width: 100%; max-width: 450px; min-height: 100vh; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; }
+        .app-container { width: 100%; max-width: 450px; min-height: 100vh; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; }
 
         /* Header Bar */
         .header-bar { width: 90%; display: flex; justify-content: space-between; align-items: center; z-index: 20; margin-bottom: 5px; }
         .user-badge { background: white; padding: 5px 15px 5px 5px; border-radius: 30px; font-size: 0.85rem; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s; }
         .user-avatar-small { width: 38px; height: 38px; border-radius: 50%; background: #ddd; object-fit: cover; border: 2px solid #4CAF50; }
-        .btn-logout-top { background: #ffebee; color: #c62828; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-logout-top, .btn-help-top { border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-logout-top { background: #ffebee; color: #c62828; }
+        .btn-help-top { background: #E8F5E9; color: #2E7D32; font-weight: 800; font-size: 1rem; }
 
         @keyframes popScore {
             0% { transform: scale(1); }
@@ -55,8 +71,20 @@
             font-size: 2.2rem; font-weight: 800; 
             color: #66BB6A; 
             text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px #A5D6A7; 
-            margin-top: 5px; margin-bottom: 10px; z-index: 10; letter-spacing: 1px;
+            margin-top: 5px; margin-bottom: 8px; z-index: 10; letter-spacing: 1px;
         }
+
+        /* --- 🌏 ตัวเลขทั้งวิทยาลัย --- */
+        .campus-ticker {
+            width: 90%; background: linear-gradient(135deg, #ECFDF5, #F0F9FF); border: 2px solid #BBF7D0;
+            border-radius: 18px; padding: 8px 14px; display: flex; align-items: center; gap: 10px;
+            font-size: 0.85rem; color: #14532D; margin-bottom: 14px; z-index: 10; box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+        }
+        .campus-globe { font-size: 1.7rem; line-height: 1; animation: globeBob 3s ease-in-out infinite; }
+        @keyframes globeBob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-3px) rotate(6deg); } }
+        .campus-count { font-weight: 800; font-size: 1.15rem; color: #15803D; display: inline-block; border-radius: 8px; padding: 0 3px; }
+        .campus-count.bump { animation: popScore 0.6s ease; }
+        .campus-sub { font-size: 0.72rem; color: #64748B; }
 
         .bin-lid {
             width: 85%; background: #4CAF50; border-radius: 40px 40px 10px 10px; padding: 15px;
@@ -67,7 +95,14 @@
         }
         .bin-lid.lid-open { transform: translateY(-18px) rotate(-10deg); }
 
-        .status-badge { background: white; border: 3px solid #2E7D32; border-radius: 25px; padding: 8px 16px; font-size: 0.98rem; font-weight: 800; color: #333; min-width: 220px; max-width: 100%; text-align: center; margin-bottom: 10px; line-height: 1.35; }
+        .status-badge {
+            background: white; border: 3px solid #2E7D32; border-radius: 25px; padding: 8px 16px;
+            font-size: 0.98rem; font-weight: 800; color: #333; min-width: 220px; max-width: 100%;
+            min-height: 44px; display: flex; align-items: center; justify-content: center;
+            text-align: center; margin-bottom: 10px; line-height: 1.35; transition: opacity 0.3s ease;
+        }
+        .status-badge.tip-mode { font-size: 0.8rem; font-weight: 600; color: #166534 !important; }
+        .status-badge.fade { opacity: 0; }
 
         /* --- ใบหน้าน้องถัง (เปลี่ยนตามอารมณ์) --- */
         .face { display: flex; gap: 40px; align-items: flex-end; margin-top: 5px; margin-bottom: 5px; min-height: 26px; }
@@ -86,22 +121,18 @@
         @keyframes faceHop { 0% { transform: translateY(0); } 40% { transform: translateY(-9px); } 100% { transform: translateY(0); } }
         @keyframes faceShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(4px); } }
 
-        /* กำลังคิด: ตาหมุน ปาก o */
         .mood-thinking .eye { animation: eyeSpin 0.8s linear infinite; }
         .mood-thinking .eye::after { animation: none; left: 3px; top: 3px; }
         .mood-thinking .mouth { width: 12px; height: 12px; border: 3px solid #333; border-radius: 50%; }
 
-        /* ดีใจ: ตายิ้ม ^^ ปากยิ้มกว้าง กระโดด */
         .mood-happy .eye { background: transparent; border-top: 5px solid #333; border-radius: 50%; animation: none; transform: translateY(6px); }
         .mood-happy .eye::after { display: none; }
         .mood-happy .mouth { width: 32px; height: 16px; border-bottom-width: 5px; border-radius: 0 0 20px 20px; }
         .mood-happy .face { animation: faceHop 0.55s cubic-bezier(.3,1.6,.5,1); }
 
-        /* เศร้า: ปากเส้นตรง มองลง */
         .mood-sad .eye::after { animation: none; left: 4px; top: 10px; }
         .mood-sad .mouth { width: 16px; height: 0; border-bottom-width: 4px; border-radius: 2px; }
 
-        /* โกรธ: คิ้วขมวด ปากคว่ำ ส่ายหัว */
         .mood-angry .eye { height: 11px; animation: none; }
         .mood-angry .eye::after { animation: none; top: 2px; left: 6px; }
         .mood-angry .eye::before { content: ''; position: absolute; top: -10px; left: -3px; width: 24px; height: 4px; background: #333; border-radius: 2px; }
@@ -148,25 +179,34 @@
         .det-box.label-inside .det-label { top: 2px; left: 2px; border-radius: 8px; }
         @keyframes boxPop { to { opacity: 1; transform: scale(1); } }
 
-        /* เลเซอร์สแกนระหว่างวิเคราะห์ */
+        /* 🔦 เลเซอร์สแกนระหว่างวิเคราะห์ (ใช้ transform ให้ลื่นบนมือถือ) */
         .scan-overlay { position: absolute; inset: 0; z-index: 7; pointer-events: none; overflow: hidden; }
         .scan-overlay::before {
             content: ''; position: absolute; inset: 0;
             background: linear-gradient(rgba(74,222,128,0.10) 1px, transparent 1px) 0 0 / 100% 18px,
                         linear-gradient(90deg, rgba(74,222,128,0.08) 1px, transparent 1px) 0 0 / 18px 100%;
+            animation: gridPulse 1.6s ease-in-out infinite;
         }
+        @keyframes gridPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+        .scan-beam {
+            position: absolute; left: 0; right: 0; top: 0; height: 100%;
+            animation: scanMove 1.6s ease-in-out infinite alternate; will-change: transform;
+        }
+        @keyframes scanMove { from { transform: translateY(0); } to { transform: translateY(calc(100% - 4px)); } }
         .scan-line {
-            position: absolute; left: 0; right: 0; height: 3px; background: #4ADE80;
-            box-shadow: 0 0 12px 4px rgba(74,222,128,0.7);
-            animation: scanMove 1.5s ease-in-out infinite alternate;
+            position: absolute; left: 0; right: 0; top: 0; height: 4px; background: #4ADE80;
+            box-shadow: 0 0 12px 4px rgba(74,222,128,0.75);
         }
-        .scan-line::after { content: ''; position: absolute; left: 0; right: 0; bottom: 3px; height: 60px; background: linear-gradient(to top, rgba(74,222,128,0.25), transparent); }
-        @keyframes scanMove { from { top: 2%; } to { top: 96%; } }
+        .scan-line::before {
+            content: ''; position: absolute; left: 0; right: 0; bottom: 4px; height: 70px;
+            background: linear-gradient(to top, rgba(74,222,128,0.28), transparent);
+        }
         .scan-label {
             position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
             background: rgba(0,0,0,0.6); color: #fff; font-size: 0.78rem; font-weight: 600;
             padding: 5px 14px; border-radius: 20px; white-space: nowrap; display: flex; align-items: center; gap: 8px;
         }
+        .scan-timer { font-variant-numeric: tabular-nums; min-width: 2.2em; display: inline-block; text-align: right; }
 
         .live-overlay-grid {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -182,7 +222,6 @@
         .cam-guide-title { color: #fff; font-weight: 700; font-size: 0.95rem; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
         .cam-guide-sub { color: #94a3b8; font-size: 0.75rem; }
 
-        /* --- โหมดกล้องสด (Live) --- */
         .live-overlay-grid.is-live .reticle-cam-icon { display: none; }
         .live-overlay-grid.is-live .live-reticle { border: 2px dashed rgba(255,255,255,0.8); box-shadow: 0 0 0 2000px rgba(0,0,0,0.12); }
         .live-overlay-grid.is-live .cam-guide-sub { color: #f1f5f9; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
@@ -240,6 +279,31 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.25);
         }
 
+        /* --- 🎯 ภารกิจประจำวัน --- */
+        .mission-card {
+            width: 85%; max-width: 360px; margin-top: 18px; background: #fff; border: 2px solid #FDE68A;
+            border-radius: 18px; padding: 12px 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); z-index: 10;
+            transition: border-color 0.4s ease, background-color 0.4s ease;
+        }
+        .mission-card.done { border-color: #86EFAC; background: #F0FDF4; }
+        .mission-top { display: flex; align-items: center; gap: 10px; }
+        .mission-icon { font-size: 1.6rem; line-height: 1; }
+        .mission-label { font-size: 0.68rem; font-weight: 700; color: #B45309; letter-spacing: 1px; }
+        .mission-card.done .mission-label { color: #15803D; }
+        .mission-text { font-weight: 700; font-size: 0.88rem; color: #0F172A; line-height: 1.3; }
+        .mission-count { margin-left: auto; font-weight: 800; color: #B45309; white-space: nowrap; font-size: 0.95rem; }
+        .mission-card.done .mission-count { color: #15803D; }
+        .mission-bar { height: 10px; background: #FEF3C7; border-radius: 10px; overflow: hidden; margin-top: 9px; }
+        .mission-card.done .mission-bar { background: #DCFCE7; }
+        .mission-fill {
+            height: 100%; width: 0; border-radius: 10px;
+            background: repeating-linear-gradient(45deg, #F59E0B 0 10px, #FBBF24 10px 20px);
+            background-size: 28px 28px; animation: stripes 1s linear infinite;
+            transition: width 0.8s cubic-bezier(.2,1,.3,1);
+        }
+        .mission-card.done .mission-fill { background: #22C55E; animation: none; }
+        @keyframes stripes { from { background-position: 0 0; } to { background-position: 28px 0; } }
+
         /* +N ลอยไปหาคะแนน */
         .fly-points {
             position: fixed; z-index: 2500; pointer-events: none;
@@ -276,6 +340,33 @@
         /* --- แก้ประเภทขยะ --- */
         .fix-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #eee; }
         .fix-swatch { width: 14px; height: 14px; border-radius: 4px; margin-top: 6px; flex-shrink: 0; }
+
+        /* --- 🧭 ทัวร์แนะนำการใช้งาน --- */
+        .tour-block { position: fixed; inset: 0; z-index: 4000; background: transparent; }
+        .tour-spot {
+            position: fixed; z-index: 4001; border-radius: 18px; pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(15,23,42,0.62); outline: 3px solid #4ADE80; outline-offset: 0;
+            transition: left 0.35s cubic-bezier(.3,1.2,.4,1), top 0.35s cubic-bezier(.3,1.2,.4,1), width 0.35s ease, height 0.35s ease;
+        }
+        .tour-tip {
+            position: fixed; z-index: 4002; width: min(320px, calc(100vw - 24px)); background: #fff;
+            border-radius: 18px; padding: 14px 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            transition: top 0.35s ease, left 0.35s ease;
+        }
+        .tour-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+        .mini-bin { width: 40px; height: 44px; position: relative; flex-shrink: 0; animation: faceHop 1.2s ease-in-out infinite; }
+        .mini-bin .mb-lid { position: absolute; top: 0; left: -3px; right: -3px; height: 13px; background: #4CAF50; border-radius: 9px 9px 3px 3px; box-shadow: 0 3px 0 #2E7D32; }
+        .mini-bin .mb-body { position: absolute; top: 15px; left: 3px; right: 3px; bottom: 0; background: #4CAF50; border-radius: 3px 3px 10px 10px; }
+        .mini-bin .mb-eye { position: absolute; top: 4px; width: 6px; height: 6px; background: #333; border-radius: 50%; }
+        .mini-bin .mb-eye.l { left: 7px; } .mini-bin .mb-eye.r { right: 7px; }
+        .mini-bin .mb-mouth { position: absolute; top: 11px; left: 50%; width: 10px; height: 5px; margin-left: -5px; border-bottom: 2px solid #333; border-radius: 0 0 8px 8px; }
+        .tour-title { font-weight: 800; color: #2E7D32; font-size: 1rem; line-height: 1.3; }
+        .tour-body { font-size: 0.88rem; color: #334155; line-height: 1.55; }
+        .tour-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 8px; }
+        .tour-dots span { width: 7px; height: 7px; border-radius: 50%; background: #CBD5E1; display: inline-block; margin-right: 4px; transition: background 0.2s; }
+        .tour-dots span.on { background: #22C55E; }
+        .tour-skip { background: none; border: none; color: #94A3B8; font-size: 0.82rem; }
+        .tour-next { background: #22C55E; color: #fff; border: none; border-radius: 20px; padding: 6px 16px; font-weight: 700; font-size: 0.85rem; }
 
         /* --- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG --- */
         .btn-cert-corporate {
@@ -402,17 +493,18 @@
         .cert-tier-item { border: 2px solid #E2E8F0; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
         .cert-tier-item.unlocked { border-color: #0284C7; background: #F0F9FF; }
 
-        /* ผู้ใช้ที่ตั้งค่า "ลดการเคลื่อนไหว" */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
+        /* เครื่องที่ตั้ง "ลดการเคลื่อนไหว": ปิดเฉพาะเอฟเฟกต์ตกแต่งชิ้นใหญ่
+           (ตัวบอกสถานะ เช่น เลเซอร์สแกน ตะกร้อ จุด LIVE ไฟ 🔥 ยังทำงานตามปกติ) */
+        .rm .leaf-layer, .rm .fly-points { display: none !important; }
+        .rm .det-box { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .rm .face, .rm .bin-body, .rm .capture-wrap, .rm .mini-bin, .rm .tierup-badge { animation: none !important; }
+        .rm .bin-lid { transition: background-color 0.3s ease !important; }
     </style>
 </head>
 <body>
+
+    <!-- 🍃 ใบไม้ลอยพื้นหลัง -->
+    <div class="leaf-layer" id="leafLayer" aria-hidden="true"></div>
 
     <!-- อัปโหลดรูปโปรไฟล์ (เลือกจากเครื่องได้ตามปกติ) -->
     <input type="file" id="editProfileInput" class="hidden" accept="image/*" onchange="handleProfileUpdate(this)">
@@ -461,10 +553,22 @@
                     <small class="fw-bold" style="color:#15803D;">🏆 <span id="dispScore">0</span> <span id="dispFlameIcon" class="flame">🔥</span></small>
                 </div>
             </div>
-            <button class="btn-logout-top" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            <div class="d-flex gap-2">
+                <button class="btn-help-top" id="btnHelp" onclick="startTour()" title="วิธีใช้งาน">?</button>
+                <button class="btn-logout-top" onclick="logout()" title="ออกจากระบบ"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
         </div>
 
         <div class="title-header">น้องถังช่วยทิ้ง</div>
+
+        <!-- 🌏 ตัวเลขทั้งวิทยาลัย -->
+        <div class="campus-ticker" id="campusTicker">
+            <div class="campus-globe">🌏</div>
+            <div class="flex-grow-1">
+                <div>วันนี้ชาวสยามเทคแยกขยะไปแล้ว <span class="campus-count" id="campusCount">–</span> ชิ้น ♻️</div>
+                <div class="campus-sub" id="campusSub">กำลังโหลด...</div>
+            </div>
+        </div>
 
         <div class="bin-lid mood-idle" id="binLid">
             <div class="status-badge" id="statusText">กำลังเปิดกล้อง...</div>
@@ -472,7 +576,7 @@
         </div>
 
         <div class="bin-body" id="binBody">
-            <div class="camera-frame" onclick="onCameraFrameTap()">
+            <div class="camera-frame" id="cameraFrame" onclick="onCameraFrameTap()">
                 <video id="webcam-video" autoplay playsinline muted></video>
 
                 <!-- ภาพที่ถ่าย + กรอบขยะ -->
@@ -481,10 +585,10 @@
                     <div class="box-layer" id="boxLayer"></div>
                 </div>
 
-                <!-- เลเซอร์สแกนระหว่างวิเคราะห์ -->
+                <!-- 🔦 เลเซอร์สแกนระหว่างวิเคราะห์ -->
                 <div class="scan-overlay hidden" id="scanOverlay">
-                    <div class="scan-line"></div>
-                    <div class="scan-label"><span class="spinner-grow spinner-grow-sm text-success"></span> น้องถังกำลังดู... <span id="scanTimer">0.0</span>s</div>
+                    <div class="scan-beam"><div class="scan-line"></div></div>
+                    <div class="scan-label"><span class="spinner-grow spinner-grow-sm text-success"></span> น้องถังกำลังดู... <span class="scan-timer" id="scanTimer">0.0</span>s</div>
                 </div>
 
                 <!-- ป้าย LIVE แสดงว่าเป็นภาพจากกล้องสด -->
@@ -522,9 +626,9 @@
 
         <div class="controls-area">
             <div id="ctrlScan" style="display:flex; gap:22px; align-items:center;">
-                <button class="btn-circle btn-history" onclick="openHistory()"><i class="fas fa-history"></i></button>
-                <button class="btn-circle btn-snap" id="btnSnap" onclick="snapCurrentFrame()" disabled><i class="fas fa-camera"></i></button>
-                <button class="btn-circle btn-rank" onclick="openLeaderboard()"><i class="fas fa-trophy"></i></button>
+                <button class="btn-circle btn-history" id="btnHistory" onclick="openHistory()" title="ประวัติ"><i class="fas fa-history"></i></button>
+                <button class="btn-circle btn-snap" id="btnSnap" onclick="snapCurrentFrame()" disabled title="ถ่ายและสแกน"><i class="fas fa-camera"></i></button>
+                <button class="btn-circle btn-rank" id="btnRank" onclick="openLeaderboard()" title="อันดับ"><i class="fas fa-trophy"></i></button>
             </div>
             <div id="ctrlAction" class="hidden" style="display:flex; gap:22px; align-items:center;">
                 <button class="btn-circle btn-retry" id="btnRetry" onclick="resetCamera()" title="ถ่ายใหม่"><i class="fas fa-undo"></i></button>
@@ -536,11 +640,42 @@
             </div>
         </div>
 
+        <!-- 🎯 ภารกิจประจำวัน -->
+        <div class="mission-card" id="missionCard">
+            <div class="mission-top">
+                <div class="mission-icon" id="missionIcon">🎯</div>
+                <div>
+                    <div class="mission-label" id="missionLabel">ภารกิจวันนี้</div>
+                    <div class="mission-text" id="missionText">กำลังโหลดภารกิจ...</div>
+                </div>
+                <div class="mission-count" id="missionCount"></div>
+            </div>
+            <div class="mission-bar"><div class="mission-fill" id="missionFill"></div></div>
+        </div>
+
         <!-- ปุ่มดาวน์โหลดประกาศนียบัตร Corporate ESG หน้าหลัก -->
         <button id="mainCertBtn" class="btn-cert-corporate" onclick="handleCertAction()">
             <i class="fas fa-award"></i>
             <span id="mainCertBtnText">ดาวน์โหลดประกาศนียบัตรรับรอง</span>
         </button>
+    </div>
+
+    <!-- 🧭 ทัวร์แนะนำการใช้งาน -->
+    <div id="tourBlock" class="tour-block hidden"></div>
+    <div id="tourSpot" class="tour-spot hidden"></div>
+    <div id="tourTip" class="tour-tip hidden" role="dialog" aria-live="polite">
+        <div class="tour-head">
+            <div class="mini-bin"><div class="mb-lid"></div><div class="mb-body"><span class="mb-eye l"></span><span class="mb-eye r"></span><span class="mb-mouth"></span></div></div>
+            <div class="tour-title" id="tourTitle"></div>
+        </div>
+        <div class="tour-body" id="tourBody"></div>
+        <div class="tour-foot">
+            <div class="tour-dots" id="tourDots"></div>
+            <div class="d-flex align-items-center gap-1">
+                <button class="tour-skip" onclick="endTour()">ข้าม</button>
+                <button class="tour-next" id="tourNext" onclick="nextTourStep()">ถัดไป</button>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL: ฉลองขึ้นระดับใหม่ -->
@@ -708,7 +843,7 @@
         // =========================================================================
         // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — ใส่ลิงก์ /exec ของคุณตรงนี้
         // =========================================================================
-        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbwROtxDn_kHJIEgYeyXielAA5JM1cn_1qcaM8RTnKYgRdryocDYWp_Y9D8iWwRLdktJ/exec';
+        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbzsVpt6IBk66r8vqpZu6fOWehT__ZbiNDLKpLXdFCdnXM4lz2MUAOBQj3mOHzq8B14x/exec';
 
         // =========================================================================
         // 🔌 ตัวแปลง google.script.run -> fetch
@@ -758,7 +893,29 @@
         const ALLOW_CAMERA_APP_FALLBACK = false;        // ปิดไว้ = รับภาพจากกล้องสดในแอปเท่านั้น
         const FRESH_PHOTO_MAX_AGE_MS = 2 * 60 * 1000;   // (ใช้เมื่อเปิดทางสำรอง) รูปต้องถ่ายไม่เกิน 2 นาที
         const AVATAR_SIZE = 200;                        // ขนาดรูปโปรไฟล์ (px) ที่เก็บใน Sheet
-        const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        const CAMPUS_REFRESH_MS = 45000;                // อัปเดตตัวเลขทั้งวิทยาลัย/ภารกิจทุก 45 วินาที
+        const TIP_INTERVAL_MS = 5000;                   // สลับข้อความ/เคล็ดลับบนฝาถังทุก 5 วินาที
+        const LEAF_COUNT = 9;                           // จำนวนใบไม้ลอยพื้นหลัง
+        const TOUR_KEY = 'nongtang_tour_v1';            // จำว่าเคยดูทัวร์แล้ว
+        const RESPECT_REDUCED_MOTION = true;            // false = เล่นเอฟเฟกต์ครบทุกเครื่อง แม้ตั้ง "ลดการเคลื่อนไหว"
+        const REDUCED_MOTION = RESPECT_REDUCED_MOTION && !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        document.documentElement.classList.toggle('rm', REDUCED_MOTION);
+
+        // 💡 เคล็ดลับแยกขยะ (สลับขึ้นบนฝาถัง)
+        const TIPS = [
+            'ขวดพลาสติก เทน้ำออก บีบให้แบน แล้วลงถังเหลือง',
+            'ถุงขนม/ซองฟอยล์ รีไซเคิลยาก ลงถังน้ำเงินนะ',
+            'เศษอาหาร เทน้ำแกงออกก่อน แล้วทิ้งถังเขียว',
+            'ถ่านไฟฉายห้ามทิ้งรวม! ลงถังแดงเท่านั้น',
+            'กระป๋องอะลูมิเนียม รีไซเคิลได้แทบไม่รู้จบ ♻️',
+            'กล่องโฟมเปื้อนอาหาร ลงถังน้ำเงิน',
+            'หลอดไฟ กระป๋องสเปรย์ เป็นขยะอันตราย ถังแดง',
+            'กระดาษเปื้อนน้ำมัน รีไซเคิลไม่ได้ ลงถังน้ำเงิน',
+            'ใบไม้แห้ง เปลือกผลไม้ ทำปุ๋ยได้ ลงถังเขียว',
+            'กล่องนม UHT ล้าง ตัด พับ แล้วรีไซเคิลได้',
+            'หน้ากากอนามัยใช้แล้ว พับใส่ถุงก่อนทิ้งถังแดง',
+            'ล้างขวด/กล่องให้สะอาดก่อนทิ้ง ช่วยให้รีไซเคิลได้จริง'
+        ];
         
         const WASTE_MAP = {
             "General Waste": { th: "ขยะทั่วไป", binText: "ถังสีน้ำเงิน", color: "#2196F3", hint: "ย่อยสลายยาก/เปื้อน" },
@@ -920,6 +1077,14 @@
         let scanTimerId = null;
         let toastTimer = null;
         let pendingCelebrateTier = null;
+        let tipTimer = null;
+        let tipIdx = Math.floor(Math.random() * TIPS.length);
+        let tipShowing = false;
+        let campusState = null;
+        let campusTimer = null;
+        let campusLoading = false;
+        let tourActive = false;
+        let tourIndex = 0;
         const countAnims = new WeakMap();
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -935,7 +1100,13 @@
             return !document.getElementById('captureWrap').classList.contains('hidden');
         }
 
+        function isAppVisible() {
+            return !document.getElementById('appSection').classList.contains('hidden');
+        }
+
         window.onload = function() {
+            initLeaves();
+
             const saved = localStorage.getItem('smartBinUser');
             if(saved) { 
                 try {
@@ -957,19 +1128,77 @@
 
         // ปิดกล้องเมื่อสลับไปแอปอื่น / เปิดใหม่อัตโนมัติเมื่อกลับมา
         document.addEventListener('visibilitychange', function() {
-            const appVisible = !document.getElementById('appSection').classList.contains('hidden');
-            if (!appVisible) return;
+            if (!isAppVisible()) return;
             if (document.hidden) {
                 if (cameraReady) stopLiveVideo();
             } else {
                 if (!isShowingCapture() && !cameraReady) startLiveVideo();
+                refreshCampus();
             }
         });
 
-        // วาดกรอบใหม่เมื่อหมุนจอ/ปรับขนาด
+        // วาดกรอบ/ตำแหน่งทัวร์ใหม่เมื่อหมุนจอ/ปรับขนาด
         window.addEventListener('resize', function() {
             if (isShowingCapture() && currentDetectedItems.length > 0) renderBoxes(currentDetectedItems, false);
+            if (tourActive) positionTour();
         });
+        window.addEventListener('scroll', function() {
+            if (tourActive) positionTour();
+        }, { passive: true });
+
+        // =========================================================================
+        // 🍃 ใบไม้ลอยพื้นหลัง
+        // =========================================================================
+        function initLeaves() {
+            const layer = document.getElementById('leafLayer');
+            if (!layer || REDUCED_MOTION) return;
+            const icons = ['🍃', '🌿', '🍃', '🍀', '🍃'];
+            let html = '';
+            for (let i = 0; i < LEAF_COUNT; i++) {
+                const x = Math.round(Math.random() * 100);
+                const size = (0.9 + Math.random() * 0.9).toFixed(2);
+                const dur = (14 + Math.random() * 12).toFixed(1);
+                const delay = (-Math.random() * 26).toFixed(1);
+                const sway = Math.round(20 + Math.random() * 40);
+                const op = (0.18 + Math.random() * 0.22).toFixed(2);
+                html += `<span class="leaf" style="--x:${x}%; --size:${size}rem; --dur:${dur}s; --delay:${delay}s; --sway:${sway}px; --op:${op};">${icons[i % icons.length]}</span>`;
+            }
+            layer.innerHTML = html;
+        }
+
+        // =========================================================================
+        // 💡 สลับข้อความ "กดชัตเตอร์" กับเคล็ดลับแยกขยะบนฝาถัง
+        // =========================================================================
+        function startTips() {
+            stopTips();
+            const badge = document.getElementById('statusText');
+            badge.textContent = 'กดชัตเตอร์เพื่อสแกน';
+            tipShowing = false;
+            tipTimer = setInterval(() => {
+                badge.classList.add('fade');
+                setTimeout(() => {
+                    if (!tipTimer) return; // ถูกหยุดระหว่างเฟด
+                    if (tipShowing) {
+                        badge.classList.remove('tip-mode');
+                        badge.textContent = 'กดชัตเตอร์เพื่อสแกน';
+                    } else {
+                        badge.classList.add('tip-mode');
+                        badge.textContent = '💡 ' + TIPS[tipIdx];
+                        tipIdx = (tipIdx + 1) % TIPS.length;
+                    }
+                    tipShowing = !tipShowing;
+                    badge.classList.remove('fade');
+                }, 300);
+            }, TIP_INTERVAL_MS);
+        }
+
+        function stopTips() {
+            clearInterval(tipTimer);
+            tipTimer = null;
+            tipShowing = false;
+            const badge = document.getElementById('statusText');
+            badge.classList.remove('tip-mode', 'fade');
+        }
 
         // =========================================================================
         // 😊 อารมณ์ของน้องถัง: idle | thinking | happy | sad | angry
@@ -992,19 +1221,28 @@
             toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
         }
 
-        function countUp(el, from, to, dur = 700) {
+        function countUp(el, from, to, dur = 700, fmt) {
             if (!el) return;
+            const f = fmt || (n => String(n));
             const prev = countAnims.get(el);
             if (prev) cancelAnimationFrame(prev);
-            if (REDUCED_MOTION || from === to) { el.textContent = to; return; }
+            el.dataset.val = to;
+            if (REDUCED_MOTION || from === to) { el.textContent = f(to); return; }
             const t0 = performance.now();
             function step(now) {
                 const p = Math.min(1, (now - t0) / dur);
                 const e = 1 - Math.pow(1 - p, 3);
-                el.textContent = Math.round(from + (to - from) * e);
+                el.textContent = f(Math.round(from + (to - from) * e));
                 if (p < 1) countAnims.set(el, requestAnimationFrame(step));
             }
             countAnims.set(el, requestAnimationFrame(step));
+        }
+
+        function bump(el) {
+            if (!el) return;
+            el.classList.remove('bump');
+            void el.offsetWidth;
+            el.classList.add('bump');
         }
 
         function popBadge() {
@@ -1042,9 +1280,13 @@
             });
         }
 
-        function fireConfetti(color) {
+        function fireConfetti(color, small) {
             if (REDUCED_MOTION || typeof confetti !== 'function') return;
             const colors = [color || '#22C55E', '#FFD700', '#22C55E', '#FFFFFF'];
+            if (small) {
+                confetti({ particleCount: 70, spread: 70, origin: { y: 0.75 }, colors: colors, zIndex: 3000 });
+                return;
+            }
             confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: colors, zIndex: 3000 });
             setTimeout(() => {
                 confetti({ particleCount: 60, angle: 60, spread: 60, origin: { x: 0, y: 0.75 }, colors: colors, zIndex: 3000 });
@@ -1114,6 +1356,174 @@
             clearInterval(scanTimerId);
             scanTimerId = null;
             document.getElementById('scanOverlay').classList.add('hidden');
+        }
+
+        // =========================================================================
+        // 🌏 ตัวเลขทั้งวิทยาลัย + 🎯 ภารกิจประจำวัน
+        // =========================================================================
+        function fmtNum(n) { return Number(n || 0).toLocaleString('th-TH'); }
+
+        function setCampusCount(n, animate = true) {
+            const el = document.getElementById('campusCount');
+            const from = Number(el.dataset.val || 0);
+            countUp(el, animate ? from : n, n, 900, fmtNum);
+            if (animate && n > from && el.dataset.loaded === '1') bump(el);
+            el.dataset.loaded = '1';
+        }
+
+        function renderMission(m) {
+            if (!m) return;
+            const card = document.getElementById('missionCard');
+            const pct = Math.min(100, Math.round((m.progress / m.target) * 100));
+            document.getElementById('missionIcon').textContent = m.done ? '✅' : (m.icon || '🎯');
+            document.getElementById('missionLabel').textContent = m.done ? 'ภารกิจวันนี้สำเร็จแล้ว! 🎉' : 'ภารกิจวันนี้';
+            document.getElementById('missionText').textContent = m.text;
+            document.getElementById('missionCount').textContent = `${m.progress}/${m.target}`;
+            document.getElementById('missionFill').style.width = pct + '%';
+            card.classList.toggle('done', !!m.done);
+        }
+
+        function applyCampus(res, fromSave) {
+            setCampusCount(res.todayTotal);
+
+            const sub = document.getElementById('campusSub');
+            if (res.todayTotal === 0) {
+                sub.textContent = 'ยังไม่มีใครเริ่มเลย มาเป็นคนแรกของวันนี้กัน! 🚀';
+            } else if (res.myToday > 0) {
+                sub.textContent = `คุณร่วมด้วย ${fmtNum(res.myToday)} ชิ้นวันนี้ 💚`;
+            } else {
+                sub.textContent = 'มาร่วมเพิ่มตัวเลขนี้ด้วยกันนะ!';
+            }
+
+            const m = res.mission;
+            const before = campusState && campusState.mission;
+            const wasDone = before && before.id === (m && m.id) && before.done;
+            renderMission(m);
+
+            if (fromSave && m && m.done && !wasDone && campusState) {
+                setTimeout(() => {
+                    showToast('🎯 ภารกิจวันนี้สำเร็จ! เก่งมาก');
+                    fireConfetti('#F59E0B', true);
+                }, 2900);
+            }
+            campusState = res;
+        }
+
+        function refreshCampus(fromSave) {
+            if (!currentUser || (campusLoading && !fromSave)) return Promise.resolve();
+            campusLoading = true;
+            return callApi('getCampusStats', [currentUser.studentId])
+                .then(res => { if (res && res.success) applyCampus(res, !!fromSave); })
+                .catch(err => console.warn('campus stats error:', err))
+                .finally(() => { campusLoading = false; });
+        }
+
+        function startCampusPolling() {
+            refreshCampus();
+            clearInterval(campusTimer);
+            campusTimer = setInterval(() => {
+                if (!document.hidden && isAppVisible()) refreshCampus();
+            }, CAMPUS_REFRESH_MS);
+        }
+
+        // =========================================================================
+        // 🧭 ทัวร์แนะนำการใช้งาน
+        // =========================================================================
+        const TOUR_STEPS = [
+            { el: 'binLid', title: 'สวัสดี! เราชื่อน้องถัง', body: 'เราจะช่วยดูว่าขยะชิ้นไหนต้องทิ้งลงถังสีอะไร เคล็ดลับแยกขยะดี ๆ จะขึ้นในป้ายตรงนี้ด้วยนะ' },
+            { el: 'cameraFrame', title: 'กล้องของน้องถัง', body: 'วางขยะให้อยู่ในกรอบ จะวางหลายชิ้นพร้อมกันก็ได้ แค่วางห่างกันนิดนึง' },
+            { el: 'btnSnap', title: 'กดชัตเตอร์', body: 'กดปุ่มนี้ (หรือแตะที่ภาพ) แล้วรอ 2–5 วินาที ถ้า AI ทายผิด กด ✏️ แก้ได้ แล้วกด ✔️ เพื่อเก็บคะแนน' },
+            { el: 'btnHistory', title: 'ประวัติ', body: 'ดูว่าเคยแยกขยะอะไรไปแล้วบ้าง' },
+            { el: 'btnRank', title: 'อันดับ', body: 'ดูว่าใครเป็นนักแยกขยะตัวท็อปของวิทยาลัย' },
+            { el: 'campusTicker', title: 'ทั้งวิทยาลัยช่วยกัน', body: 'ตัวเลขนี้คือขยะที่ชาวสยามเทคแยกรวมกันวันนี้ อัปเดตเองเรื่อย ๆ' },
+            { el: 'missionCard', title: 'ภารกิจประจำวัน', body: 'ทุกคนได้ภารกิจเดียวกัน ทำให้สำเร็จก่อนเที่ยงคืน แล้วพรุ่งนี้มาลุยภารกิจใหม่!' },
+            { el: 'userBadgeBox', title: 'โปรไฟล์และคะแนน', body: 'แตะเพื่อดูคะแนน สถิติ และเปลี่ยนรูปโปรไฟล์ ไฟ 🔥 จะมอดถ้าไม่ได้แยกขยะเกิน 3 วัน' },
+            { el: 'mainCertBtn', title: 'ประกาศนียบัตร', body: 'สะสมคะแนนถึงเกณฑ์ ดาวน์โหลดประกาศนียบัตรได้ทันที พร้อมแล้วไปแยกขยะกันเลย!' }
+        ];
+
+        function startTour() {
+            if (!isAppVisible()) return;
+            tourActive = true;
+            tourIndex = 0;
+            document.getElementById('tourBlock').classList.remove('hidden');
+            document.getElementById('tourSpot').classList.remove('hidden');
+            document.getElementById('tourTip').classList.remove('hidden');
+            document.getElementById('tourDots').innerHTML = TOUR_STEPS.map(() => '<span></span>').join('');
+            showTourStep(0);
+        }
+
+        async function showTourStep(i) {
+            // ข้ามขั้นที่หาองค์ประกอบไม่เจอหรือถูกซ่อนอยู่
+            while (i < TOUR_STEPS.length) {
+                const t = document.getElementById(TOUR_STEPS[i].el);
+                if (t && t.offsetParent !== null) break;
+                i++;
+            }
+            if (i >= TOUR_STEPS.length) { endTour(); return; }
+            tourIndex = i;
+
+            const step = TOUR_STEPS[i];
+            document.getElementById('tourTitle').textContent = step.title;
+            document.getElementById('tourBody').textContent = step.body;
+            document.getElementById('tourNext').textContent = (i === TOUR_STEPS.length - 1) ? 'เริ่มใช้งาน!' : 'ถัดไป';
+            document.querySelectorAll('#tourDots span').forEach((d, k) => d.classList.toggle('on', k === i));
+
+            const target = document.getElementById(step.el);
+            target.scrollIntoView({ block: 'center', behavior: REDUCED_MOTION ? 'auto' : 'smooth' });
+            positionTour();
+            await sleep(380);
+            if (tourActive && tourIndex === i) positionTour();
+        }
+
+        function positionTour() {
+            if (!tourActive) return;
+            const step = TOUR_STEPS[tourIndex];
+            const target = step && document.getElementById(step.el);
+            if (!target) return;
+
+            const spot = document.getElementById('tourSpot');
+            const tip = document.getElementById('tourTip');
+            const r = target.getBoundingClientRect();
+            const pad = 8;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            spot.style.left = (r.left - pad) + 'px';
+            spot.style.top = (r.top - pad) + 'px';
+            spot.style.width = (r.width + pad * 2) + 'px';
+            spot.style.height = (r.height + pad * 2) + 'px';
+
+            const tw = tip.offsetWidth;
+            const th = tip.offsetHeight;
+            let top = r.bottom + pad + 12;
+            if (top + th > vh - 12) top = r.top - pad - 12 - th;          // ไม่พอด้านล่าง -> วางด้านบน
+            if (top < 12) top = Math.min(vh - th - 12, r.bottom - th - 12); // ไม่พอทั้งคู่ -> วางทับด้านล่างของเป้าหมาย
+            top = Math.max(12, top);
+            let left = r.left + r.width / 2 - tw / 2;
+            left = Math.max(12, Math.min(vw - tw - 12, left));
+
+            tip.style.top = top + 'px';
+            tip.style.left = left + 'px';
+        }
+
+        function nextTourStep() {
+            if (tourIndex >= TOUR_STEPS.length - 1) { endTour(); return; }
+            showTourStep(tourIndex + 1);
+        }
+
+        function endTour() {
+            tourActive = false;
+            document.getElementById('tourBlock').classList.add('hidden');
+            document.getElementById('tourSpot').classList.add('hidden');
+            document.getElementById('tourTip').classList.add('hidden');
+            try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
+            window.scrollTo({ top: 0, behavior: REDUCED_MOTION ? 'auto' : 'smooth' });
+        }
+
+        function maybeStartFirstTour() {
+            let seen = false;
+            try { seen = !!localStorage.getItem(TOUR_KEY); } catch (e) {}
+            if (!seen) setTimeout(() => { if (!tourActive && isAppVisible()) startTour(); }, 1200);
         }
 
         function getRankInfo(score) {
@@ -1302,6 +1712,8 @@
         function logout() { 
             if(confirm("ต้องการออกจากระบบ?")) { 
                 stopLiveVideo();
+                stopTips();
+                clearInterval(campusTimer);
                 localStorage.removeItem('smartBinUser'); 
                 location.reload(); 
             } 
@@ -1857,8 +2269,10 @@
             document.getElementById('dispName').innerText = currentUser.name; 
             document.getElementById('userAvatar').src = currentUser.avatar || defaultAvatar; 
             updateScore(); 
+            startCampusPolling();
             loadAIModel();
             startLiveVideo();
+            maybeStartFirstTour();
         }
 
         async function loadAIModel() {
@@ -1912,12 +2326,13 @@
                 overlay.classList.add('is-live');
                 liveBadge.classList.remove('hidden');
                 snapBtn.disabled = false;
-                lidText.innerText = "กดชัตเตอร์เพื่อสแกน";
                 lidText.style.color = "#333";
                 setMood('idle');
+                startTips();
                 return;
             }
 
+            stopTips();
             statusBox.classList.remove('hidden');
             overlay.classList.add('hidden');
             liveBadge.classList.add('hidden');
@@ -2453,6 +2868,7 @@
             const wrap = document.getElementById('captureWrap');
             const overlay = document.getElementById('overlayGrid');
 
+            stopTips();
             document.getElementById('captured-image').src = src;
             document.getElementById('boxLayer').innerHTML = '';
             wrap.classList.remove('hidden', 'dropping', 'gone');
@@ -2475,6 +2891,7 @@
         function renderMultiWasteResult(items, isLivingBeing, extraInfo) {
             currentDetectedItems = items || [];
             stopScanFx();
+            stopTips();
 
             const badge = document.getElementById('statusText');
             const hint = document.getElementById('hintText');
@@ -2686,6 +3103,11 @@
                 if (newScore !== prevShown + addedPoints) {
                     countUp(scoreEl, parseInt(scoreEl.textContent) || 0, newScore);
                 }
+
+                // 🌏 เพิ่มตัวเลขทั้งวิทยาลัยทันที แล้วค่อยดึงค่าจริง + ตรวจภารกิจ
+                const campusEl = document.getElementById('campusCount');
+                setCampusCount(Number(campusEl.dataset.val || 0) + addedPoints);
+                refreshCampus(true);
 
                 const beforeTier = getRankInfo(prevTierScore).currentTier;
                 refreshCertificateButtons(newScore, 0);
