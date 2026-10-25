@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ผู้ดูแลระบบ • น้องถังช่วยทิ้ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Prompt', sans-serif; background: #F1F5F9; min-height: 100vh; }
+        .hidden { display: none !important; }
+
+        /* หน้าเข้าสู่ระบบ */
+        .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: #fff; border-radius: 22px; padding: 30px 26px; max-width: 380px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 3px solid #1E3A8A; }
+
+        /* แถบบน */
+        .admin-top { background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; padding: 12px 18px; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .admin-top h1 { font-size: 1.05rem; font-weight: 800; margin: 0; }
+        .admin-top .sub { font-size: 0.72rem; opacity: 0.75; }
+        .admin-top .btn { border-radius: 20px; font-size: 0.8rem; }
+
+        .stat-card { background: #fff; border-radius: 16px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(15,23,42,0.06); height: 100%; }
+        .stat-label { font-size: 0.76rem; color: #64748B; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; color: #0F172A; line-height: 1.2; }
+        .panel { background: #fff; border-radius: 18px; box-shadow: 0 2px 8px rgba(15,23,42,0.06); padding: 16px; }
+
+        .nav-pills .nav-link { border-radius: 30px; font-weight: 600; color: #334155; }
+        .nav-pills .nav-link.active { background: #1E3A8A; color: #fff; }
+
+        .table td, .table th { vertical-align: middle; font-size: 0.84rem; white-space: nowrap; }
+        .role-badge { font-size: 0.72rem; font-weight: 700; border-radius: 10px; padding: 2px 8px; }
+        .role-student { background: #DCFCE7; color: #166534; }
+        .role-teacher { background: #DBEAFE; color: #1D4ED8; }
+        .cat-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+        .warn-box { background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; border-radius: 14px; padding: 10px 14px; font-size: 0.85rem; }
+        .info-box { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E3A8A; border-radius: 14px; padding: 10px 14px; font-size: 0.85rem; }
+
+        .app-toast {
+            position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 160%);
+            background: #1E293B; color: #fff; padding: 12px 22px; border-radius: 30px;
+            font-weight: 600; font-size: 0.9rem; z-index: 3000; max-width: 90%; text-align: center;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.3); transition: transform 0.35s cubic-bezier(.2,1.4,.4,1);
+        }
+        .app-toast.show { transform: translate(-50%, 0); }
+    </style>
+</head>
+<body>
+
+    <div id="appToast" class="app-toast" role="status" aria-live="polite"></div>
+
+    <!-- 🔐 เข้าสู่ระบบผู้ดูแล -->
+    <div id="loginView" class="login-wrap hidden">
+        <div class="login-card text-center">
+            <div style="font-size:2.6rem;">🛠️</div>
+            <h4 class="fw-bold mb-1" style="color:#1E3A8A;">ผู้ดูแลระบบ</h4>
+            <p class="text-muted small mb-3">น้องถังช่วยทิ้ง • วิทยาลัยเทคโนโลยีสยาม</p>
+            <input type="text" class="form-control mb-2 rounded-pill" value="admin" disabled>
+            <input type="password" id="admPass" class="form-control mb-3 rounded-pill" placeholder="รหัสผ่านผู้ดูแล" autocomplete="current-password">
+            <button id="btnAdmLogin" class="btn btn-primary w-100 rounded-pill fw-bold py-2 mb-3" onclick="adminLogin()">เข้าสู่ระบบ</button>
+            <a href="index.html" class="small text-muted">← กลับหน้าแอป</a>
+        </div>
+    </div>
+
+    <!-- 🛠️ หน้าผู้ดูแล -->
+    <div id="adminView" class="hidden">
+        <div class="admin-top">
+            <div class="me-auto">
+                <h1>🛠️ ผู้ดูแลระบบ • น้องถังช่วยทิ้ง</h1>
+                <div class="sub">แก้ไขข้อมูลผู้ใช้และบันทึกการคัดแยกขยะ</div>
+            </div>
+            <button class="btn btn-light btn-sm" onclick="refreshAll()"><i class="fas fa-sync-alt me-1"></i>รีเฟรช</button>
+            <a class="btn btn-outline-light btn-sm" href="index.html"><i class="fas fa-mobile-alt me-1"></i>หน้าแอป</a>
+            <button class="btn btn-danger btn-sm" onclick="adminLogout()"><i class="fas fa-sign-out-alt me-1"></i>ออกจากระบบ</button>
+        </div>
+
+        <div class="container-fluid py-3" style="max-width:1200px;">
+            <div id="defaultPwWarn" class="warn-box mb-3 hidden">
+                ⚠️ ยังใช้รหัสผู้ดูแลเริ่มต้นอยู่ กรุณาเปลี่ยนที่แท็บ <b>ตั้งค่า</b> เพื่อความปลอดภัย
+            </div>
+
+            <!-- สถิติ -->
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md"><div class="stat-card"><div class="stat-label">ผู้ใช้ทั้งหมด</div><div class="stat-value" id="stUsers">–</div></div></div>
+                <div class="col-6 col-md"><div class="stat-card"><div class="stat-label">🎓 นักศึกษา</div><div class="stat-value" id="stStudents">–</div></div></div>
+                <div class="col-6 col-md"><div class="stat-card"><div class="stat-label">👩‍🏫 อาจารย์/บุคลากร</div><div class="stat-value" id="stTeachers">–</div></div></div>
+                <div class="col-6 col-md"><div class="stat-card"><div class="stat-label">♻️ บันทึกขยะทั้งหมด</div><div class="stat-value" id="stWaste">–</div></div></div>
+                <div class="col-12 col-md"><div class="stat-card"><div class="stat-label">📅 บันทึกวันนี้</div><div class="stat-value" id="stToday">–</div></div></div>
+            </div>
+
+            <!-- แท็บ -->
+            <ul class="nav nav-pills mb-3 gap-1" role="tablist">
+                <li class="nav-item"><button class="nav-link active" id="tabUsersBtn" data-bs-toggle="pill" data-bs-target="#tabUsers" type="button"><i class="fas fa-users me-1"></i>ผู้ใช้งาน</button></li>
+                <li class="nav-item"><button class="nav-link" id="tabWasteBtn" data-bs-toggle="pill" data-bs-target="#tabWaste" type="button"><i class="fas fa-recycle me-1"></i>บันทึกการคัดแยก</button></li>
+                <li class="nav-item"><button class="nav-link" id="tabSettingsBtn" data-bs-toggle="pill" data-bs-target="#tabSettings" type="button"><i class="fas fa-cog me-1"></i>ตั้งค่า</button></li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- 👥 ผู้ใช้งาน -->
+                <div class="tab-pane fade show active" id="tabUsers">
+                    <div class="panel">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <input type="search" id="userSearch" class="form-control rounded-pill" style="max-width:320px;" placeholder="🔍 ค้นหา ชื่อ / ชื่อผู้ใช้ / รหัส / อีเมล" oninput="renderUsers()">
+                            <select id="roleFilter" class="form-select rounded-pill" style="max-width:190px;" onchange="renderUsers()">
+                                <option value="">ทุกบทบาท</option>
+                                <option value="student">นักศึกษา</option>
+                                <option value="teacher">อาจารย์/บุคลากร</option>
+                                <option value="noemail">ยังไม่ผูกอีเมล</option>
+                            </select>
+                            <button class="btn btn-success rounded-pill ms-auto" onclick="openUserModal(0)"><i class="fas fa-user-plus me-1"></i>เพิ่มผู้ใช้</button>
+                        </div>
+                        <div id="orphanBox" class="info-box mb-3 hidden"></div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>รหัส</th><th>อีเมล</th><th>บทบาท</th><th class="text-end">คะแนน</th><th>ใช้งานล่าสุด</th><th></th></tr>
+                                </thead>
+                                <tbody id="usersBody"><tr><td colspan="8" class="text-center text-muted py-4">กำลังโหลด...</td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="small text-muted mt-2" id="usersCount"></div>
+                    </div>
+                </div>
+
+                <!-- ♻️ บันทึกการคัดแยก -->
+                <div class="tab-pane fade" id="tabWaste">
+                    <div class="panel">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <input type="search" id="wasteFilter" class="form-control rounded-pill" style="max-width:260px;" placeholder="กรองตามรหัส (เว้นว่าง = ทั้งหมด)">
+                            <select id="wasteLimit" class="form-select rounded-pill" style="max-width:150px;">
+                                <option value="100">ล่าสุด 100</option>
+                                <option value="300" selected>ล่าสุด 300</option>
+                                <option value="1000">ล่าสุด 1000</option>
+                            </select>
+                            <button class="btn btn-primary rounded-pill" onclick="loadWaste()"><i class="fas fa-search me-1"></i>แสดง</button>
+                        </div>
+                        <div class="small text-muted mb-2">เปลี่ยนประเภทในช่องเลือกได้ทันที ระบบจะบันทึกให้อัตโนมัติ</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr><th>เวลา</th><th>รหัส</th><th>ชื่อ</th><th>ประเภท</th><th>ชื่อชิ้น</th><th>แหล่ง / การแก้ไข</th><th>รูป</th><th></th></tr>
+                                </thead>
+                                <tbody id="wasteBody"><tr><td colspan="8" class="text-center text-muted py-4">กด "แสดง" เพื่อโหลดข้อมูล</td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="small text-muted mt-2" id="wasteCount"></div>
+                    </div>
+                </div>
+
+                <!-- ⚙️ ตั้งค่า -->
+                <div class="tab-pane fade" id="tabSettings">
+                    <div class="panel" style="max-width:480px;">
+                        <h6 class="fw-bold mb-3">🔑 เปลี่ยนรหัสผู้ดูแลระบบ</h6>
+                        <input type="password" id="apOld" class="form-control mb-2 rounded-pill" placeholder="รหัสผู้ดูแลปัจจุบัน">
+                        <input type="password" id="apNew" class="form-control mb-2 rounded-pill" placeholder="รหัสใหม่ (อย่างน้อย 8 ตัวอักษร)">
+                        <input type="password" id="apNew2" class="form-control mb-3 rounded-pill" placeholder="ยืนยันรหัสใหม่">
+                        <button id="btnAdmPw" class="btn btn-warning rounded-pill fw-bold" onclick="changeAdminPassword()">บันทึกรหัสใหม่</button>
+                        <hr>
+                        <div class="small text-muted">
+                            • ชื่อผู้ใช้ของผู้ดูแลคือ <b>admin</b> เสมอ<br>
+                            • รหัสผู้ดูแลเก็บใน Apps Script (Script Properties: ADMIN_PASSWORD) ไม่อยู่บน GitHub<br>
+                            • หากลืมรหัสผู้ดูแล ให้ลบ Script Property ชื่อ ADMIN_PASSWORD ระบบจะกลับไปใช้รหัสเริ่มต้นใน Code.gs
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: แก้ไข / เพิ่มผู้ใช้ -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="umTitle">แก้ไขผู้ใช้</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label small fw-semibold mb-1">บทบาท</label>
+                    <select id="umRole" class="form-select mb-2" onchange="updateIdLabel()">
+                        <option value="student">🎓 นักศึกษา</option>
+                        <option value="teacher">👩‍🏫 อาจารย์ / บุคลากร</option>
+                    </select>
+                    <label class="form-label small fw-semibold mb-1">ชื่อผู้ใช้ (ใช้ล็อกอิน)</label>
+                    <input type="text" id="umUsername" class="form-control mb-2">
+                    <label class="form-label small fw-semibold mb-1">ชื่อ-นามสกุล</label>
+                    <input type="text" id="umName" class="form-control mb-2">
+                    <label class="form-label small fw-semibold mb-1" id="umIdLabel">รหัสนักศึกษา</label>
+                    <input type="text" id="umId" class="form-control mb-1">
+                    <div class="small text-muted mb-2">ถ้าเปลี่ยนรหัส ระบบจะย้ายประวัติขยะเดิมไปที่รหัสใหม่ให้อัตโนมัติ</div>
+                    <label class="form-label small fw-semibold mb-1">อีเมล</label>
+                    <input type="email" id="umEmail" class="form-control mb-2" placeholder="เว้นว่างได้">
+                    <label class="form-label small fw-semibold mb-1" id="umPwLabel">ตั้งรหัสผ่านใหม่</label>
+                    <input type="text" id="umPassword" class="form-control mb-2" placeholder="เว้นว่าง = ไม่เปลี่ยน" autocomplete="off">
+                    <div class="form-check mb-2" id="umAvatarWrap">
+                        <input class="form-check-input" type="checkbox" id="umRemoveAvatar">
+                        <label class="form-check-label small" for="umRemoveAvatar">ลบรูปโปรไฟล์</label>
+                    </div>
+
+                    <div id="umDangerZone" class="border-top pt-3 mt-3">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="unlockUser()"><i class="fas fa-unlock me-1"></i>ปลดล็อกการกรอกผิด</button>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="viewEditingUserWaste()"><i class="fas fa-list me-1"></i>ดูบันทึกขยะ</button>
+                        </div>
+                        <div class="mt-3 p-2 rounded-3" style="background:#FEF2F2;">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="umDeleteLogs">
+                                <label class="form-check-label small" for="umDeleteLogs">ลบประวัติขยะทั้งหมดของผู้ใช้นี้ด้วย</label>
+                            </div>
+                            <button class="btn btn-danger btn-sm rounded-pill" onclick="deleteUser()"><i class="fas fa-trash me-1"></i>ลบผู้ใช้นี้</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" id="btnSaveUser" class="btn btn-primary rounded-pill fw-bold px-3" onclick="saveUser()">บันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config.js"></script>
+    <script>
+        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
+        const ADMIN_SESSION_KEY = 'nongtang_admin_session';
+        const CATEGORIES = [
+            { th: 'ขยะทั่วไป', color: '#2196F3' },
+            { th: 'ขยะเปียก', color: '#4CAF50' },
+            { th: 'ขยะรีไซเคิล', color: '#FFC107' },
+            { th: 'ขยะอันตราย', color: '#F44336' }
+        ];
+
+        let token = '';
+        let users = [];
+        let wasteMap = {};
+        let editing = null;
+        let toastTimer = null;
+
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('appToast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        function setBtnLoading(btn, loading, label) {
+            if (!btn) return;
+            if (loading) {
+                btn.dataset.label = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + (label || 'กำลังทำงาน...');
+            } else {
+                btn.disabled = false;
+                if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+                delete btn.dataset.label;
+            }
+        }
+
+        async function callApi(action, args) {
+            if (!API_URL || API_URL.indexOf('ใส่_ID') !== -1) throw new Error('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ config.js');
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: action, args: args }),
+                redirect: 'follow'
+            });
+            if (!res.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับผิดพลาด (HTTP ' + res.status + ')');
+            const json = await res.json();
+            if (!json.ok) throw new Error(json.error || 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์');
+            return json.data;
+        }
+
+        // เรียกฟังก์ชันผู้ดูแล (แนบ token อัตโนมัติ)
+        async function adminCall(action, ...args) {
+            try {
+                return await callApi(action, [token, ...args]);
+            } catch (e) {
+                if (String(e.message).indexOf('ADMIN_SESSION_EXPIRED') !== -1) {
+                    sessionExpired();
+                    throw new Error('หมดเวลาการเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่');
+                }
+                throw e;
+            }
+        }
+
+        function saveSession(t) {
+            token = t;
+            try { sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ token: t, at: Date.now() })); } catch (e) {}
+        }
+
+        function clearSession() {
+            token = '';
+            try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch (e) {}
+        }
+
+        function showLogin() {
+            document.getElementById('adminView').classList.add('hidden');
+            document.getElementById('loginView').classList.remove('hidden');
+            document.getElementById('admPass').value = '';
+            setTimeout(() => document.getElementById('admPass').focus(), 50);
+        }
+
+        function showAdmin() {
+            document.getElementById('loginView').classList.add('hidden');
+            document.getElementById('adminView').classList.remove('hidden');
+            refreshAll();
+        }
+
+        function sessionExpired() {
+            clearSession();
+            document.querySelectorAll('.modal.show').forEach(m => {
+                const inst = bootstrap.Modal.getInstance(m);
+                if (inst) inst.hide();
+            });
+            showLogin();
+        }
+
+        // ---------- เริ่มต้น ----------
+        window.onload = async function() {
+            document.getElementById('admPass').addEventListener('keypress', e => { if (e.key === 'Enter') adminLogin(); });
+            document.getElementById('wasteFilter').addEventListener('keypress', e => { if (e.key === 'Enter') loadWaste(); });
+
+            let saved = null;
+            try { saved = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY) || 'null'); } catch (e) {}
+            if (saved && saved.token) {
+                token = saved.token;
+                try {
+                    await adminCall('adminPing');
+                    showAdmin();
+                    return;
+                } catch (e) { /* หมดอายุ -> ไปหน้าเข้าสู่ระบบ */ }
+            }
+            showLogin();
+        };
+
+        async function adminLogin() {
+            const pw = document.getElementById('admPass').value;
+            const btn = document.getElementById('btnAdmLogin');
+            if (!pw) { alert('กรุณากรอกรหัสผ่านผู้ดูแล'); return; }
+            setBtnLoading(btn, true, 'กำลังตรวจสอบ...');
+            try {
+                const res = await callApi('loginUser', ['admin', pw]);
+                if (res && res.success && res.role === 'admin') {
+                    saveSession(res.token);
+                    showAdmin();
+                } else {
+                    alert(res && res.message ? res.message : '❌ ข้อมูลไม่ถูกต้อง');
+                }
+            } catch (e) {
+                alert('❌ เชื่อมต่อระบบไม่สำเร็จ: ' + e.message);
+            } finally {
+                setBtnLoading(btn, false);
+            }
+        }
+
+        async function adminLogout() {
+            if (!confirm('ออกจากระบบผู้ดูแล?')) return;
+            try { await callApi('adminLogout', [token]); } catch (e) {}
+            clearSession();
+            showLogin();
+        }
+
+        function refreshAll() {
+            loadOverview();
+            if (document.getElementById('tabWasteBtn').classList.contains('active')) loadWaste();
+        }
+
+        // ---------- ภาพรวม + ผู้ใช้ ----------
+        async function loadOverview() {
+            try {
+                const res = await adminCall('adminOverview');
+                users = res.users || [];
+                const s = res.stats || {};
+                document.getElementById('stUsers').textContent = (s.users || 0).toLocaleString('th-TH');
+                document.getElementById('stStudents').textContent = (s.students || 0).toLocaleString('th-TH');
+                document.getElementById('stTeachers').textContent = (s.teachers || 0).toLocaleString('th-TH');
+                document.getElementById('stWaste').textContent = (s.wasteTotal || 0).toLocaleString('th-TH');
+                document.getElementById('stToday').textContent = (s.todayTotal || 0).toLocaleString('th-TH');
+                document.getElementById('defaultPwWarn').classList.toggle('hidden', !res.defaultPassword);
+
+                const ob = document.getElementById('orphanBox');
+                const orphans = res.orphans || [];
+                if (orphans.length) {
+                    ob.innerHTML = 'ℹ️ พบบันทึกขยะของรหัสที่ไม่มีบัญชีผู้ใช้: ' +
+                        orphans.slice(0, 10).map(o => `<b>${esc(o.studentId)}</b> (${o.count})`).join(', ') +
+                        (orphans.length > 10 ? ` และอีก ${orphans.length - 10} รหัส` : '') +
+                        '<br><span class="small">แก้ได้โดยแก้รหัสของผู้ใช้ให้ตรง หรือเพิ่มผู้ใช้ด้วยรหัสนั้น</span>';
+                    ob.classList.remove('hidden');
+                } else {
+                    ob.classList.add('hidden');
+                }
+                renderUsers();
+            } catch (e) {
+                if (token) alert('❌ โหลดข้อมูลไม่สำเร็จ: ' + e.message);
+            }
+        }
+
+        function renderUsers() {
+            const q = document.getElementById('userSearch').value.trim().toLowerCase();
+            const rf = document.getElementById('roleFilter').value;
+            const list = users.filter(u => {
+                if (rf === 'noemail' && u.email) return false;
+                if ((rf === 'student' || rf === 'teacher') && u.role !== rf) return false;
+                if (!q) return true;
+                return [u.username, u.name, u.studentId, u.email].some(v => String(v || '').toLowerCase().indexOf(q) !== -1);
+            });
+
+            const body = document.getElementById('usersBody');
+            if (list.length === 0) {
+                body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">ไม่พบผู้ใช้</td></tr>';
+            } else {
+                body.innerHTML = list.map(u => `
+                    <tr>
+                        <td>${esc(u.username)}</td>
+                        <td class="fw-semibold">${esc(u.name)}</td>
+                        <td>${esc(u.studentId)}</td>
+                        <td>${u.email ? esc(u.email) : '<span class="text-warning small">ยังไม่ผูก</span>'}</td>
+                        <td><span class="role-badge ${u.role === 'teacher' ? 'role-teacher' : 'role-student'}">${u.role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'}</span></td>
+                        <td class="text-end fw-bold">${u.score}</td>
+                        <td class="small text-muted">${esc(u.lastActive || '-')}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="openUserModal(${u.row})"><i class="fas fa-pen"></i> แก้ไข</button>
+                        </td>
+                    </tr>`).join('');
+            }
+            document.getElementById('usersCount').textContent = `แสดง ${list.length} จาก ${users.length} บัญชี`;
+        }
+
+        function updateIdLabel() {
+            const teacher = document.getElementById('umRole').value === 'teacher';
+            document.getElementById('umIdLabel').textContent = teacher ? 'เลขประจำตัวอาจารย์' : 'รหัสนักศึกษา';
+        }
+
+        function openUserModal(row) {
+            editing = row ? users.find(u => u.row === row) : null;
+            if (row && !editing) { alert('ไม่พบผู้ใช้ กรุณากดรีเฟรช'); return; }
+            const isNew = !editing;
+
+            document.getElementById('umTitle').textContent = isNew ? '➕ เพิ่มผู้ใช้ใหม่' : '✏️ แก้ไขผู้ใช้';
+            document.getElementById('umRole').value = isNew ? 'student' : editing.role;
+            document.getElementById('umUsername').value = isNew ? '' : editing.username;
+            document.getElementById('umName').value = isNew ? '' : editing.name;
+            document.getElementById('umId').value = isNew ? '' : editing.studentId;
+            document.getElementById('umEmail').value = isNew ? '' : editing.email;
+            document.getElementById('umPassword').value = '';
+            document.getElementById('umPwLabel').textContent = isNew ? 'รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)' : 'ตั้งรหัสผ่านใหม่';
+            document.getElementById('umPassword').placeholder = isNew ? 'จำเป็น' : 'เว้นว่าง = ไม่เปลี่ยน';
+            document.getElementById('umRemoveAvatar').checked = false;
+            document.getElementById('umAvatarWrap').classList.toggle('hidden', isNew || !editing.hasAvatar);
+            document.getElementById('umDeleteLogs').checked = false;
+            document.getElementById('umDangerZone').classList.toggle('hidden', isNew);
+            updateIdLabel();
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
+        }
+
+        async function saveUser() {
+            const f = {
+                role: document.getElementById('umRole').value,
+                username: document.getElementById('umUsername').value.trim(),
+                name: document.getElementById('umName').value.trim(),
+                studentId: document.getElementById('umId').value.trim(),
+                email: document.getElementById('umEmail').value.trim().toLowerCase(),
+                newPassword: document.getElementById('umPassword').value.trim(),
+                removeAvatar: document.getElementById('umRemoveAvatar').checked
+            };
+            if (!f.username || !f.name || !f.studentId) { alert('กรุณากรอกชื่อผู้ใช้ ชื่อ-นามสกุล และรหัสให้ครบ'); return; }
+            if (!editing && !f.newPassword) { alert('ผู้ใช้ใหม่ต้องตั้งรหัสผ่าน'); return; }
+            if (editing && editing.studentId !== f.studentId &&
+                !confirm(`เปลี่ยนรหัสจาก "${editing.studentId}" เป็น "${f.studentId}"?\nประวัติขยะเดิมจะถูกย้ายไปที่รหัสใหม่`)) return;
+
+            const btn = document.getElementById('btnSaveUser');
+            setBtnLoading(btn, true, 'กำลังบันทึก...');
+            try {
+                const res = await adminCall('adminSaveUser', editing ? editing.row : 0, editing ? editing.username : '', f);
+                if (res && res.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+                    showToast(res.message);
+                    loadOverview();
+                } else {
+                    alert(res && res.message ? res.message : '❌ บันทึกไม่สำเร็จ');
+                }
+            } catch (e) {
+                alert('❌ ' + e.message);
+            } finally {
+                setBtnLoading(btn, false);
+            }
+        }
+
+        async function deleteUser() {
+            if (!editing) return;
+            const withLogs = document.getElementById('umDeleteLogs').checked;
+            const msg = `ลบผู้ใช้ "${editing.name}" (${editing.studentId}) ?` +
+                (withLogs ? `\n⚠️ ประวัติขยะ ${editing.score} รายการจะถูกลบด้วย` : '\n(ประวัติขยะจะยังอยู่ในชีต)') +
+                '\n\nการลบย้อนกลับไม่ได้';
+            if (!confirm(msg)) return;
+            try {
+                const res = await adminCall('adminDeleteUser', editing.row, editing.username, withLogs);
+                if (res && res.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+                    showToast(res.message);
+                    loadOverview();
+                } else {
+                    alert(res && res.message ? res.message : '❌ ลบไม่สำเร็จ');
+                }
+            } catch (e) {
+                alert('❌ ' + e.message);
+            }
+        }
+
+        async function unlockUser() {
+            if (!editing) return;
+            try {
+                const res = await adminCall('adminUnlockUser', editing.username, editing.studentId);
+                showToast(res && res.message ? res.message : '🔓 ปลดล็อกแล้ว');
+            } catch (e) {
+                alert('❌ ' + e.message);
+            }
+        }
+
+        function viewEditingUserWaste() {
+            if (!editing) return;
+            const id = editing.studentId;
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+            document.getElementById('wasteFilter').value = id;
+            bootstrap.Tab.getOrCreateInstance(document.getElementById('tabWasteBtn')).show();
+            loadWaste();
+        }
+
+        // ---------- บันทึกการคัดแยก ----------
+        function categoryOptions(current) {
+            let opts = CATEGORIES.map(c => `<option value="${c.th}" ${c.th === current ? 'selected' : ''}>${c.th}</option>`).join('');
+            if (!CATEGORIES.some(c => c.th === current)) {
+                opts = `<option value="${esc(current)}" selected disabled>${esc(current) || '(ว่าง)'}</option>` + opts;
+            }
+            return opts;
+        }
+
+        function catColor(th) {
+            const c = CATEGORIES.find(x => x.th === th);
+            return c ? c.color : '#9E9E9E';
+        }
+
+        async function loadWaste() {
+            const filter = document.getElementById('wasteFilter').value.trim();
+            const limit = Number(document.getElementById('wasteLimit').value);
+            const body = document.getElementById('wasteBody');
+            body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลด...</td></tr>';
+            try {
+                const res = await adminCall('adminListWaste', filter, limit);
+                const items = (res && res.items) || [];
+                wasteMap = {};
+                items.forEach(it => { wasteMap[it.row] = it; });
+
+                if (items.length === 0) {
+                    body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">ไม่พบรายการ</td></tr>';
+                } else {
+                    body.innerHTML = items.map(it => `
+                        <tr>
+                            <td class="small">${esc(it.time)}</td>
+                            <td>${esc(it.studentId)}</td>
+                            <td>${esc(it.name) || '<span class="text-danger small">ไม่พบบัญชี</span>'}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="cat-dot" id="dot_${it.row}" style="background:${catColor(it.category)};"></span>
+                                    <select class="form-select form-select-sm" style="min-width:130px;" data-row="${it.row}" onchange="changeCategory(this)">${categoryOptions(it.category)}</select>
+                                </div>
+                            </td>
+                            <td class="small">${esc(it.itemName) || '-'}</td>
+                            <td class="small text-muted">${esc(it.source) || '-'}${it.corrected ? ' • ' + esc(it.corrected) : ''}</td>
+                            <td>${/^https?:\/\//.test(it.image) ? `<a href="${esc(it.image)}" target="_blank" rel="noopener" class="small">ดูรูป</a>` : '<span class="small text-muted">-</span>'}</td>
+                            <td class="text-end"><button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteWaste(${it.row})"><i class="fas fa-trash"></i></button></td>
+                        </tr>`).join('');
+                }
+                document.getElementById('wasteCount').textContent =
+                    `แสดง ${items.length} รายการ` + (res.total > items.length ? ` จากทั้งหมด ${res.total} รายการ` : '') + (filter ? ` (รหัส ${filter})` : '');
+            } catch (e) {
+                body.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${esc(e.message)}</td></tr>`;
+            }
+        }
+
+        async function changeCategory(sel) {
+            const it = wasteMap[sel.dataset.row];
+            if (!it) return;
+            const newCat = sel.value;
+            sel.disabled = true;
+            try {
+                const res = await adminCall('adminUpdateWaste', it.row, it.studentId, it.category, { category: newCat });
+                if (res && res.success) {
+                    it.category = newCat;
+                    it.corrected = 'แก้ไขโดยผู้ดูแล';
+                    document.getElementById('dot_' + it.row).style.background = catColor(newCat);
+                    showToast(res.message);
+                } else {
+                    sel.value = it.category;
+                    alert(res && res.message ? res.message : '❌ แก้ไขไม่สำเร็จ');
+                }
+            } catch (e) {
+                sel.value = it.category;
+                alert('❌ ' + e.message);
+            } finally {
+                sel.disabled = false;
+            }
+        }
+
+        async function deleteWaste(row) {
+            const it = wasteMap[row];
+            if (!it) return;
+            if (!confirm(`ลบรายการ "${it.category}" ของ ${it.name || it.studentId} (${it.time}) ?\nคะแนนของผู้ใช้จะลดลง 1`)) return;
+            try {
+                const res = await adminCall('adminDeleteWaste', it.row, it.studentId, it.category);
+                if (res && res.success) {
+                    showToast(res.message);
+                    loadWaste();
+                    loadOverview();
+                } else {
+                    alert(res && res.message ? res.message : '❌ ลบไม่สำเร็จ');
+                    loadWaste();
+                }
+            } catch (e) {
+                alert('❌ ' + e.message);
+            }
+        }
+
+        // ---------- ตั้งค่า ----------
+        async function changeAdminPassword() {
+            const oldPw = document.getElementById('apOld').value;
+            const p1 = document.getElementById('apNew').value;
+            const p2 = document.getElementById('apNew2').value;
+            if (!oldPw || !p1 || !p2) { alert('กรุณากรอกให้ครบทุกช่อง'); return; }
+            if (p1.length < 8) { alert('รหัสใหม่ต้องมีอย่างน้อย 8 ตัวอักษร'); return; }
+            if (p1 !== p2) { alert('รหัสใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
+
+            const btn = document.getElementById('btnAdmPw');
+            setBtnLoading(btn, true, 'กำลังบันทึก...');
+            try {
+                const res = await adminCall('adminChangePassword', oldPw, p1);
+                if (res && res.success) {
+                    ['apOld', 'apNew', 'apNew2'].forEach(id => document.getElementById(id).value = '');
+                    document.getElementById('defaultPwWarn').classList.add('hidden');
+                    showToast(res.message);
+                } else {
+                    alert(res && res.message ? res.message : '❌ เปลี่ยนรหัสไม่สำเร็จ');
+                }
+            } catch (e) {
+                alert('❌ ' + e.message);
+            } finally {
+                setBtnLoading(btn, false);
+            }
+        }
+    </script>
+</body>
+</html>
