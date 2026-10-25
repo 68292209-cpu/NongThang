@@ -44,7 +44,8 @@
 
         /* --- Auth Screen --- */
         .auth-container { min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 999; background: #FEFDF5; position: fixed; top:0; left:0; overflow-y: auto; }
-        .auth-card { background: white; width: 100%; max-width: 390px; padding: 32px 28px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 3px solid #81C784; }
+        .auth-card { background: white; width: 100%; max-width: 390px; padding: 32px 28px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 3px solid #81C784; transition: border-color 0.3s ease; }
+        .auth-card.teacher-mode { border-color: #93C5FD; }
         .profile-upload { width: 100px; height: 100px; background: #eee; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer; border: 3px solid #4CAF50; }
         .profile-upload img { width: 100%; height: 100%; object-fit: cover; }
         .auth-links { display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; }
@@ -54,6 +55,13 @@
         .auth-note { font-size: 0.78rem; color: #64748B; background: #F8FAFC; border-radius: 12px; padding: 8px 12px; text-align: left; }
         .otp-input { text-align: center; letter-spacing: 10px; font-size: 1.35rem; font-weight: 800; }
         .otp-input::placeholder { letter-spacing: normal; font-size: 0.9rem; font-weight: 400; }
+
+        /* สลับ นักศึกษา / อาจารย์ */
+        .role-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #F1F5F9; border-radius: 30px; padding: 4px; }
+        .role-btn { border: none; background: transparent; border-radius: 26px; padding: 8px 6px; font-size: 0.84rem; font-weight: 700; color: #64748B; transition: background 0.2s, color 0.2s; }
+        .role-btn.active { background: #fff; color: #2E7D32; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        .auth-card.teacher-mode .role-btn.active { color: #1D4ED8; }
+        .role-chip { display: inline-block; font-size: 0.62rem; font-weight: 700; background: #DBEAFE; color: #1D4ED8; border-radius: 10px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
 
         /* --- App Layout --- */
         .app-container { width: 100%; max-width: 450px; min-height: 100vh; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; }
@@ -227,8 +235,8 @@
             margin-bottom: 12px;
         }
         .reticle-cam-icon { font-size: 3.2rem; color: rgba(255,255,255,0.55); }
-        .cam-guide-title { color: #fff; font-weight: 700; font-size: 0.95rem; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
-        .cam-guide-sub { color: #94a3b8; font-size: 0.75rem; }
+        .cam-guide-title { color: #fff; font-weight: 700; font-size: 0.95rem; text-shadow: 0 1px 3px rgba(0,0,0,0.6); text-align: center; padding: 0 10px; }
+        .cam-guide-sub { color: #94a3b8; font-size: 0.75rem; text-align: center; padding: 0 12px; }
 
         .live-overlay-grid.is-live .reticle-cam-icon { display: none; }
         .live-overlay-grid.is-live .live-reticle { border: 2px dashed rgba(255,255,255,0.8); box-shadow: 0 0 0 2000px rgba(0,0,0,0.12); }
@@ -560,36 +568,44 @@
 
     <!-- AUTH -->
     <div id="authSection" class="auth-container">
-        <div class="auth-card text-center">
+        <div class="auth-card text-center" id="authCard">
             <div class="mb-3" style="font-size:3rem;">♻️</div>
             <h3 class="fw-bold text-success mb-1">น้องถังช่วยทิ้ง</h3>
             <p class="text-muted small mb-3">วิทยาลัยเทคโนโลยีสยาม (สยามเทค) • ITM</p>
 
+            <!-- เลือกประเภทผู้ใช้ -->
+            <div class="role-switch mb-3">
+                <button type="button" class="role-btn active" data-role="student" onclick="setAuthRole('student')">🎓 นักศึกษา</button>
+                <button type="button" class="role-btn" data-role="teacher" onclick="setAuthRole('teacher')">👩‍🏫 อาจารย์ / บุคลากร</button>
+            </div>
+
             <!-- เข้าสู่ระบบ -->
             <div id="loginForm">
+                <div class="small text-muted mb-2" id="loginNote">เข้าสู่ระบบสำหรับนักศึกษา</div>
                 <input type="text" id="logUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้" autocomplete="username">
                 <input type="password" id="logPass" class="form-control mb-3 rounded-pill" placeholder="รหัสผ่าน" autocomplete="current-password">
                 <button type="button" id="btnLoginSubmit" class="btn btn-success w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doLogin()">เข้าสู่ระบบ</button>
                 <div class="auth-links">
                     <button type="button" class="auth-link" onclick="showAuthForm('forgot')">ลืมรหัสผ่าน?</button>
-                    <button type="button" class="auth-link" onclick="showAuthForm('register')">สมัครสมาชิกใหม่</button>
+                    <button type="button" class="auth-link" id="regLinkText" onclick="showAuthForm('register')">สมัครสมาชิกใหม่</button>
                 </div>
             </div>
 
             <!-- สมัครสมาชิก -->
             <div id="regForm" class="hidden">
+                <h6 class="fw-bold mb-3" id="regTitle" style="color:#0F172A;">สมัครสมาชิกนักศึกษา</h6>
                 <div class="profile-upload" onclick="document.getElementById('regFile').click()">
                     <img id="previewAvatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="hidden" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
                     <i id="uploadIcon" class="fas fa-camera"></i>
                 </div>
                 <input type="file" id="regFile" class="hidden" accept="image/*" onchange="previewImage(this)">
-                <div class="small text-muted mb-3">แตะเพื่อใส่รูปโปรไฟล์ (ถ้ามี)</div>
+                <div class="small text-muted mb-3" id="regAvatarHint">แตะเพื่อใส่รูปโปรไฟล์ (ถ้ามี)</div>
                 <input type="text" id="regUser" class="form-control mb-2 rounded-pill" placeholder="ตั้งชื่อผู้ใช้" autocomplete="username">
                 <input type="password" id="regPass" class="form-control mb-2 rounded-pill" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)" autocomplete="new-password">
                 <input type="text" id="regId" class="form-control mb-2 rounded-pill" placeholder="รหัสนักศึกษา">
                 <input type="text" id="regName" class="form-control mb-2 rounded-pill" placeholder="ชื่อ-นามสกุล">
                 <input type="email" id="regEmail" class="form-control mb-1 rounded-pill" placeholder="อีเมลวิทยาลัย (@siamtech.ac.th)" autocomplete="email">
-                <div class="small text-muted mb-3 text-start px-2">ใช้รับรหัส OTP ตอนลืมรหัสผ่าน</div>
+                <div class="small text-muted mb-3 text-start px-2" id="regEmailNote">ใช้รับรหัส OTP ตอนลืมรหัสผ่าน</div>
                 <button type="button" id="btnRegSubmit" class="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doRegister()">ลงทะเบียน</button>
                 <button type="button" class="auth-link" onclick="showAuthForm('login')">กลับไปเข้าสู่ระบบ</button>
             </div>
@@ -600,7 +616,7 @@
 
                 <!-- ขั้นที่ 1: ขอรหัส OTP -->
                 <div id="fgStep1">
-                    <div class="auth-note mb-3">กรอกชื่อผู้ใช้และอีเมล @siamtech.ac.th ที่ผูกกับบัญชีไว้ ระบบจะส่งรหัส OTP 6 หลักไปทางอีเมล</div>
+                    <div class="auth-note mb-3" id="fgNote">กรอกชื่อผู้ใช้และอีเมล @siamtech.ac.th ที่ผูกกับบัญชีไว้ ระบบจะส่งรหัส OTP 6 หลักไปทางอีเมล</div>
                     <input type="text" id="fgUser" class="form-control mb-2 rounded-pill" placeholder="ชื่อผู้ใช้" autocomplete="username">
                     <input type="email" id="fgEmail" class="form-control mb-3 rounded-pill" placeholder="อีเมล (@siamtech.ac.th)" autocomplete="email">
                     <button type="button" id="btnSendOtp" class="btn btn-warning w-100 py-2 mb-3 rounded-pill fw-bold" onclick="doRequestOtp(false)">📧 ส่งรหัส OTP ไปที่อีเมล</button>
@@ -630,7 +646,7 @@
             <div class="user-badge" id="userBadgeBox" onclick="openProfileModal()">
                 <img id="userAvatar" src="" class="user-avatar-small" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
                 <div>
-                    <div style="line-height:1.1;"><span id="dispName" style="font-weight:700;">...</span></div>
+                    <div style="line-height:1.1;"><span id="dispName" style="font-weight:700;">...</span><span id="dispRole" class="role-chip hidden">อาจารย์</span></div>
                     <small class="fw-bold" style="color:#15803D;">🏆 <span id="dispScore">0</span> <span id="dispFlameIcon" class="flame">🔥</span></small>
                 </div>
             </div>
@@ -647,7 +663,7 @@
         <div class="campus-ticker" id="campusTicker">
             <div class="campus-globe">🌏</div>
             <div class="flex-grow-1">
-                <div>วันนี้ชาวสยามเทคแยกขยะไปแล้ว <span class="campus-count" id="campusCount">–</span> ชิ้น ♻️</div>
+                <div><span id="campusLead">วันนี้ชาวสยามเทคแยกขยะไปแล้ว</span> <span class="campus-count" id="campusCount">–</span> <span id="campusUnit">ชิ้น</span> ♻️</div>
                 <div class="campus-sub" id="campusSub">กำลังโหลด...</div>
             </div>
         </div>
@@ -670,7 +686,7 @@
                 <!-- 🔦 เลเซอร์สแกนระหว่างวิเคราะห์ -->
                 <div class="scan-overlay hidden" id="scanOverlay">
                     <div class="scan-beam"><div class="scan-line"></div></div>
-                    <div class="scan-label"><span class="spinner-grow spinner-grow-sm text-success"></span> น้องถังกำลังดู... <span class="scan-timer" id="scanTimer">0.0</span>s</div>
+                    <div class="scan-label"><span class="spinner-grow spinner-grow-sm text-success"></span> <span id="scanLabelText">น้องถังกำลังดู...</span> <span class="scan-timer" id="scanTimer">0.0</span>s</div>
                 </div>
 
                 <!-- ป้าย LIVE แสดงว่าเป็นภาพจากกล้องสด -->
@@ -680,8 +696,8 @@
                     <div class="live-reticle">
                         <i class="fas fa-camera reticle-cam-icon"></i>
                     </div>
-                    <div class="cam-guide-title">แตะเพื่อถ่าย (สแกนได้หลายชิ้นพร้อมกัน)</div>
-                    <div class="cam-guide-sub">วางขยะแยกกันเล็กน้อย ระบบจะตรวจจับและบันทึกคะแนน</div>
+                    <div class="cam-guide-title" id="camGuideTitle">แตะเพื่อถ่าย (สแกนได้หลายชิ้นพร้อมกัน)</div>
+                    <div class="cam-guide-sub" id="camGuideSub">วางขยะแยกกันเล็กน้อย ระบบจะตรวจจับและบันทึกคะแนน</div>
                 </div>
 
                 <!-- สถานะกล้อง: กำลังเปิด / เปิดไม่ได้ -->
@@ -733,7 +749,7 @@
                 <div class="mission-icon" id="missionIcon">🎯</div>
                 <div>
                     <div class="mission-label" id="missionLabel">ภารกิจวันนี้</div>
-                    <div class="mission-text" id="missionText">กำลังโหลดภารกิจ...</div>
+                    <div class="mission-text" id="missionText">กำลังโหลด...</div>
                 </div>
                 <div class="mission-count" id="missionCount"></div>
             </div>
@@ -798,7 +814,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="small text-muted mb-2">ใช้อีเมลของวิทยาลัย (@siamtech.ac.th) เท่านั้น ระบบจะส่งรหัส OTP ไปที่อีเมลนี้เมื่อคุณลืมรหัสผ่าน</p>
+                    <p class="small text-muted mb-2" id="emailModalNote">ใช้อีเมลของวิทยาลัยเท่านั้น ระบบจะส่งรหัส OTP ไปที่อีเมลนี้เมื่อลืมรหัสผ่าน</p>
                     <input type="email" id="emInput" class="form-control mb-2 rounded-pill" placeholder="อีเมล (@siamtech.ac.th)" autocomplete="email">
                     <input type="password" id="emPass" class="form-control mb-1 rounded-pill" placeholder="รหัสผ่านปัจจุบัน (เพื่อยืนยันตัวตน)" autocomplete="current-password">
                 </div>
@@ -819,7 +835,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body pt-2">
-                    <p class="small text-muted mb-2">AI ทายผิด? เช็กจากคู่มือนี้ แล้วกด ✏️ แก้ประเภทได้เลย</p>
+                    <p class="small text-muted mb-2">หากผลการจำแนกไม่ถูกต้อง ตรวจสอบจากคู่มือนี้ แล้วกด ✏️ เพื่อแก้ไขประเภท</p>
                     <input type="search" id="guideSearch" class="form-control rounded-pill mb-2" placeholder="🔍 พิมพ์ชื่อขยะ เช่น ขวด, ถ่าน, ถุงขนม" oninput="renderGuideSearch(this.value)">
                     <div id="guideSearchResults" class="hidden mb-2"></div>
                     <div class="guide-tabs" id="guideTabs"></div>
@@ -841,15 +857,15 @@
             <div class="modal-content border-0 rounded-4 text-center p-3">
                 <div class="tierup-badge">🏅</div>
                 <div class="small fw-bold mt-2" style="letter-spacing:3px; color:#B45309;">LEVEL UP!</div>
-                <div class="small text-muted mt-1">ยินดีด้วย! ปลดล็อกระดับใหม่แล้ว</div>
+                <div class="small text-muted mt-1" id="tierUpSub">ยินดีด้วย! ปลดล็อกระดับใหม่แล้ว</div>
                 <h4 class="fw-bold mt-1 mb-0" id="tierUpName" style="color:#0F172A;"></h4>
                 <div class="text-muted small mb-1" id="tierUpNameEn"></div>
                 <img id="tierUpArt" class="tierup-art" alt="" onerror="this.classList.add('hidden')">
                 <p class="small text-muted mb-2 px-2" id="tierUpDesc"></p>
                 <button class="btn-cert-corporate w-100 mt-1" style="max-width:100%;" onclick="openTierCertFromCelebration()">
-                    <i class="fas fa-award"></i> ดูประกาศนียบัตรของฉัน
+                    <i class="fas fa-award"></i> ดูประกาศนียบัตร
                 </button>
-                <button type="button" class="btn btn-link text-muted mt-1" data-bs-dismiss="modal">ไว้ทีหลัง</button>
+                <button type="button" class="btn btn-link text-muted mt-1" data-bs-dismiss="modal">ไว้ภายหลัง</button>
             </div>
         </div>
     </div>
@@ -863,7 +879,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="small text-muted mb-2">AI ทายผิด? เลือกประเภทที่ถูกต้อง หรือลบชิ้นที่ไม่ใช่ขยะออก<br>(เพิ่มชิ้นใหม่ไม่ได้ ถ้าขาดชิ้นไหนให้ถ่ายใหม่)</p>
+                    <p class="small text-muted mb-2">เลือกประเภทที่ถูกต้อง หรือลบรายการที่ไม่ใช่ขยะออก<br>(เพิ่มรายการใหม่ไม่ได้ หากขาดรายการใดให้ถ่ายภาพใหม่)</p>
                     <button type="button" class="fix-guide-link" onclick="openGuideFromFix()">📘 ไม่แน่ใจว่าถังไหน? เปิดคู่มือแยกขยะ</button>
                     <div id="fixList"></div>
                 </div>
@@ -880,7 +896,7 @@
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 rounded-4">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-success">👤 โปรไฟล์ผู้ใช้งาน</h5>
+                    <h5 class="modal-title fw-bold text-success" id="profileTitle">👤 โปรไฟล์ผู้ใช้งาน</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center pt-2">
@@ -935,7 +951,7 @@
                         </span>
                     </button>
                     <button class="btn-my-certs mb-4" onclick="openMyCertificatesModal()">
-                        <i class="fas fa-folder-open"></i> รายการประกาศนียบัตรทั้งหมดของฉัน
+                        <i class="fas fa-folder-open"></i> รายการประกาศนียบัตรทั้งหมด
                     </button>
 
                     <!-- สถิติการแยกขยะ -->
@@ -1009,18 +1025,20 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- 🔗 ลิงก์ระบบหลังบ้านอยู่ในไฟล์ config.js -->
+    <script src="config.js"></script>
     <script>
         // =========================================================================
-        // 🔗 ลิงก์ระบบหลังบ้าน (Apps Script Web App) — ใส่ลิงก์ /exec ของคุณตรงนี้
+        // 🔗 ลิงก์ระบบหลังบ้าน (อ่านจาก config.js)
         // =========================================================================
-        const API_URL = 'https://script.google.com/a/macros/siamtech.ac.th/s/AKfycbzLDULJWBz26tfbXQW6Wyo7PSopRc0Zf6ecEjO7b_EDQlTXaP8EV-JsiZTqhbFjhBfO/exec';
+        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
 
         // =========================================================================
         // 🔌 ตัวแปลง google.script.run -> fetch
         // =========================================================================
         async function callApi(action, args) {
             if (!API_URL || API_URL.indexOf('ใส่_ID') !== -1) {
-                throw new Error('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ index.html');
+                throw new Error('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ config.js');
             }
             const res = await fetch(API_URL, {
                 method: 'POST',
@@ -1064,7 +1082,10 @@
         const FRESH_PHOTO_MAX_AGE_MS = 2 * 60 * 1000;   // (ใช้เมื่อเปิดทางสำรอง) รูปต้องถ่ายไม่เกิน 2 นาที
         const AVATAR_SIZE = 200;                        // ขนาดรูปโปรไฟล์ (px) ที่เก็บใน Sheet
         const MIN_PASSWORD_LENGTH = 6;                  // ต้องตรงกับค่าใน Code.gs
-        const EMAIL_REGEX = /^[a-z0-9._%+\-]+@siamtech\.ac\.th$/i;  // รับเฉพาะอีเมลวิทยาลัย
+        const STUDENT_EMAIL_DOMAIN = 'siamtech.ac.th';  // ต้องตรงกับ ALLOWED_EMAIL_DOMAIN ใน Code.gs
+        const TEACHER_EMAIL_DOMAIN = 'siamtech.ac.th';  // ต้องตรงกับ TEACHER_EMAIL_DOMAIN ใน Code.gs
+        const ADMIN_SESSION_KEY = 'nongtang_admin_session';
+        const AUTH_ROLE_KEY = 'nongtang_auth_role';
         const CAMPUS_REFRESH_MS = 45000;                // อัปเดตตัวเลขทั้งวิทยาลัย/ภารกิจทุก 45 วินาที
         const TIP_INTERVAL_MS = 5000;                   // สลับข้อความ/เคล็ดลับบนฝาถังทุก 5 วินาที
         const LEAF_COUNT = 9;                           // จำนวนใบไม้ลอยพื้นหลัง
@@ -1073,7 +1094,7 @@
         const REDUCED_MOTION = RESPECT_REDUCED_MOTION && !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
         document.documentElement.classList.toggle('rm', REDUCED_MOTION);
 
-        // 💡 เคล็ดลับแยกขยะ (สลับขึ้นบนฝาถัง)
+        // 💡 เคล็ดลับแยกขยะ (สลับขึ้นบนฝาถัง) — นักศึกษา
         const TIPS = [
             'ขวดพลาสติก เทน้ำออก บีบให้แบน แล้วลงถังเหลือง',
             'ถุงขนม/ซองฟอยล์ รีไซเคิลยาก ลงถังน้ำเงินนะ',
@@ -1088,14 +1109,126 @@
             'หน้ากากอนามัยใช้แล้ว พับใส่ถุงก่อนทิ้งถังแดง',
             'ล้างขวด/กล่องให้สะอาดก่อนทิ้ง ช่วยให้รีไซเคิลได้จริง'
         ];
+
+        // 💡 ข้อแนะนำ — อาจารย์/บุคลากร (ภาษาทางการ)
+        const TIPS_FORMAL = [
+            'ขวดพลาสติก ควรเทของเหลวออกและบีบให้แบนก่อนทิ้งลงถังสีเหลือง',
+            'ซองขนมและบรรจุภัณฑ์ชนิดฟอยล์รีไซเคิลได้ยาก ควรทิ้งลงถังสีน้ำเงิน',
+            'เศษอาหาร ควรแยกน้ำออกก่อนทิ้งลงถังสีเขียว',
+            'ถ่านไฟฉายและแบตเตอรี่ ต้องทิ้งลงถังสีแดงเท่านั้น',
+            'กระป๋องอะลูมิเนียมสามารถนำกลับมารีไซเคิลได้หลายครั้ง',
+            'กล่องโฟมที่เปื้อนอาหาร ควรทิ้งลงถังสีน้ำเงิน',
+            'หลอดไฟและกระป๋องสเปรย์ จัดเป็นขยะอันตราย ทิ้งลงถังสีแดง',
+            'กระดาษที่เปื้อนน้ำมันไม่สามารถรีไซเคิลได้ ควรทิ้งลงถังสีน้ำเงิน',
+            'เศษใบไม้และเปลือกผลไม้ นำไปทำปุ๋ยได้ ทิ้งลงถังสีเขียว',
+            'การทำความสะอาดบรรจุภัณฑ์ก่อนทิ้ง ช่วยเพิ่มโอกาสในการรีไซเคิล'
+        ];
+
+        // 🗣️ ข้อความตามบทบาท (นักศึกษา = เป็นกันเอง / อาจารย์ = ทางการ)
+        const TEXTS = {
+            student: {
+                idLabel: 'รหัสนักศึกษา',
+                unit: 'ชิ้น',
+                snapPrompt: 'กดชัตเตอร์เพื่อสแกน',
+                analyzing: 'กำลังสแกนและตีกรอบขยะ...',
+                scanning: 'น้องถังกำลังดู...',
+                notWaste: 'อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ',
+                livingHint: '⛔ แหน่ะ! อย่าแกล้งกันสิ',
+                noWasteHint: '⛔ ไม่พบขยะในภาพ ลองวางขยะให้ชัดแล้วถ่ายใหม่นะครับ',
+                defaultHint: 'วางขยะ 1 หรือหลายชิ้น แล้วกดถ่ายเลย!',
+                camTitle: 'แตะเพื่อถ่าย (สแกนได้หลายชิ้นพร้อมกัน)',
+                camSub: 'วางขยะแยกกันเล็กน้อย ระบบจะตรวจจับและบันทึกคะแนน',
+                foundOneHint: 'ตรวจพบ 1 ชิ้น:',
+                foundMany: n => `พบขยะ ${n} ชิ้น! (+${n} คะแนน)`,
+                sortMany: n => `🎯 แยกทิ้งตามกรอบสีทั้ง ${n} ชิ้น`,
+                campusLead: 'วันนี้ชาวสยามเทคแยกขยะไปแล้ว',
+                campusNone: 'ยังไม่มีใครเริ่มเลย มาเป็นคนแรกของวันนี้กัน! 🚀',
+                campusMine: n => `คุณร่วมด้วย ${n} ชิ้นวันนี้ 💚`,
+                campusJoin: 'มาร่วมเพิ่มตัวเลขนี้ด้วยกันนะ!',
+                missionLabel: 'ภารกิจวันนี้',
+                missionDoneLabel: 'ภารกิจวันนี้สำเร็จแล้ว! 🎉',
+                missionDoneText: 'เก่งมาก! พรุ่งนี้มาแยกขยะกันอีกนะ',
+                missionText: '',
+                missionToast: '🎯 ภารกิจวันนี้สำเร็จ! เก่งมาก',
+                logoutConfirm: 'ต้องการออกจากระบบ?',
+                profileTitle: '👤 โปรไฟล์ผู้ใช้งาน',
+                tierUpSub: 'ยินดีด้วย! ปลดล็อกระดับใหม่แล้ว',
+                emailNudge: '📧 แตะรูปโปรไฟล์ > ตั้งค่าอีเมล เพื่อใช้กู้รหัสผ่านได้',
+                emailMissing: '⚠️ ยังไม่ได้ผูกอีเมล (ต้องใช้ตอนลืมรหัสผ่าน)',
+                guideHint: '📘 ไม่แน่ใจว่า AI ถูกไหม? ดูคู่มือแยกขยะ',
+                notWasteAlert: 'อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ!',
+                tips: TIPS
+            },
+            teacher: {
+                idLabel: 'เลขประจำตัวอาจารย์',
+                unit: 'รายการ',
+                snapPrompt: 'กดปุ่มถ่ายภาพเพื่อเริ่มการสแกน',
+                analyzing: 'ระบบกำลังวิเคราะห์ภาพ...',
+                scanning: 'ระบบกำลังวิเคราะห์...',
+                notWaste: 'ไม่พบขยะในภาพ กรุณาถ่ายภาพใหม่',
+                livingHint: '⛔ ตรวจพบบุคคลหรือสัตว์ในภาพ กรุณาถ่ายเฉพาะขยะ',
+                noWasteHint: '⛔ ไม่พบขยะในภาพ กรุณาจัดวางขยะให้ชัดเจนแล้วถ่ายภาพใหม่',
+                defaultHint: 'วางขยะตั้งแต่ 1 รายการขึ้นไปในกรอบ แล้วกดถ่ายภาพ',
+                camTitle: 'แตะเพื่อถ่ายภาพ (รองรับหลายรายการพร้อมกัน)',
+                camSub: 'กรุณาวางขยะแยกห่างกันเล็กน้อย ระบบจะตรวจจับและบันทึกผลโดยอัตโนมัติ',
+                foundOneHint: 'ตรวจพบ 1 รายการ:',
+                foundMany: n => `ตรวจพบขยะ ${n} รายการ (+${n} คะแนน)`,
+                sortMany: n => `🎯 กรุณาคัดแยกตามกรอบสีทั้ง ${n} รายการ`,
+                campusLead: 'วันนี้บุคลากรและนักศึกษาสยามเทคคัดแยกขยะแล้ว',
+                campusNone: 'ยังไม่มีการบันทึกในวันนี้',
+                campusMine: n => `ท่านร่วมคัดแยก ${n} รายการในวันนี้`,
+                campusJoin: 'ขอเชิญร่วมเป็นแบบอย่างในการคัดแยกขยะ',
+                missionLabel: 'เป้าหมายประจำวัน',
+                missionDoneLabel: 'บรรลุเป้าหมายประจำวันแล้ว',
+                missionDoneText: 'ขอบคุณที่ร่วมเป็นแบบอย่างในการคัดแยกขยะ',
+                missionText: 'คัดแยกขยะอย่างน้อย 1 รายการในวันนี้',
+                missionToast: '✅ บรรลุเป้าหมายประจำวันแล้ว ขอบคุณที่ร่วมคัดแยกขยะ',
+                logoutConfirm: 'ยืนยันการออกจากระบบ',
+                profileTitle: '👤 ข้อมูลส่วนตัว',
+                tierUpSub: 'ขอแสดงความยินดี ท่านได้รับการรับรองในระดับใหม่',
+                emailNudge: '📧 กรุณาตั้งค่าอีเมลในหน้าข้อมูลส่วนตัว เพื่อใช้กู้คืนรหัสผ่าน',
+                emailMissing: '⚠️ ยังไม่ได้ตั้งค่าอีเมล (จำเป็นสำหรับการกู้คืนรหัสผ่าน)',
+                guideHint: '📘 ตรวจสอบความถูกต้องกับคู่มือการคัดแยกขยะ',
+                notWasteAlert: 'ไม่พบขยะในภาพ กรุณาถ่ายภาพใหม่',
+                tips: TIPS_FORMAL
+            }
+        };
+
+        // ข้อความหน้าเข้าสู่ระบบ ตามประเภทผู้ใช้ที่เลือก
+        const AUTH_TEXTS = {
+            student: {
+                loginNote: 'เข้าสู่ระบบสำหรับนักศึกษา',
+                regLink: 'สมัครสมาชิกใหม่',
+                regTitle: 'สมัครสมาชิกนักศึกษา',
+                avatarHint: 'แตะเพื่อใส่รูปโปรไฟล์ (ถ้ามี)',
+                idPh: 'รหัสนักศึกษา',
+                namePh: 'ชื่อ-นามสกุล',
+                emailPh: 'อีเมลวิทยาลัย (เช่น 68xxxxxx@' + STUDENT_EMAIL_DOMAIN + ')',
+                emailNote: 'ใช้รับรหัส OTP ตอนลืมรหัสผ่าน',
+                regBtn: 'ลงทะเบียน',
+                fgNote: 'กรอกชื่อผู้ใช้และอีเมลวิทยาลัยที่ผูกกับบัญชีไว้ ระบบจะส่งรหัส OTP 6 หลักไปทางอีเมล'
+            },
+            teacher: {
+                loginNote: 'เข้าสู่ระบบสำหรับอาจารย์และบุคลากร',
+                regLink: 'ลงทะเบียนอาจารย์ใหม่',
+                regTitle: 'ลงทะเบียนอาจารย์ / บุคลากร',
+                avatarHint: 'แตะเพื่อเพิ่มรูปโปรไฟล์ (ไม่บังคับ)',
+                idPh: 'เลขประจำตัวอาจารย์',
+                namePh: 'ชื่อ-นามสกุล (ไม่ต้องระบุคำนำหน้า)',
+                emailPh: 'อีเมลอาจารย์ (เช่น somchai.k@' + TEACHER_EMAIL_DOMAIN + ')',
+                emailNote: 'ใช้สำหรับรับรหัส OTP เมื่อต้องการกู้คืนรหัสผ่าน',
+                regBtn: 'ยืนยันการลงทะเบียน',
+                fgNote: 'กรุณากรอกชื่อผู้ใช้และอีเมลที่ลงทะเบียนไว้ ระบบจะจัดส่งรหัส OTP 6 หลักไปยังอีเมลของท่าน'
+            }
+        };
         
         const WASTE_MAP = {
             "General Waste": { th: "ขยะทั่วไป", binText: "ถังสีน้ำเงิน", color: "#2196F3", hint: "ย่อยสลายยาก/เปื้อน" },
             "Compostable Waste": { th: "ขยะเปียก", binText: "ถังสีเขียว", color: "#4CAF50", hint: "เศษอาหาร/ใบไม้" },
             "Recyclable Waste": { th: "ขยะรีไซเคิล", binText: "ถังสีเหลือง", color: "#FFC107", hint: "ขวด/กระดาษ/แก้ว/โลหะ" },
             "Hazardous Waste": { th: "ขยะอันตราย", binText: "ถังสีแดง", color: "#F44336", hint: "ขยะติดเชื้อ/ถ่าน/สารเคมี/อิเล็กทรอนิกส์" },
-            "Non Waste": { th: "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ", binText: "ห้ามทิ้ง", color: "#9E9E9E", hint: "⛔ นี่ไม่ใช่ขยะ ถ่ายขยะจริงๆ มานะครับ" },
-            "Living Being": { th: "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ", binText: "ห้ามทิ้ง", color: "#E91E63", hint: "⛔ แหน่ะ! อย่าแกล้งถ่ายคนหรือสัตว์สิ ถ่ายขยะจริงๆ มานะ" }
+            "Non Waste": { th: "ไม่ใช่ขยะ", binText: "ห้ามทิ้ง", color: "#9E9E9E", hint: "⛔ ไม่ใช่ขยะ" },
+            "Living Being": { th: "ไม่ใช่ขยะ", binText: "ห้ามทิ้ง", color: "#E91E63", hint: "⛔ สิ่งมีชีวิต" }
         };
 
         // ประเภทที่ผู้ใช้เลือกได้ตอนแก้ไข (และแท็บในคู่มือ)
@@ -1130,10 +1263,10 @@
         };
 
         const LIVING_CLASSES = {
-            "person": "คน (เพื่อน/ครู)",
+            "person": "บุคคล",
             "bird": "นก",
             "cat": "แมว",
-            "dog": "สุนัข (หมา)",
+            "dog": "สุนัข",
             "mouse": "หนู",
             "horse": "ม้า",
             "sheep": "แกะ",
@@ -1265,6 +1398,8 @@
         let cameraStarting = false;
         let isAnalyzing = false;
         let currentUser = null;
+        let currentRole = 'student';     // บทบาทของผู้ใช้ที่ล็อกอินอยู่
+        let authRole = 'student';        // ประเภทผู้ใช้ที่เลือกในหน้าเข้าสู่ระบบ
         let userTotalScore = 0;
         let userDaysInactive = 0;
         let scoreLoaded = false;
@@ -1294,6 +1429,12 @@
         const countAnims = new WeakMap();
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
+        // ดึงข้อความตามบทบาท
+        function T(key) {
+            const d = TEXTS[currentRole] || TEXTS.student;
+            return d[key] !== undefined ? d[key] : TEXTS.student[key];
+        }
+
         function escapeHtml(s) {
             return String(s == null ? '' : s)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -1319,7 +1460,27 @@
             } else {
                 btn.disabled = false;
                 if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+                delete btn.dataset.label;
             }
+        }
+
+        // --- ตรวจอีเมลตามบทบาท ---
+        function emailParts(email) {
+            const m = String(email || '').trim().toLowerCase().match(/^([a-z0-9._%+\-]+)@([a-z0-9.\-]+)$/);
+            return m ? { local: m[1], domain: m[2] } : null;
+        }
+
+        function emailError(email, role) {
+            const p = emailParts(email);
+            const dom = role === 'teacher' ? TEACHER_EMAIL_DOMAIN : STUDENT_EMAIL_DOMAIN;
+            if (!p || p.domain !== dom) return `กรุณาใช้อีเมลของวิทยาลัย (ลงท้ายด้วย @${dom})`;
+            if (role === 'teacher' && !/[a-z]/.test(p.local)) return `อีเมลอาจารย์ต้องเป็นแบบชื่อ เช่น somchai.k@${dom} (ไม่ใช่ตัวเลข)`;
+            return '';
+        }
+
+        function isAnyAllowedEmail(email) {
+            const p = emailParts(email);
+            return !!p && (p.domain === STUDENT_EMAIL_DOMAIN || p.domain === TEACHER_EMAIL_DOMAIN);
         }
 
         // ปิดโปรไฟล์ก่อน แล้วค่อยเปิดหน้าต่างใหม่ (กันหน้าต่างซ้อนกัน)
@@ -1336,6 +1497,10 @@
 
         window.onload = function() {
             initLeaves();
+
+            let savedRole = 'student';
+            try { savedRole = localStorage.getItem(AUTH_ROLE_KEY) || 'student'; } catch (e) {}
+            setAuthRole(savedRole);
 
             const saved = localStorage.getItem('smartBinUser');
             if(saved) { 
@@ -1397,6 +1562,25 @@
         });
 
         // =========================================================================
+        // 🗣️ ปรับข้อความในแอปตามบทบาท
+        // =========================================================================
+        function applyRoleTexts() {
+            const teacher = currentRole === 'teacher';
+            document.body.classList.toggle('teacher-ui', teacher);
+            document.getElementById('dispRole').classList.toggle('hidden', !teacher);
+            document.getElementById('camGuideTitle').textContent = T('camTitle');
+            document.getElementById('camGuideSub').textContent = T('camSub');
+            document.getElementById('hintText').textContent = T('defaultHint');
+            document.getElementById('scanLabelText').textContent = T('scanning');
+            document.getElementById('campusLead').textContent = T('campusLead');
+            document.getElementById('campusUnit').textContent = T('unit');
+            document.getElementById('missionLabel').textContent = T('missionLabel');
+            document.getElementById('guideHintBtn').textContent = T('guideHint');
+            document.getElementById('profileTitle').textContent = T('profileTitle');
+            document.getElementById('tierUpSub').textContent = T('tierUpSub');
+        }
+
+        // =========================================================================
         // 🍃 ใบไม้ลอยพื้นหลัง
         // =========================================================================
         function initLeaves() {
@@ -1422,19 +1606,20 @@
         function startTips() {
             stopTips();
             const badge = document.getElementById('statusText');
-            badge.textContent = 'กดชัตเตอร์เพื่อสแกน';
+            badge.textContent = T('snapPrompt');
             tipShowing = false;
             tipTimer = setInterval(() => {
                 badge.classList.add('fade');
                 setTimeout(() => {
                     if (!tipTimer) return;
+                    const tips = T('tips');
                     if (tipShowing) {
                         badge.classList.remove('tip-mode');
-                        badge.textContent = 'กดชัตเตอร์เพื่อสแกน';
+                        badge.textContent = T('snapPrompt');
                     } else {
                         badge.classList.add('tip-mode');
-                        badge.textContent = '💡 ' + TIPS[tipIdx];
-                        tipIdx = (tipIdx + 1) % TIPS.length;
+                        badge.textContent = '💡 ' + tips[tipIdx % tips.length];
+                        tipIdx = (tipIdx + 1) % tips.length;
                     }
                     tipShowing = !tipShowing;
                     badge.classList.remove('fade');
@@ -1718,8 +1903,8 @@
             const card = document.getElementById('missionCard');
             const pct = Math.min(100, Math.round((m.progress / m.target) * 100));
             document.getElementById('missionIcon').textContent = m.done ? '✅' : (m.icon || '🎯');
-            document.getElementById('missionLabel').textContent = m.done ? 'ภารกิจวันนี้สำเร็จแล้ว! 🎉' : 'ภารกิจวันนี้';
-            document.getElementById('missionText').textContent = m.done ? 'เก่งมาก! พรุ่งนี้มาแยกขยะกันอีกนะ' : m.text;
+            document.getElementById('missionLabel').textContent = m.done ? T('missionDoneLabel') : T('missionLabel');
+            document.getElementById('missionText').textContent = m.done ? T('missionDoneText') : (T('missionText') || m.text);
             document.getElementById('missionCount').textContent = `${m.progress}/${m.target}`;
             document.getElementById('missionFill').style.width = pct + '%';
             card.classList.toggle('done', !!m.done);
@@ -1730,11 +1915,11 @@
 
             const sub = document.getElementById('campusSub');
             if (res.todayTotal === 0) {
-                sub.textContent = 'ยังไม่มีใครเริ่มเลย มาเป็นคนแรกของวันนี้กัน! 🚀';
+                sub.textContent = T('campusNone');
             } else if (res.myToday > 0) {
-                sub.textContent = `คุณร่วมด้วย ${fmtNum(res.myToday)} ชิ้นวันนี้ 💚`;
+                sub.textContent = T('campusMine')(fmtNum(res.myToday));
             } else {
-                sub.textContent = 'มาร่วมเพิ่มตัวเลขนี้ด้วยกันนะ!';
+                sub.textContent = T('campusJoin');
             }
 
             const m = res.mission;
@@ -1744,7 +1929,7 @@
 
             if (fromSave && m && m.done && !wasDone && campusState) {
                 setTimeout(() => {
-                    showToast('🎯 ภารกิจวันนี้สำเร็จ! เก่งมาก');
+                    showToast(T('missionToast'));
                     fireConfetti('#F59E0B', true);
                 }, 2900);
             }
@@ -1771,7 +1956,7 @@
         // =========================================================================
         // 🧭 ทัวร์แนะนำการใช้งาน
         // =========================================================================
-        const TOUR_STEPS = [
+        const TOUR_STEPS_STUDENT = [
             { el: 'binLid', title: 'สวัสดี! เราชื่อน้องถัง', body: 'เราจะช่วยดูว่าขยะชิ้นไหนต้องทิ้งลงถังสีอะไร เคล็ดลับแยกขยะดี ๆ จะขึ้นในป้ายตรงนี้ด้วยนะ' },
             { el: 'cameraFrame', title: 'กล้องของน้องถัง', body: 'วางขยะให้อยู่ในกรอบ จะวางหลายชิ้นพร้อมกันก็ได้ แค่วางห่างกันนิดนึง' },
             { el: 'btnSnap', title: 'กดชัตเตอร์', body: 'กดปุ่มนี้ (หรือแตะที่ภาพ) แล้วรอ 2–5 วินาที ถ้า AI ทายผิด กด ✏️ แก้ได้ แล้วกด ✔️ เพื่อเก็บคะแนน' },
@@ -1784,6 +1969,23 @@
             { el: 'mainCertBtn', title: 'ประกาศนียบัตร', body: 'สะสมคะแนนถึงเกณฑ์ ดาวน์โหลดประกาศนียบัตรได้ทันที พร้อมแล้วไปแยกขยะกันเลย!' }
         ];
 
+        const TOUR_STEPS_TEACHER = [
+            { el: 'binLid', title: 'ระบบผู้ช่วยคัดแยกขยะ', body: 'ระบบจะช่วยระบุประเภทขยะและถังที่ถูกต้อง พร้อมแสดงข้อแนะนำการคัดแยกในป้ายนี้' },
+            { el: 'cameraFrame', title: 'พื้นที่ถ่ายภาพ', body: 'กรุณาวางขยะให้อยู่ในกรอบ สามารถวางได้หลายรายการพร้อมกัน โดยเว้นระยะห่างเล็กน้อย' },
+            { el: 'btnSnap', title: 'ปุ่มถ่ายภาพ', body: 'กดปุ่มนี้หรือแตะที่ภาพ แล้วรอประมาณ 2–5 วินาที หากผลการจำแนกไม่ถูกต้อง สามารถกด ✏️ เพื่อแก้ไข และกด ✔️ เพื่อบันทึก' },
+            { el: 'btnGuide', title: 'คู่มือการคัดแยกขยะ', body: 'ข้อมูลประเภทขยะทั้ง 4 ถัง พร้อมระบบค้นหาตามชื่อขยะ' },
+            { el: 'btnHistory', title: 'ประวัติการบันทึก', body: 'แสดงรายการคัดแยกขยะที่ท่านบันทึกไว้' },
+            { el: 'btnRank', title: 'ทำเนียบผู้นำ', body: 'แสดงอันดับผู้มีส่วนร่วมในการคัดแยกขยะสูงสุดของวิทยาลัย' },
+            { el: 'campusTicker', title: 'ภาพรวมของวิทยาลัย', body: 'จำนวนรายการคัดแยกขยะของทั้งวิทยาลัยในวันนี้ ระบบจะปรับปรุงข้อมูลโดยอัตโนมัติ' },
+            { el: 'missionCard', title: 'เป้าหมายประจำวัน', body: 'คัดแยกขยะอย่างน้อย 1 รายการต่อวัน เป้าหมายจะเริ่มต้นใหม่ทุกเวลา 00.00 น.' },
+            { el: 'userBadgeBox', title: 'ข้อมูลส่วนตัว', body: 'แตะเพื่อดูคะแนน สถิติ เปลี่ยนรูปโปรไฟล์ เปลี่ยนรหัสผ่าน หรือตั้งค่าอีเมลสำหรับกู้คืนรหัสผ่าน' },
+            { el: 'mainCertBtn', title: 'ประกาศนียบัตร', body: 'เมื่อคะแนนถึงเกณฑ์ ท่านสามารถดาวน์โหลดประกาศนียบัตรได้ทันที' }
+        ];
+
+        function tourSteps() {
+            return currentRole === 'teacher' ? TOUR_STEPS_TEACHER : TOUR_STEPS_STUDENT;
+        }
+
         function startTour() {
             if (!isAppVisible()) return;
             tourActive = true;
@@ -1791,23 +1993,24 @@
             document.getElementById('tourBlock').classList.remove('hidden');
             document.getElementById('tourSpot').classList.remove('hidden');
             document.getElementById('tourTip').classList.remove('hidden');
-            document.getElementById('tourDots').innerHTML = TOUR_STEPS.map(() => '<span></span>').join('');
+            document.getElementById('tourDots').innerHTML = tourSteps().map(() => '<span></span>').join('');
             showTourStep(0);
         }
 
         async function showTourStep(i) {
-            while (i < TOUR_STEPS.length) {
-                const t = document.getElementById(TOUR_STEPS[i].el);
+            const steps = tourSteps();
+            while (i < steps.length) {
+                const t = document.getElementById(steps[i].el);
                 if (t && t.offsetParent !== null) break;
                 i++;
             }
-            if (i >= TOUR_STEPS.length) { endTour(); return; }
+            if (i >= steps.length) { endTour(); return; }
             tourIndex = i;
 
-            const step = TOUR_STEPS[i];
+            const step = steps[i];
             document.getElementById('tourTitle').textContent = step.title;
             document.getElementById('tourBody').textContent = step.body;
-            document.getElementById('tourNext').textContent = (i === TOUR_STEPS.length - 1) ? 'เริ่มใช้งาน!' : 'ถัดไป';
+            document.getElementById('tourNext').textContent = (i === steps.length - 1) ? 'เริ่มใช้งาน' : 'ถัดไป';
             document.querySelectorAll('#tourDots span').forEach((d, k) => d.classList.toggle('on', k === i));
 
             const target = document.getElementById(step.el);
@@ -1819,7 +2022,7 @@
 
         function positionTour() {
             if (!tourActive) return;
-            const step = TOUR_STEPS[tourIndex];
+            const step = tourSteps()[tourIndex];
             const target = step && document.getElementById(step.el);
             if (!target) return;
 
@@ -1849,7 +2052,7 @@
         }
 
         function nextTourStep() {
-            if (tourIndex >= TOUR_STEPS.length - 1) { endTour(); return; }
+            if (tourIndex >= tourSteps().length - 1) { endTour(); return; }
             showTourStep(tourIndex + 1);
         }
 
@@ -1870,7 +2073,7 @@
             } else if (currentUser && !currentUser.email) {
                 // เตือนบัญชีที่ยังไม่ผูกอีเมล
                 setTimeout(() => {
-                    if (!tourActive && isAppVisible()) showToast('📧 แตะรูปโปรไฟล์ > ตั้งค่าอีเมล เพื่อใช้กู้รหัสผ่านได้', 4500);
+                    if (!tourActive && isAppVisible()) showToast(T('emailNudge'), 4500);
                 }, 3500);
             }
         }
@@ -1905,7 +2108,7 @@
 
             // ปุ่มประกาศนียบัตร 2 บรรทัด
             const line1 = currentTier ? 'ดาวน์โหลดประกาศนียบัตร' : 'ดูเกณฑ์การรับรองมาตรฐาน';
-            const line2 = currentTier ? `ระดับ${currentTier.name}` : 'ESG Tiers • แยกขยะชิ้นแรกเพื่อปลดล็อก';
+            const line2 = currentTier ? `ระดับ${currentTier.name}` : 'ESG Tiers • บันทึกรายการแรกเพื่อปลดล็อก';
             ['main', 'modal'].forEach(prefix => {
                 document.getElementById(prefix + 'CertLine1').textContent = line1;
                 document.getElementById(prefix + 'CertLine2').textContent = line2;
@@ -1926,17 +2129,17 @@
             if (userDaysInactive >= 3 && score > 0) {
                 streakCard.classList.remove('active');
                 streakTitle.innerText = 'ขาดการบันทึกความต่อเนื่อง';
-                streakDesc.innerText = `ไม่ได้บันทึกมา ${userDaysInactive} วัน — คัดแยกขยะ 1 ชิ้นเพื่อจุดไฟความต่อเนื่องอีกครั้ง`;
+                streakDesc.innerText = `ไม่ได้บันทึกมา ${userDaysInactive} วัน — คัดแยกขยะ 1 รายการเพื่อกลับสู่สถานะต่อเนื่อง`;
                 rankTitle.innerHTML = `ระดับปัจจุบัน: <span class="text-secondary">${highestTier.name} (${highestTier.nameEn})</span>`;
             } else if (score === 0) {
                 streakCard.classList.remove('active');
                 streakTitle.innerText = 'ยังไม่มีประวัติการบันทึก';
-                streakDesc.innerText = 'เริ่มต้นคัดแยกขยะชิ้นแรกเพื่อจุดไฟและรับการรับรองมาตรฐานก้าวแรก';
+                streakDesc.innerText = 'เริ่มต้นคัดแยกขยะรายการแรกเพื่อรับการรับรองมาตรฐานขั้นแรก';
                 rankTitle.innerText = 'ระดับการรับรอง: ยังไม่เข้าเกณฑ์ (ต้องมีอย่างน้อย 1 คะแนน)';
             } else {
                 streakCard.classList.add('active');
                 streakTitle.innerText = 'ความต่อเนื่องระดับมาตรฐาน (Active)';
-                streakDesc.innerText = 'ท่านรักษามาตรฐานการคัดแยกอย่างสม่ำเสมอตามเกณฑ์ ESG';
+                streakDesc.innerText = 'รักษามาตรฐานการคัดแยกอย่างสม่ำเสมอตามเกณฑ์ ESG';
                 rankTitle.innerHTML = `ระดับการรับรอง: <span style="color:#0F172A; font-weight:800;">${highestTier.name} (${highestTier.nameEn})</span>`;
             }
 
@@ -1954,6 +2157,27 @@
         // ==========================================
         // 🔐 ระบบ AUTHENTICATION & LOGIN
         // ==========================================
+        function setAuthRole(role) {
+            authRole = role === 'teacher' ? 'teacher' : 'student';
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.toggle('active', b.dataset.role === authRole));
+            document.getElementById('authCard').classList.toggle('teacher-mode', authRole === 'teacher');
+
+            const A = AUTH_TEXTS[authRole];
+            document.getElementById('loginNote').textContent = A.loginNote;
+            document.getElementById('regLinkText').textContent = A.regLink;
+            document.getElementById('regTitle').textContent = A.regTitle;
+            document.getElementById('regAvatarHint').textContent = A.avatarHint;
+            document.getElementById('regId').placeholder = A.idPh;
+            document.getElementById('regName').placeholder = A.namePh;
+            document.getElementById('regEmail').placeholder = A.emailPh;
+            document.getElementById('regEmailNote').textContent = A.emailNote;
+            document.getElementById('fgNote').textContent = A.fgNote;
+            const regBtn = document.getElementById('btnRegSubmit');
+            if (!regBtn.disabled) regBtn.textContent = A.regBtn;
+
+            try { localStorage.setItem(AUTH_ROLE_KEY, authRole); } catch (e) {}
+        }
+
         function showAuthForm(which) {
             const map = { login: 'loginForm', register: 'regForm', forgot: 'forgotForm' };
             Object.keys(map).forEach(k => {
@@ -1995,6 +2219,12 @@
 
             google.script.run
                 .withSuccessHandler(res => { 
+                    if (res && res.success && res.role === 'admin') {
+                        // 🛠️ ผู้ดูแลระบบ -> ไปหน้า admin.html
+                        try { sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ token: res.token, at: Date.now() })); } catch (e) {}
+                        location.href = 'admin.html';
+                        return;
+                    }
                     setBtnLoading(btn, false);
                     if (res && res.success) { 
                         currentUser = res; 
@@ -2020,6 +2250,7 @@
                 studentId: document.getElementById('regId').value.trim(), 
                 name: document.getElementById('regName').value.trim(), 
                 email: document.getElementById('regEmail').value.trim().toLowerCase(),
+                role: authRole,
                 profileImage: '' 
             }; 
 
@@ -2027,14 +2258,16 @@
                 alert("กรุณากรอกข้อมูลให้ครบทุกช่อง"); 
                 return; 
             } 
+            if (data.username.toLowerCase() === 'admin') {
+                alert("ชื่อผู้ใช้นี้สงวนไว้สำหรับระบบ กรุณาใช้ชื่ออื่น");
+                return;
+            }
             if (data.password.length < MIN_PASSWORD_LENGTH) {
                 alert(`รหัสผ่านต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`);
                 return;
             }
-            if (!EMAIL_REGEX.test(data.email)) {
-                alert("กรุณาใช้อีเมลของวิทยาลัย (ลงท้ายด้วย @siamtech.ac.th)");
-                return;
-            }
+            const er = emailError(data.email, data.role);
+            if (er) { alert(er); return; }
 
             setBtnLoading(btn, true, 'กำลังบันทึก...');
 
@@ -2064,7 +2297,7 @@
         }
 
         // =========================================================================
-        // 🔑 ลืมรหัสผ่าน: OTP ทางอีเมล @siamtech.ac.th
+        // 🔑 ลืมรหัสผ่าน: OTP ทางอีเมล
         // =========================================================================
         function backToOtpStep1() {
             document.getElementById('fgStep1').classList.remove('hidden');
@@ -2100,7 +2333,7 @@
             const em = isResend ? otpEmail : document.getElementById('fgEmail').value.trim().toLowerCase();
 
             if (!u || !em) { alert('กรุณากรอกชื่อผู้ใช้และอีเมล'); return; }
-            if (!EMAIL_REGEX.test(em)) { alert('อีเมลต้องลงท้ายด้วย @siamtech.ac.th'); return; }
+            if (!isAnyAllowedEmail(em)) { alert('กรุณาใช้อีเมลของวิทยาลัย'); return; }
 
             const sendBtn = document.getElementById('btnSendOtp');
             const resendBtn = document.getElementById('btnResendOtp');
@@ -2121,7 +2354,7 @@
                         document.getElementById('fgStep2').classList.remove('hidden');
                         const mins = Math.round((res.expiresIn || 600) / 60);
                         document.getElementById('fgOtpInfo').innerHTML =
-                            `📧 ส่งรหัส OTP ไปที่ <b>${escapeHtml(res.maskedEmail)}</b> แล้ว (ใช้ได้ ${mins} นาที)<br>ถ้าไม่เจอในกล่องจดหมาย ลองดูในโฟลเดอร์ <b>สแปม / จดหมายขยะ</b>`;
+                            `📧 ส่งรหัสไปที่ <b>${escapeHtml(res.maskedEmail)}</b> แล้ว (ใช้ได้ ${mins} นาที)<br>หากไม่พบในกล่องจดหมาย กรุณาตรวจสอบโฟลเดอร์ <b>สแปม / จดหมายขยะ</b>`;
                         document.getElementById('fgOtp').value = '';
                         document.getElementById('fgOtp').focus();
                         startOtpCooldown(res.cooldown || 60);
@@ -2219,7 +2452,9 @@
 
         // 📧 ตั้งค่าอีเมล (จากหน้าโปรไฟล์)
         function openEmailSettings() {
+            const dom = currentRole === 'teacher' ? TEACHER_EMAIL_DOMAIN : STUDENT_EMAIL_DOMAIN;
             document.getElementById('emInput').value = (currentUser && currentUser.email) || '';
+            document.getElementById('emInput').placeholder = currentRole === 'teacher' ? `อีเมลอาจารย์ (เช่น somchai.k@${dom})` : `อีเมล (@${dom})`;
             document.getElementById('emPass').value = '';
             swapFromProfile(() => new bootstrap.Modal(document.getElementById('emailModal')).show());
         }
@@ -2230,7 +2465,8 @@
             const btn = document.getElementById('btnSaveEmail');
 
             if (!em || !pw) { alert('กรุณากรอกอีเมลและรหัสผ่านปัจจุบัน'); return; }
-            if (!EMAIL_REGEX.test(em)) { alert('อีเมลต้องลงท้ายด้วย @siamtech.ac.th'); return; }
+            const er = emailError(em, currentRole);
+            if (er) { alert(er); return; }
 
             setBtnLoading(btn, true, 'กำลังบันทึก...');
             google.script.run
@@ -2254,7 +2490,7 @@
         }
 
         function logout() { 
-            if(confirm("ต้องการออกจากระบบ?")) { 
+            if(confirm(T('logoutConfirm'))) { 
                 stopLiveVideo();
                 stopTips();
                 clearInterval(campusTimer);
@@ -2347,7 +2583,7 @@
             new bootstrap.Modal(document.getElementById('profileModal')).show(); 
             document.getElementById('modalProfileImg').src = currentUser.avatar || defaultAvatar; 
             document.getElementById('modalProfileName').innerText = currentUser.name; 
-            document.getElementById('modalStudentId').innerText = "รหัสนักศึกษา: " + currentUser.studentId; 
+            document.getElementById('modalStudentId').innerText = T('idLabel') + ": " + currentUser.studentId; 
 
             const emailEl = document.getElementById('modalEmail');
             if (currentUser.email) {
@@ -2355,7 +2591,7 @@
                 emailEl.classList.remove('missing');
                 emailEl.classList.add('text-muted');
             } else {
-                emailEl.textContent = '⚠️ ยังไม่ได้ผูกอีเมล (ต้องใช้ตอนลืมรหัสผ่าน)';
+                emailEl.textContent = T('emailMissing');
                 emailEl.classList.add('missing');
                 emailEl.classList.remove('text-muted');
             }
@@ -2369,14 +2605,14 @@
 
                 let html = ''; 
                 if (!data.breakdown || data.breakdown.length === 0) { 
-                    html = '<div class="text-center text-muted small py-2">ยังไม่มีประวัติการทิ้งขยะ</div>'; 
+                    html = '<div class="text-center text-muted small py-2">ยังไม่มีประวัติการคัดแยกขยะ</div>'; 
                 } else { 
                     data.breakdown.forEach(item => { 
                         let color = "#999"; 
                         for(let key in WASTE_MAP) { 
                             if(WASTE_MAP[key].th === item.category) { color = WASTE_MAP[key].color; break; } 
                         } 
-                        html += `<div class="stat-bar-container"><div class="stat-label"><span>${escapeHtml(item.category)}</span><span>${item.count} ชิ้น (${item.percent}%)</span></div><div class="progress"><div class="progress-bar" role="progressbar" style="width: ${item.percent}%; background-color: ${color};"></div></div></div>`; 
+                        html += `<div class="stat-bar-container"><div class="stat-label"><span>${escapeHtml(item.category)}</span><span>${item.count} ${T('unit')} (${item.percent}%)</span></div><div class="progress"><div class="progress-bar" role="progressbar" style="width: ${item.percent}%; background-color: ${color};"></div></div></div>`; 
                     }); 
                 } 
                 document.getElementById('statsContent').innerHTML = html; 
@@ -2632,9 +2868,9 @@
                 ctx.restore();
             }
 
-            // พื้นขาวเบลอด้านหลังข้อความระดับ (วาดก่อนข้อความทั้งหมด จะได้ไม่บังรหัสนักศึกษา)
+            // พื้นขาวเบลอด้านหลังข้อความระดับ (วาดก่อนข้อความทั้งหมด จะได้ไม่บังรหัส)
             const backdropCY = 670;
-            ctx.save();
+                        ctx.save();
             const whiteBackdrop = ctx.createRadialGradient(W / 2, backdropCY, 60, W / 2, backdropCY, 540);
             whiteBackdrop.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
             whiteBackdrop.addColorStop(0.55, 'rgba(255, 255, 255, 0.82)');
@@ -2765,7 +3001,7 @@
             ctx.stroke();
             ctx.restore();
 
-            fillGlowingText(`รหัสนักศึกษา: ${currentUser ? currentUser.studentId : '-'}`, W / 2, 558, '600 26px "Prompt", sans-serif', '#0F172A', 12);
+            fillGlowingText(`${T('idLabel')}: ${currentUser ? currentUser.studentId : '-'}`, W / 2, 558, '600 26px "Prompt", sans-serif', '#0F172A', 12);
 
             let nextTextY = 625;
 
@@ -2826,6 +3062,8 @@
 
         // --- SHOW APP & CAMERA ---
         function showApp() { 
+            currentRole = currentUser && currentUser.role === 'teacher' ? 'teacher' : 'student';
+            applyRoleTexts();
             document.getElementById('authSection').classList.add('hidden'); 
             document.getElementById('appSection').classList.remove('hidden'); 
             document.getElementById('dispName').innerText = currentUser.name; 
@@ -3052,7 +3290,7 @@
 
             const ageMs = Date.now() - (file.lastModified || 0);
             if (!file.lastModified || ageMs > FRESH_PHOTO_MAX_AGE_MS || ageMs < -60000) {
-                alert("⛔ ต้องเป็นรูปที่เพิ่งถ่ายจากกล้องเท่านั้น (ไม่เกิน 2 นาที)\nไม่สามารถใช้รูปเก่าจากแกลลอรี่ได้ครับ");
+                alert("⛔ ต้องเป็นรูปที่เพิ่งถ่ายจากกล้องเท่านั้น (ไม่เกิน 2 นาที)\nไม่สามารถใช้รูปเก่าจากแกลลอรี่ได้");
                 return;
             }
 
@@ -3076,7 +3314,7 @@
             };
             img.onerror = function() {
                 URL.revokeObjectURL(url);
-                alert("❌ อ่านรูปไม่สำเร็จ ลองถ่ายใหม่อีกครั้งครับ");
+                alert("❌ อ่านรูปไม่สำเร็จ กรุณาถ่ายใหม่อีกครั้ง");
             };
             img.src = url;
         }
@@ -3142,11 +3380,11 @@
                 const info = WASTE_MAP[it.className] || WASTE_MAP["General Waste"];
                 const [x, y, w, h] = it.bbox;
                 const L = x * s + ox;
-                const T = y * s + oy;
+                const T0 = y * s + oy;
                 const l = Math.max(2, L);
-                const t = Math.max(2, T);
+                const t = Math.max(2, T0);
                 const r = Math.min(fw - 2, L + w * s);
-                const b = Math.min(fh - 2, T + h * s);
+                const b = Math.min(fh - 2, T0 + h * s);
                 if (r - l < 8 || b - t < 8) return;
 
                 const el = document.createElement('div');
@@ -3189,7 +3427,7 @@
                         return null;
                     }
                     if (res.isLivingBeing) {
-                        return { living: res.livingName || 'สิ่งมีชีวิต/หน้าคน', items: [] };
+                        return { living: res.livingName || 'สิ่งมีชีวิต/บุคคล', items: [] };
                     }
                     const items = (res.items || []).slice(0, 6).map(it => {
                         const [ymin, xmin, ymax, xmax] = it.box_2d || [150, 150, 850, 850];
@@ -3436,7 +3674,7 @@
             overlay.classList.add('hidden');
             document.getElementById('camStatus').classList.add('hidden');
             document.getElementById('liveBadge').classList.add('hidden');
-            document.getElementById('statusText').innerText = "กำลังสแกนและตีกรอบขยะ...";
+            document.getElementById('statusText').innerText = T('analyzing');
             startScanFx();
             setMood('thinking');
         }
@@ -3466,7 +3704,7 @@
             document.getElementById('guideHintBtn').classList.remove('hidden');
 
             if (isLivingBeing || currentDetectedItems.length === 0) {
-                badge.innerText = "อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ";
+                badge.innerText = T('notWaste');
                 badge.style.color = "#D32F2F";
                 lid.style.backgroundColor = isLivingBeing ? "#E91E63" : "#9E9E9E";
                 setMood(isLivingBeing ? 'angry' : 'sad');
@@ -3476,8 +3714,8 @@
                 colorBar.classList.remove('hidden');
 
                 hint.innerText = isLivingBeing 
-                    ? `⛔ แหน่ะ! อย่าแกล้งกันสิ (${extraInfo})` 
-                    : `⛔ ไม่พบขยะในภาพ ลองวางขยะให้ชัดแล้วถ่ายใหม่นะครับ (${extraInfo})`;
+                    ? `${T('livingHint')} (${extraInfo})` 
+                    : `${T('noWasteHint')} (${extraInfo})`;
                 confirmBtn.disabled = true;
                 fixBtn.classList.add('hidden');
                 pointsBadge.classList.add('hidden');
@@ -3494,7 +3732,7 @@
                 colorBar.innerText = `ทิ้งลง${info.binText}`;
                 colorBar.classList.remove('hidden');
 
-                hint.innerText = `ตรวจพบ 1 ชิ้น: ${item.itemName} • ${info.hint} (${extraInfo})`;
+                hint.innerText = `${T('foundOneHint')} ${item.itemName} • ${info.hint} (${extraInfo})`;
                 confirmBtn.disabled = false;
                 fixBtn.classList.remove('hidden');
                 pointsBadge.innerText = "+1";
@@ -3503,7 +3741,7 @@
                 const count = currentDetectedItems.length;
                 const firstInfo = WASTE_MAP[currentDetectedItems[0].className];
 
-                badge.innerText = `พบขยะ ${count} ชิ้น! (+${count} คะแนน)`;
+                badge.innerText = T('foundMany')(count);
                 badge.style.color = "#15803D";
                 lid.style.backgroundColor = firstInfo.color;
                 setMood('happy');
@@ -3514,7 +3752,7 @@
                 }).join(' | ');
 
                 colorBar.style.backgroundColor = "#1E293B";
-                colorBar.innerText = `🎯 แยกทิ้งตามกรอบสีทั้ง ${count} ชิ้น`;
+                colorBar.innerText = T('sortMany')(count);
                 colorBar.classList.remove('hidden');
 
                 hint.innerText = `${summaryList} (${extraInfo})`;
@@ -3600,7 +3838,7 @@
             
             document.getElementById('statusText').style.color = "#333";
             document.getElementById('binLid').style.backgroundColor = "#4CAF50";
-            document.getElementById('hintText').innerText = "วางขยะ 1 หรือหลายชิ้น แล้วกดถ่ายเลย!";
+            document.getElementById('hintText').innerText = T('defaultHint');
             document.getElementById('colorBar').classList.add('hidden');
             document.getElementById('confirmPointsBadge').classList.add('hidden');
             document.getElementById('btnFix').classList.add('hidden');
@@ -3622,7 +3860,7 @@
         // ✅ ยืนยันบันทึก: น้องถังงับขยะ + คะแนนลอยไปเข้ากระเป๋า (เล่นพร้อมกับการส่งข้อมูล)
         async function confirmSave() {
             if (!currentDetectedItems || currentDetectedItems.length === 0) { 
-                alert("อาจจะยังน้า ให้ถ่ายขยะจริงๆมานะ!"); 
+                alert(T('notWasteAlert')); 
                 return; 
             }
             setActionButtonsDisabled(true);
@@ -3678,7 +3916,7 @@
                 refreshCertificateButtons(newScore, 0);
                 const afterTier = getRankInfo(newScore).currentTier;
 
-                showToast(res.message || '✅ บันทึกสำเร็จ!');
+                showToast(res.message || '✅ บันทึกสำเร็จ');
                 resetCamera();
 
                 if (wasLoaded && afterTier && (!beforeTier || beforeTier.id !== afterTier.id)) {
@@ -3711,7 +3949,7 @@
                 if(d && d.length > 0) {
                     d.forEach(i => h += `<div class="p-2 border-bottom d-flex justify-content-between"><span>${escapeHtml(i.category)}</span><small class="text-muted">${escapeHtml(i.time)}</small></div>`); 
                 }
-                document.getElementById('historyList').innerHTML = h || '<div class="text-center p-3 text-muted">ยังไม่มีประวัติการทิ้งขยะ</div>'; 
+                document.getElementById('historyList').innerHTML = h || '<div class="text-center p-3 text-muted">ยังไม่มีประวัติการคัดแยกขยะ</div>'; 
             }).getUserHistory(currentUser.studentId); 
         }
         
@@ -3731,7 +3969,8 @@
                 if(data.length > 3) {
                     html += '<div class="bg-white p-2">';
                     data.slice(3).forEach((u, i) => {
-                        html += `<div class="normal-rank-item"><div class="rank-num">${i+4}</div><div class="flex-grow-1 ms-3" style="font-weight:600; color:#555;">${escapeHtml(u.name)}</div><div style="font-weight:bold; color:#f57c00;">🔥 ${u.score}</div></div>`;
+                        const icon = u.role === 'teacher' ? '👩‍🏫 ' : '';
+                        html += `<div class="normal-rank-item"><div class="rank-num">${i+4}</div><div class="flex-grow-1 ms-3" style="font-weight:600; color:#555;">${icon}${escapeHtml(u.name)}</div><div style="font-weight:bold; color:#f57c00;">🔥 ${u.score}</div></div>`;
                     });
                     html += '</div>';
                 }
@@ -3744,7 +3983,8 @@
             if (rank === 1) icon = '<div class="rank-status-icon">👑</div>';
             if (rank === 2) icon = '<div class="rank-status-icon">🥈</div>';
             if (rank === 3) icon = '<div class="rank-status-icon">🥉</div>';
-            return `<div class="podium-rank rank-${rank}"><div class="avatar-wrapper"><img src="${escapeHtml(u.avatar || defaultAvatar)}" class="rank-avatar" onerror="this.src='${defaultAvatar}'">${icon}</div><div class="rank-name">${escapeHtml(u.name)}</div><div class="rank-score">🔥 ${u.score}</div></div>`;
+            const roleIcon = u.role === 'teacher' ? '👩‍🏫 ' : '';
+            return `<div class="podium-rank rank-${rank}"><div class="avatar-wrapper"><img src="${escapeHtml(u.avatar || defaultAvatar)}" class="rank-avatar" onerror="this.src='${defaultAvatar}'">${icon}</div><div class="rank-name">${roleIcon}${escapeHtml(u.name)}</div><div class="rank-score">🔥 ${u.score}</div></div>`;
         }
     </script>
 </body>
