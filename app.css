@@ -479,15 +479,19 @@ body {
     box-shadow: 0 6px 16px rgba(21,128,61,0.4); white-space: nowrap;
 }
 
-/* แถบแจ้งเตือนด้านล่าง */
+/* แถบแจ้งเตือน (ซ่อนสนิทเมื่อไม่ได้ใช้ ไม่ให้เหลือวงรีดำค้างที่ขอบจอ) */
 .app-toast {
-    position: fixed; left: 50%; top: calc(var(--topbar-h) + var(--safe-top) + 10px); transform: translate(-50%, -260%);
+    position: fixed; left: 50%; top: calc(var(--topbar-h) + var(--safe-top) + 10px); transform: translate(-50%, -24px);
     background: #1E293B; color: #fff; padding: 12px 22px; border-radius: 30px;
     font-weight: 600; font-size: 0.9rem; z-index: 3000; max-width: 90%; text-align: center;
     box-shadow: 0 10px 24px rgba(15,23,42,0.3);
-    transition: transform 0.35s cubic-bezier(.2,1.4,.4,1);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: transform 0.35s cubic-bezier(.2,1.4,.4,1), opacity 0.25s ease, visibility 0s linear 0.35s;
 }
-.app-toast.show { transform: translate(-50%, 0); }
+.app-toast.show {
+    transform: translate(-50%, 0); opacity: 1; visibility: visible;
+    transition: transform 0.35s cubic-bezier(.2,1.4,.4,1), opacity 0.25s ease, visibility 0s;
+}
 
 /* 🔥 ไฟ streak */
 .flame { display: inline-block; transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; transition: filter 1.2s ease, opacity 1.2s ease; }
