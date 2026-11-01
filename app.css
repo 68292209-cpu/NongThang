@@ -1,0 +1,733 @@
+/* =========================================================================
+   น้องถังช่วยทิ้ง • สไตล์ทั้งหมดของหน้าแอป (index.html)
+   ========================================================================= */
+
+:root {
+    --topbar-h: 56px;
+    --app-h: 100vh;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --gap: clamp(6px, 1.2vh, 12px);
+    --status-h: 50px;
+    --btn: clamp(48px, 7.2vh, 58px);
+    --snap: clamp(60px, 9.4vh, 78px);
+    --act: clamp(54px, 8.4vh, 70px);
+}
+@supports (height: 100dvh) {
+    :root { --app-h: 100dvh; }
+}
+
+html, body { height: 100%; }
+body {
+    font-family: 'Prompt', sans-serif;
+    background-color: #FEFDF5;
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.hidden { display: none !important; }
+
+/* --- 🍃 ใบไม้ลอยพื้นหลัง --- */
+.leaf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.leaf {
+    position: absolute; top: -8%; left: var(--x); font-size: var(--size); opacity: var(--op);
+    animation: leafFall var(--dur) linear var(--delay) infinite; will-change: transform;
+}
+@keyframes leafFall {
+    0%   { transform: translate3d(0, -10vh, 0) rotate(0deg); }
+    25%  { transform: translate3d(var(--sway), 22vh, 0) rotate(80deg); }
+    50%  { transform: translate3d(calc(var(--sway) * -1), 50vh, 0) rotate(170deg); }
+    75%  { transform: translate3d(var(--sway), 80vh, 0) rotate(260deg); }
+    100% { transform: translate3d(0, 115vh, 0) rotate(360deg); }
+}
+
+/* --- Auth Screen --- */
+.auth-container { min-height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 999; background: #FEFDF5; position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.auth-card { background: white; width: 100%; max-width: 390px; padding: 32px 28px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 3px solid #81C784; transition: border-color 0.3s ease; margin: auto; }
+.auth-card.teacher-mode { border-color: #93C5FD; }
+.profile-upload { width: 100px; height: 100px; background: #eee; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer; border: 3px solid #4CAF50; }
+.profile-upload img { width: 100%; height: 100%; object-fit: cover; }
+.auth-links { display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; }
+.auth-link { color: #64748B; cursor: pointer; background: none; border: none; padding: 0; }
+.auth-link:hover { color: #2E7D32; text-decoration: underline; }
+.auth-link:disabled { opacity: 0.55; cursor: not-allowed; text-decoration: none; color: #64748B; }
+.auth-note { font-size: 0.78rem; color: #64748B; background: #F8FAFC; border-radius: 12px; padding: 8px 12px; text-align: left; }
+.otp-input { text-align: center; letter-spacing: 10px; font-size: 1.35rem; font-weight: 800; }
+.otp-input::placeholder { letter-spacing: normal; font-size: 0.9rem; font-weight: 400; }
+
+/* สลับ นักศึกษา / อาจารย์ */
+.role-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #F1F5F9; border-radius: 30px; padding: 4px; }
+.role-btn { border: none; background: transparent; border-radius: 26px; padding: 8px 6px; font-size: 0.84rem; font-weight: 700; color: #64748B; transition: background 0.2s, color 0.2s; }
+.role-btn.active { background: #fff; color: #2E7D32; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+.auth-card.teacher-mode .role-btn.active { color: #1D4ED8; }
+.role-chip { display: inline-block; font-size: 0.6rem; font-weight: 700; background: #DBEAFE; color: #1D4ED8; border-radius: 10px; padding: 1px 6px; margin-left: 4px; vertical-align: middle; }
+
+/* =========================================================================
+   📌 แถบบนสุด (ยึดติดด้านบน ลอยอยู่หน้าสุด)
+   ========================================================================= */
+.top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1040;
+    padding-top: var(--safe-top);
+    background: rgba(254, 253, 245, 0.88);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    backdrop-filter: saturate(160%) blur(12px);
+    border-bottom: 1px solid rgba(46, 125, 50, 0.12);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+.top-bar-inner {
+    max-width: 520px; margin: 0 auto; height: var(--topbar-h);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 0 12px; box-sizing: border-box;
+}
+.user-badge {
+    background: white; padding: 4px 12px 4px 4px; border-radius: 30px; font-size: 0.82rem;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 8px;
+    cursor: pointer; min-width: 0; flex: 0 1 auto;
+}
+.user-meta { min-width: 0; line-height: 1.15; }
+.user-name-line { display: flex; align-items: center; min-width: 0; }
+#dispName { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 34vw; }
+.user-avatar-small { width: 36px; height: 36px; border-radius: 50%; background: #ddd; object-fit: cover; border: 2px solid #4CAF50; flex-shrink: 0; }
+.top-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.top-btn {
+    width: 38px; height: 38px; border: none; border-radius: 50%; position: relative; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 0.92rem; cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.15s;
+}
+.top-btn:active { transform: scale(0.92); }
+.btn-guide-top { background: #E3F2FD; color: #1565C0; }
+.btn-help-top { background: #E8F5E9; color: #2E7D32; font-weight: 800; font-size: 1rem; }
+.btn-logout-top { background: #ffebee; color: #c62828; }
+
+/* 🏅 ปุ่มประกาศนียบัตร (เล็กแต่เด่น) */
+.btn-cert-top {
+    background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 55%, #B45309 100%);
+    color: #fff; font-size: 1.08rem; text-shadow: 0 1px 2px rgba(120, 53, 15, 0.5);
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.45);
+}
+.btn-cert-top::before {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+    border: 2px solid rgba(245, 158, 11, 0.6); animation: certRing 2.4s ease-out infinite; pointer-events: none;
+}
+@keyframes certRing { 0% { transform: scale(0.85); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
+.cert-shine { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; pointer-events: none; }
+.cert-shine::after {
+    content: ''; position: absolute; top: 0; left: -70%; width: 50%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.85), transparent);
+    transform: skewX(-20deg); animation: shine 3s ease-in-out infinite;
+}
+.cert-dot { position: absolute; right: -2px; bottom: -2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; background: var(--tier, #059669); }
+.btn-cert-top.locked { background: linear-gradient(135deg, #E2E8F0, #94A3B8); box-shadow: 0 2px 6px rgba(0,0,0,0.12); text-shadow: none; }
+.btn-cert-top.locked::before, .btn-cert-top.locked .cert-shine { display: none; }
+.btn-cert-top.locked .cert-dot { background: #64748B; }
+
+@keyframes popScore {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.18); background-color: #FFF9C4; }
+    100% { transform: scale(1); }
+}
+.score-pop { animation: popScore 0.6s ease; }
+
+/* =========================================================================
+   📱 หน้าหลัก: จัดวางให้พอดีหนึ่งหน้าจอ (ไม่ต้องเลื่อน)
+   ========================================================================= */
+.app-container {
+    position: fixed; top: 0; left: 0; right: 0; margin: 0 auto; z-index: 1;
+    width: 100%; max-width: 520px; height: var(--app-h); box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "title" "ticker" "lid" "body" "mission" "controls";
+    justify-items: center; align-items: start;
+    row-gap: var(--gap);
+    padding: calc(var(--topbar-h) + var(--safe-top) + var(--gap)) 12px calc(var(--safe-bottom) + 12px);
+}
+
+.title-header {
+    grid-area: title;
+    font-size: clamp(1.4rem, 3.6vh, 2rem); font-weight: 800; line-height: 1.15; margin: 0;
+    color: #66BB6A; text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px #A5D6A7; letter-spacing: 1px;
+}
+
+/* --- 🌏 ตัวเลขทั้งวิทยาลัย --- */
+.campus-ticker {
+    grid-area: ticker; width: 94%; box-sizing: border-box;
+    background: linear-gradient(135deg, #ECFDF5, #F0F9FF); border: 2px solid #BBF7D0;
+    border-radius: 16px; padding: 6px 12px; display: flex; align-items: center; gap: 10px;
+    font-size: 0.8rem; color: #14532D; box-shadow: 0 3px 10px rgba(0,0,0,0.04); line-height: 1.3;
+}
+.campus-globe { font-size: 1.5rem; line-height: 1; animation: globeBob 3s ease-in-out infinite; }
+@keyframes globeBob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-3px) rotate(6deg); } }
+.campus-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.campus-count { font-weight: 800; font-size: 1.05rem; color: #15803D; display: inline-block; border-radius: 8px; padding: 0 3px; }
+.campus-count.bump { animation: popScore 0.6s ease; }
+.campus-sub { font-size: 0.7rem; color: #64748B; }
+
+/* --- ฝาถัง --- */
+.bin-lid {
+    grid-area: lid; width: 88%; box-sizing: border-box;
+    background: #4CAF50; border-radius: 34px 34px 10px 10px; padding: clamp(8px, 1.5vh, 14px) 14px;
+    display: flex; flex-direction: column; align-items: center; z-index: 5;
+    box-shadow: 0 8px 0px #2E7D32; position: relative;
+    transform-origin: 12% 100%;
+    transition: background-color 0.3s ease, transform 0.25s cubic-bezier(.3,1.6,.5,1);
+}
+.bin-lid.lid-open { transform: translateY(-18px) rotate(-10deg); }
+
+/* ป้ายข้อความบนฝา: ขนาดคงที่ ไม่ยืดหดตามข้อความ (แก้ภาพซ้อนบน Safari iOS) */
+.status-badge {
+    width: 100%; height: var(--status-h); box-sizing: border-box;
+    background: white; border: 3px solid #2E7D32; border-radius: 25px; padding: 3px 14px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    margin-bottom: clamp(4px, 1vh, 8px);
+}
+.status-text {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+    text-align: center; font-size: 0.95rem; font-weight: 800; line-height: 1.3; color: #333;
+    transition: opacity 0.3s ease; will-change: opacity; -webkit-transform: translateZ(0); transform: translateZ(0);
+}
+.status-text.tip-mode { font-size: 0.78rem; font-weight: 600; color: #166534 !important; }
+.status-text.fade { opacity: 0; }
+
+/* --- ใบหน้าน้องถัง (เปลี่ยนตามอารมณ์) --- */
+.face { display: flex; gap: 40px; align-items: flex-end; margin: 2px 0; min-height: 24px; }
+.eye { width: 18px; height: 18px; background: #333; border-radius: 50%; position: relative; animation: blink 4s infinite; transition: height 0.2s ease, transform 0.2s ease; }
+.eye::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: white; border-radius: 50%; animation: lookAround 7s ease-in-out infinite; }
+.mouth { width: 20px; height: 10px; border-bottom: 4px solid #333; border-radius: 0 0 15px 15px; transition: all 0.25s ease; }
+
+@keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+@keyframes lookAround {
+    0%, 35% { left: 3px; top: 3px; }
+    45%, 60% { left: 9px; top: 4px; }
+    70%, 85% { left: 2px; top: 6px; }
+    95%, 100% { left: 3px; top: 3px; }
+}
+@keyframes eyeSpin { to { transform: rotate(360deg); } }
+@keyframes faceHop { 0% { transform: translateY(0); } 40% { transform: translateY(-9px); } 100% { transform: translateY(0); } }
+@keyframes faceShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(4px); } }
+
+.mood-thinking .eye { animation: eyeSpin 0.8s linear infinite; }
+.mood-thinking .eye::after { animation: none; left: 3px; top: 3px; }
+.mood-thinking .mouth { width: 12px; height: 12px; border: 3px solid #333; border-radius: 50%; }
+
+.mood-happy .eye { background: transparent; border-top: 5px solid #333; border-radius: 50%; animation: none; transform: translateY(6px); }
+.mood-happy .eye::after { display: none; }
+.mood-happy .mouth { width: 32px; height: 16px; border-bottom-width: 5px; border-radius: 0 0 20px 20px; }
+.mood-happy .face { animation: faceHop 0.55s cubic-bezier(.3,1.6,.5,1); }
+
+.mood-sad .eye::after { animation: none; left: 4px; top: 10px; }
+.mood-sad .mouth { width: 16px; height: 0; border-bottom-width: 4px; border-radius: 2px; }
+
+.mood-angry .eye { height: 11px; animation: none; }
+.mood-angry .eye::after { animation: none; top: 2px; left: 6px; }
+.mood-angry .eye::before { content: ''; position: absolute; top: -10px; left: -3px; width: 24px; height: 4px; background: #333; border-radius: 2px; }
+.mood-angry .eye:first-child::before { transform: rotate(22deg); }
+.mood-angry .eye:last-child::before { transform: rotate(-22deg); }
+.mood-angry .mouth { border-bottom: none; border-top: 4px solid #333; border-radius: 15px 15px 0 0; height: 10px; transform: translateY(6px); }
+.mood-angry .face { animation: faceShake 0.5s ease; }
+
+/* --- ตัวถัง + กล้อง (ยืดเต็มพื้นที่ที่เหลือ) --- */
+.bin-body {
+    grid-area: body; width: 76%; box-sizing: border-box; align-self: stretch;
+    display: flex; min-height: 0;
+    margin-top: calc(-1 * var(--gap) - 10px);
+    background: #4CAF50; padding: clamp(8px, 1.4vh, 14px); padding-top: calc(clamp(8px, 1.4vh, 14px) + 14px);
+    border-radius: 0 0 34px 34px; z-index: 1;
+    box-shadow: inset 0 -10px 20px rgba(0,0,0,0.2); transform-origin: 50% 100%;
+}
+.bin-body.gulp { animation: gulp 0.45s ease; }
+@keyframes gulp {
+    0% { transform: scale(1, 1); }
+    30% { transform: scale(1.06, 0.92); }
+    60% { transform: scale(0.97, 1.04); }
+    100% { transform: scale(1, 1); }
+}
+
+.camera-frame {
+    flex: 1 1 auto; width: 100%; min-height: 0;
+    background: #161f30; border-radius: 20px; border: 4px solid #fff; box-sizing: border-box;
+    overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    -webkit-mask-image: -webkit-radial-gradient(white, black); /* ให้มุมโค้งตัดวิดีโอบน Safari */
+    container-type: size; container-name: cam;
+}
+/* กล้องเตี้ย: ลดข้อความแนะนำในกรอบ ไม่ให้ทับกัน */
+@container cam (max-height: 300px) {
+    .cam-guide-sub { display: none; }
+}
+@container cam (max-height: 210px) {
+    .cam-guide-title { display: none; }
+    .live-overlay-grid { padding-bottom: 28px; }
+}
+#webcam-video, #captured-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+#webcam-video { position: absolute; inset: 0; }
+
+/* ภาพที่ถ่าย + ชั้นกรอบขยะ */
+.capture-wrap { position: absolute; inset: 0; z-index: 4; }
+.capture-wrap.dropping { animation: dropInBin 0.6s cubic-bezier(.5,0,.75,0) forwards; }
+.capture-wrap.gone { opacity: 0; }
+@keyframes dropInBin { to { transform: translateY(-80%) scale(0.12) rotate(-12deg); opacity: 0; } }
+
+.box-layer { position: absolute; inset: 0; pointer-events: none; }
+.det-box {
+    position: absolute; border: 3px solid var(--c); border-radius: 10px; background: var(--bg);
+    opacity: 0; transform: scale(0.6);
+    animation: boxPop 0.45s cubic-bezier(.2,1.5,.4,1) forwards;
+}
+.det-label {
+    position: absolute; left: -3px; top: -24px; background: var(--c); color: var(--fg);
+    font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 8px 8px 8px 0;
+    white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+}
+.det-box.label-inside .det-label { top: 2px; left: 2px; border-radius: 8px; }
+@keyframes boxPop { to { opacity: 1; transform: scale(1); } }
+
+/* 🔦 เลเซอร์สแกนระหว่างวิเคราะห์ */
+.scan-overlay { position: absolute; inset: 0; z-index: 7; pointer-events: none; overflow: hidden; }
+.scan-overlay::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(rgba(74,222,128,0.10) 1px, transparent 1px) 0 0 / 100% 18px,
+                linear-gradient(90deg, rgba(74,222,128,0.08) 1px, transparent 1px) 0 0 / 18px 100%;
+    animation: gridPulse 1.6s ease-in-out infinite;
+}
+@keyframes gridPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.scan-beam {
+    position: absolute; left: 0; right: 0; top: 0; height: 100%;
+    animation: scanMove 1.6s ease-in-out infinite alternate; will-change: transform;
+}
+@keyframes scanMove { from { transform: translateY(0); } to { transform: translateY(calc(100% - 4px)); } }
+.scan-line {
+    position: absolute; left: 0; right: 0; top: 0; height: 4px; background: #4ADE80;
+    box-shadow: 0 0 12px 4px rgba(74,222,128,0.75);
+}
+.scan-line::before {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 4px; height: 70px;
+    background: linear-gradient(to top, rgba(74,222,128,0.28), transparent);
+}
+.scan-label {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); color: #fff; font-size: 0.76rem; font-weight: 600;
+    padding: 5px 14px; border-radius: 20px; white-space: nowrap; display: flex; align-items: center; gap: 8px;
+}
+.scan-timer { font-variant-numeric: tabular-nums; min-width: 2.2em; display: inline-block; text-align: right; }
+
+.live-overlay-grid {
+    position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-bottom: 34px; box-sizing: border-box;
+}
+.live-reticle {
+    height: min(180px, 46%); aspect-ratio: 1 / 1; width: auto; max-width: 60%;
+    border: 2px dashed rgba(255,255,255,0.45); border-radius: 22px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 8px; flex-shrink: 0;
+}
+.reticle-cam-icon { font-size: 3rem; color: rgba(255,255,255,0.55); }
+.cam-guide-title { color: #fff; font-weight: 700; font-size: 0.88rem; text-shadow: 0 1px 3px rgba(0,0,0,0.6); text-align: center; padding: 0 10px; line-height: 1.3; }
+.cam-guide-sub { color: #94a3b8; font-size: 0.72rem; text-align: center; padding: 0 12px; line-height: 1.3; }
+
+.live-overlay-grid.is-live .reticle-cam-icon { display: none; }
+.live-overlay-grid.is-live .live-reticle { border: 2px dashed rgba(255,255,255,0.8); box-shadow: 0 0 0 2000px rgba(0,0,0,0.12); }
+.live-overlay-grid.is-live .cam-guide-sub { color: #f1f5f9; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+.live-badge {
+    position: absolute; top: 10px; left: 10px; z-index: 9;
+    background: rgba(0,0,0,0.55); color: #fff; font-size: 0.7rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 6px;
+    pointer-events: none; letter-spacing: 1px;
+}
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: livePulse 1.2s infinite; }
+@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.cam-status {
+    position: absolute; inset: 0; z-index: 8;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 14px 14px 50px; background: #161f30; color: #fff; gap: 8px; overflow-y: auto;
+}
+.cam-status-text { font-size: 0.8rem; line-height: 1.5; color: #e2e8f0; white-space: pre-line; }
+.cam-status-detail { font-size: 0.64rem; color: #64748b; word-break: break-word; max-width: 100%; }
+.btn-cam-retry {
+    background: #22c55e; color: #fff; border: none; border-radius: 30px;
+    padding: 8px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(34,197,94,0.35);
+}
+.btn-cam-alt {
+    background: transparent; color: #e2e8f0; border: 2px solid rgba(255,255,255,0.45); border-radius: 30px;
+    padding: 6px 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+}
+.btn-cam-retry:active, .btn-cam-alt:active { transform: scale(0.96); }
+
+/* 📘 ปุ่มดูคู่มือ (ลอยมุมขวาบนของกล้อง แสดงเฉพาะตอนมีผลสแกน) */
+.guide-hint-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 11;
+    background: rgba(255,255,255,0.95); border: 2px solid #90CAF9; color: #1565C0;
+    border-radius: 20px; padding: 4px 10px; font-weight: 700; font-size: 0.72rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.guide-hint-btn:active { transform: scale(0.96); }
+
+/* Color Bar & Hint */
+.bottom-info-area { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; z-index: 10; }
+.color-bar { width: 100%; padding: 6px 10px; text-align: center; font-weight: 800; color: white; font-size: 0.98rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); background: #555; transition: background 0.3s ease; }
+.result-hint-overlay { background: rgba(0,0,0,0.85); color: #fff; text-align: center; padding: 6px 8px; font-size: 0.76rem; line-height: 1.35; }
+
+/* --- 🎯 ภารกิจประจำวัน (อยู่เหนือปุ่มถ่าย) --- */
+.mission-card {
+    grid-area: mission; width: 94%; box-sizing: border-box;
+    background: #fff; border: 2px solid #FDE68A; border-radius: 16px; padding: 7px 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: border-color 0.4s ease, background-color 0.4s ease;
+}
+.mission-card.done { border-color: #86EFAC; background: #F0FDF4; }
+.mission-top { display: flex; align-items: center; gap: 10px; }
+.mission-body { min-width: 0; flex: 1 1 auto; }
+.mission-icon { font-size: 1.35rem; line-height: 1; }
+.mission-label { font-size: 0.62rem; font-weight: 700; color: #B45309; letter-spacing: 1px; line-height: 1.3; }
+.mission-card.done .mission-label { color: #15803D; }
+.mission-text { font-weight: 700; font-size: 0.82rem; color: #0F172A; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mission-count { margin-left: auto; font-weight: 800; color: #B45309; white-space: nowrap; font-size: 0.92rem; }
+.mission-card.done .mission-count { color: #15803D; }
+.mission-bar { height: 7px; background: #FEF3C7; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+.mission-card.done .mission-bar { background: #DCFCE7; }
+.mission-fill {
+    height: 100%; width: 0; border-radius: 10px;
+    background: repeating-linear-gradient(45deg, #F59E0B 0 10px, #FBBF24 10px 20px);
+    background-size: 28px 28px; animation: stripes 1s linear infinite;
+    transition: width 0.8s cubic-bezier(.2,1,.3,1);
+}
+.mission-card.done .mission-fill { background: #22C55E; animation: none; }
+@keyframes stripes { from { background-position: 0 0; } to { background-position: 28px 0; } }
+
+/* --- ปุ่มควบคุม --- */
+.controls-area { grid-area: controls; display: flex; align-items: center; justify-content: center; }
+.ctrl-row { display: flex; gap: clamp(16px, 5vw, 24px); align-items: center; }
+.btn-circle { width: var(--btn); height: var(--btn); border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; box-shadow: 0 5px 12px rgba(0,0,0,0.08); transition: 0.15s; }
+.btn-circle:active { transform: scale(0.92); }
+.btn-circle:disabled { cursor: not-allowed; }
+.btn-snap { width: var(--snap); height: var(--snap); background: white; border: 5px solid #ff5252; color: #ff5252; font-size: 1.9rem; box-shadow: 0 6px 16px rgba(255,82,82,0.25); }
+.btn-snap:disabled { opacity: 0.45; box-shadow: none; }
+.btn-history { background: #E3F2FD; color: #1565C0; }
+.btn-rank { background: #FFF9C4; color: #FBC02D; }
+.btn-confirm { background: #C8E6C9; color: #2E7D32; width: var(--act); height: var(--act); transition: 0.3s; position: relative; }
+.btn-confirm:disabled { background: #e0e0e0; color: #999; opacity: 0.6; }
+.btn-retry { background: #FFCCBC; color: #D84315; width: var(--act); height: var(--act); }
+.btn-fix { background: #EDE7F6; color: #5E35B1; }
+
+.points-badge {
+    position: absolute; top: -6px; right: -6px;
+    background: #FF5722; color: white; font-size: 0.76rem; font-weight: 800;
+    padding: 3px 8px; border-radius: 20px; border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+/* --- ปรับตามความสูงจอ --- */
+/* จอไม่สูงมาก (มือถือส่วนใหญ่): ซ่อนหัวข้อใหญ่ เพื่อให้กล้องมีพื้นที่ */
+@media (max-height: 800px) {
+    .title-header { display: none; }
+    .app-container {
+        grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+        grid-template-areas: "ticker" "lid" "body" "mission" "controls";
+    }
+}
+/* จอเตี้ย (เช่น iPhone SE / มีแถบเบราว์เซอร์) */
+@media (max-height: 640px) {
+    :root { --status-h: 42px; --topbar-h: 52px; }
+    .campus-sub, .cam-guide-sub, .mission-label { display: none; }
+    .campus-globe { font-size: 1.25rem; }
+    .eye { width: 14px; height: 14px; }
+    .eye::after { width: 5px; height: 5px; }
+    .face { gap: 32px; min-height: 18px; }
+    .mission-icon { font-size: 1.15rem; }
+    .status-text { font-size: 0.86rem; }
+    .status-text.tip-mode { font-size: 0.72rem; }
+}
+/* จอเตี้ยมาก */
+@media (max-height: 540px) and (orientation: portrait) {
+    :root { --status-h: 38px; }
+    .eye { width: 12px; height: 12px; }
+    .eye::after { width: 4px; height: 4px; top: 2px; left: 2px; }
+    .mouth { width: 16px; height: 8px; border-bottom-width: 3px; }
+    .face { gap: 28px; min-height: 14px; }
+    .bin-lid { padding-top: 6px; padding-bottom: 6px; }
+    .campus-ticker { padding: 4px 10px; }
+}
+/* มือถือแนวนอน: แบ่งซ้าย (ถัง+กล้อง) / ขวา (ข้อมูล+ปุ่ม) */
+@media (orientation: landscape) and (max-height: 520px) {
+    :root { --status-h: 40px; }
+    .app-container {
+        max-width: 960px;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas: "lid ticker" "body mission" "body controls";
+        column-gap: 16px; align-items: center;
+        padding-left: calc(12px + env(safe-area-inset-left, 0px));
+        padding-right: calc(12px + env(safe-area-inset-right, 0px));
+    }
+    .title-header { display: none; }
+    .bin-lid { width: 94%; align-self: end; }
+    .bin-body { width: 82%; }
+    .campus-ticker, .mission-card { width: 100%; }
+    .mission-card { align-self: end; }
+    .face { display: none; }
+    .status-badge { margin-bottom: 0; }
+}
+
+/* +N ลอยไปหาคะแนน */
+.fly-points {
+    position: fixed; z-index: 2500; pointer-events: none;
+    background: linear-gradient(135deg, #22C55E, #15803D); color: #fff;
+    font-weight: 800; font-size: 1.1rem; padding: 6px 14px; border-radius: 30px;
+    box-shadow: 0 6px 16px rgba(21,128,61,0.4); white-space: nowrap;
+}
+
+/* แถบแจ้งเตือนด้านล่าง */
+.app-toast {
+    position: fixed; left: 50%; top: calc(var(--topbar-h) + var(--safe-top) + 10px); transform: translate(-50%, -260%);
+    background: #1E293B; color: #fff; padding: 12px 22px; border-radius: 30px;
+    font-weight: 600; font-size: 0.9rem; z-index: 3000; max-width: 90%; text-align: center;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.3);
+    transition: transform 0.35s cubic-bezier(.2,1.4,.4,1);
+}
+.app-toast.show { transform: translate(-50%, 0); }
+
+/* 🔥 ไฟ streak */
+.flame { display: inline-block; transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; transition: filter 1.2s ease, opacity 1.2s ease; }
+.flame.flame-out { animation: none; filter: grayscale(100%) brightness(1.1); opacity: 0.5; }
+@keyframes flicker {
+    0%, 100% { transform: scale(1) rotate(-2deg); filter: brightness(1); }
+    25% { transform: scale(1.08, 1.12) rotate(2deg); filter: brightness(1.15); }
+    50% { transform: scale(0.96, 1.02) rotate(-1deg); filter: brightness(1); }
+    75% { transform: scale(1.05, 1.1) rotate(1.5deg); filter: brightness(1.1); }
+}
+
+/* ฉลองขึ้นระดับ */
+.tierup-badge { font-size: 3.4rem; line-height: 1; animation: badgePop 0.7s cubic-bezier(.2,1.6,.4,1); }
+@keyframes badgePop { 0% { transform: scale(0) rotate(-30deg); } 100% { transform: scale(1) rotate(0); } }
+.tierup-art { max-width: 100%; max-height: 170px; object-fit: contain; margin: 6px auto 4px; display: block; }
+
+/* --- แก้ประเภทขยะ --- */
+.fix-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #eee; }
+.fix-swatch { width: 14px; height: 14px; border-radius: 4px; margin-top: 6px; flex-shrink: 0; }
+.fix-guide-link { background: #E3F2FD; color: #1565C0; border: none; border-radius: 12px; padding: 8px 12px; font-size: 0.82rem; font-weight: 600; width: 100%; text-align: left; margin-bottom: 6px; }
+
+/* --- 📘 คู่มือแยกขยะ --- */
+.guide-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+.guide-tab {
+    border: 2px solid var(--c); background: #fff; color: #0F172A; border-radius: 12px;
+    padding: 7px 2px 6px; font-size: 0.72rem; font-weight: 700; line-height: 1.2; transition: background 0.2s, color 0.2s;
+}
+.guide-tab .gt-dot { width: 16px; height: 16px; border-radius: 5px; background: var(--c); display: block; margin: 0 auto 4px; }
+.guide-tab.active { background: var(--c); color: var(--fg); }
+.guide-tab.active .gt-dot { background: rgba(255,255,255,0.7); }
+.guide-head { border-radius: 14px; padding: 12px 14px; background: var(--c); color: var(--fg); margin-bottom: 4px; }
+.guide-head .gh-title { font-weight: 800; font-size: 1.05rem; }
+.guide-head .gh-desc { font-size: 0.8rem; opacity: 0.95; margin-top: 2px; }
+.guide-sec-title { font-size: 0.82rem; font-weight: 800; margin: 12px 0 6px; color: #0F172A; }
+.guide-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.guide-chip { background: #F1F5F9; border-radius: 20px; padding: 3px 10px; font-size: 0.78rem; color: #1E293B; }
+.guide-list { padding-left: 18px; margin: 0; font-size: 0.82rem; color: #334155; }
+.guide-list li { margin-bottom: 3px; }
+.guide-mistake { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; padding: 8px 12px; }
+.gs-row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-bottom: 1px solid #eee; font-size: 0.86rem; cursor: pointer; }
+.gs-row:hover { background: #F8FAFC; }
+.gs-bin { margin-left: auto; font-size: 0.74rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; background: var(--c); color: var(--fg); white-space: nowrap; }
+.gs-empty { font-size: 0.82rem; color: #64748B; padding: 8px 4px; }
+
+/* --- 🧭 ทัวร์แนะนำการใช้งาน --- */
+.tour-block { position: fixed; inset: 0; z-index: 4000; background: transparent; }
+.tour-spot {
+    position: fixed; z-index: 4001; border-radius: 18px; pointer-events: none;
+    box-shadow: 0 0 0 9999px rgba(15,23,42,0.62); outline: 3px solid #4ADE80; outline-offset: 0;
+    transition: left 0.35s cubic-bezier(.3,1.2,.4,1), top 0.35s cubic-bezier(.3,1.2,.4,1), width 0.35s ease, height 0.35s ease;
+}
+.tour-tip {
+    position: fixed; z-index: 4002; width: min(320px, calc(100vw - 24px)); background: #fff;
+    border-radius: 18px; padding: 14px 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    transition: top 0.35s ease, left 0.35s ease;
+}
+.tour-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.mini-bin { width: 40px; height: 44px; position: relative; flex-shrink: 0; animation: faceHop 1.2s ease-in-out infinite; }
+.mini-bin .mb-lid { position: absolute; top: 0; left: -3px; right: -3px; height: 13px; background: #4CAF50; border-radius: 9px 9px 3px 3px; box-shadow: 0 3px 0 #2E7D32; }
+.mini-bin .mb-body { position: absolute; top: 15px; left: 3px; right: 3px; bottom: 0; background: #4CAF50; border-radius: 3px 3px 10px 10px; }
+.mini-bin .mb-eye { position: absolute; top: 4px; width: 6px; height: 6px; background: #333; border-radius: 50%; }
+.mini-bin .mb-eye.l { left: 7px; } .mini-bin .mb-eye.r { right: 7px; }
+.mini-bin .mb-mouth { position: absolute; top: 11px; left: 50%; width: 10px; height: 5px; margin-left: -5px; border-bottom: 2px solid #333; border-radius: 0 0 8px 8px; }
+.tour-title { font-weight: 800; color: #2E7D32; font-size: 1rem; line-height: 1.3; }
+.tour-body { font-size: 0.88rem; color: #334155; line-height: 1.55; }
+.tour-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 8px; }
+.tour-dots span { width: 7px; height: 7px; border-radius: 50%; background: #CBD5E1; display: inline-block; margin-right: 4px; transition: background 0.2s; }
+.tour-dots span.on { background: #22C55E; }
+.tour-skip { background: none; border: none; color: #94A3B8; font-size: 0.82rem; }
+.tour-next { background: #22C55E; color: #fff; border: none; border-radius: 20px; padding: 6px 16px; font-weight: 700; font-size: 0.85rem; }
+
+/* --- ปุ่มประกาศนียบัตร (ในหน้าโปรไฟล์ / พรีวิว) --- */
+.btn-cert-corporate {
+    background: linear-gradient(135deg, #0A192F 0%, #173865 50%, #047857 100%);
+    color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 50px;
+    padding: 11px 26px; font-weight: 700; font-size: 0.95rem;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    width: 85%; max-width: 360px; margin-top: 18px; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-cert-corporate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35); color: #fff; }
+.btn-cert-corporate:active { transform: scale(0.97); }
+.btn-cert-corporate > i { font-size: 1.25rem; flex-shrink: 0; }
+.cert-btn-text { display: flex; flex-direction: column; align-items: flex-start; text-align: left; line-height: 1.25; min-width: 0; }
+.cert-line1 { font-weight: 700; font-size: 0.95rem; white-space: nowrap; }
+.cert-line2 { font-weight: 500; font-size: 0.78rem; opacity: 0.88; }
+
+.btn-my-certs {
+    background: #1E293B; color: white; border: none; border-radius: 50px;
+    padding: 12px 24px; font-weight: 700; font-size: 0.92rem; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 10px; cursor: pointer; transition: 0.2s;
+}
+.btn-my-certs:hover { background: #0F172A; color: white; }
+
+/* --- Profile Modal Cards --- */
+.profile-img-large { width: 105px; height: 105px; border-radius: 50%; object-fit: cover; border: 4px solid #4CAF50; box-shadow: 0 5px 15px rgba(0,0,0,0.12); margin-bottom: 10px; }
+.profile-email { font-size: 0.8rem; margin-bottom: 6px; }
+.profile-email.missing { color: #B45309; font-weight: 600; }
+
+.score-box-green { background: #EFFDF5; border: 2px solid #BBF7D0; border-radius: 20px; padding: 16px; text-align: center; margin-bottom: 14px; }
+.score-box-title { color: #555; font-size: 0.9rem; margin-bottom: 2px; }
+.score-box-value { color: #15803D; font-size: 2rem; font-weight: 800; line-height: 1.2; }
+.score-box-sub { color: #0284C7; font-size: 0.85rem; font-weight: 600; margin-top: 4px; }
+
+.streak-card { background: #F3F4F6; border: 2px solid #CBD5E1; border-radius: 20px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; text-align: left; margin-bottom: 14px; }
+.streak-card.active { background: #FFF7ED; border-color: #FDBA74; }
+.streak-icon { font-size: 2.3rem; line-height: 1; }
+.streak-title { font-weight: 800; font-size: 1rem; color: #EF4444; margin-bottom: 2px; }
+.streak-card.active .streak-title { color: #EA580C; }
+.streak-desc { font-size: 0.8rem; color: #475569; line-height: 1.35; }
+
+.rank-progress-card { background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 20px; padding: 16px 18px; text-align: left; margin-bottom: 16px; }
+.rank-title-line { font-weight: 800; font-size: 0.95rem; color: #0F172A; margin-bottom: 8px; }
+.rank-bar-bg { height: 11px; background: #E2E8F0; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+.rank-bar-fill { height: 100%; background: linear-gradient(90deg, #173865, #047857); border-radius: 10px; transition: width 0.4s ease; }
+.rank-sub-text { font-size: 0.82rem; color: #475569; }
+
+.stat-bar-container { margin-bottom: 10px; }
+.stat-label { font-size: 0.85rem; display: flex; justify-content: space-between; margin-bottom: 2px; }
+.progress { height: 10px; border-radius: 10px; background-color: #eee; }
+.progress-bar { border-radius: 10px; }
+
+/* --- 🏆 Leaderboard (มีแอนิเมชัน) --- */
+.lb-trophy { display: inline-block; transform-origin: 50% 90%; animation: trophyWiggle 2.6s ease-in-out infinite; }
+@keyframes trophyWiggle {
+    0%, 70%, 100% { transform: rotate(0); }
+    75% { transform: rotate(-14deg) scale(1.12); }
+    85% { transform: rotate(12deg) scale(1.12); }
+    92% { transform: rotate(-6deg); }
+}
+
+.podium-container { display: flex; justify-content: center; align-items: flex-end; margin-bottom: 18px; padding-top: 34px; position: relative; }
+.podium-rank {
+    text-align: center; position: relative; margin: 0 6px;
+    animation: podiumPop 0.65s cubic-bezier(.2,1.5,.4,1) both; animation-delay: var(--d, 0s);
+}
+@keyframes podiumPop {
+    0% { opacity: 0; transform: translateY(46px) scale(0.55); }
+    100% { opacity: 1; transform: translateY(var(--ty, 0px)) scale(1); }
+}
+.avatar-wrapper { position: relative; display: inline-block; }
+.rank-avatar { position: relative; z-index: 1; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #fff; }
+.rank-name { font-size: 0.75rem; font-weight: bold; margin: 8px auto 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 84px; }
+.rank-score { background: #333; color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.7rem; display: inline-block; margin-top: 2px; position: relative; overflow: hidden; }
+.rank-status-icon { position: absolute; z-index: 10; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+.podium-step {
+    margin: 8px auto 0; width: 82px; border-radius: 12px 12px 0 0; display: flex; justify-content: center;
+    padding-top: 6px; font-weight: 800; font-size: 1.15rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    transform-origin: 50% 100%; animation: stepGrow 0.7s cubic-bezier(.3,1.3,.5,1) both; animation-delay: var(--d, 0s);
+}
+@keyframes stepGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+.rank-1 { z-index: 3; order: 2; --ty: -12px; }
+.rank-1 .rank-avatar { width: 92px; height: 92px; border: 4px solid #FFD700; }
+.rank-1 .rank-name { max-width: 120px; font-size: 0.82rem; }
+.rank-1 .rank-score { background: #FFD700; color: #5c4d00; font-size: 0.9rem; }
+.rank-1 .podium-step { width: 104px; height: 74px; background: linear-gradient(180deg, #FDE68A, #F59E0B); }
+.rank-1 .rank-status-icon {
+    top: -18px; left: 50%; width: 34px; height: 34px; font-size: 20px; border: 2px solid #FFD700;
+    transform: translateX(-50%); animation: crownBob 2.2s ease-in-out infinite;
+}
+@keyframes crownBob {
+    0%, 100% { transform: translateX(-50%) translateY(0) rotate(-8deg); }
+    50% { transform: translateX(-50%) translateY(-5px) rotate(8deg); }
+}
+.rank-1 .avatar-wrapper::before {
+    content: ''; position: absolute; inset: -7px; border-radius: 50%; z-index: 0;
+    background: conic-gradient(#FFD700, #FFF8C5, #F59E0B, #FFE27A, #FFD700);
+    animation: haloSpin 3s linear infinite;
+}
+.rank-1 .avatar-wrapper::after {
+    content: ''; position: absolute; inset: -7px; border-radius: 50%; z-index: 0; pointer-events: none;
+    box-shadow: 0 0 22px 6px rgba(255,200,0,0.55); animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes haloSpin { to { transform: rotate(360deg); } }
+@keyframes glowPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+.rank-1 .rank-score::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.85), transparent);
+    transform: skewX(-20deg); animation: shine 2.6s ease-in-out infinite; animation-delay: 1.4s;
+}
+@keyframes shine { 0% { left: -70%; } 45%, 100% { left: 130%; } }
+
+.sparkle { position: absolute; font-size: 0.85rem; pointer-events: none; z-index: 11; opacity: 0; animation: twinkle 2.4s ease-in-out infinite; animation-delay: var(--sd, 0s); }
+@keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(25deg); } }
+
+.rank-2 { z-index: 2; order: 1; }
+.rank-3 { z-index: 2; order: 3; }
+.rank-2 .rank-avatar, .rank-3 .rank-avatar { width: 70px; height: 70px; }
+.rank-2 .rank-avatar { border-color: #C0C0C0; }
+.rank-3 .rank-avatar { border-color: #CD7F32; }
+.rank-2 .podium-step { height: 52px; background: linear-gradient(180deg, #E2E8F0, #94A3B8); }
+.rank-3 .podium-step { height: 38px; background: linear-gradient(180deg, #FDBA74, #C2410C); }
+.rank-2 .rank-status-icon, .rank-3 .rank-status-icon {
+    bottom: 0; right: 0; width: 24px; height: 24px; font-size: 14px; border: 2px solid #fff;
+    transform-origin: 50% 0%; animation: medalSwing 2.8s ease-in-out infinite;
+}
+.rank-3 .rank-status-icon { animation-delay: 0.5s; }
+@keyframes medalSwing { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+
+.lb-list { background: #fff; border-radius: 14px; padding: 4px 8px; }
+.normal-rank-item {
+    display: flex; align-items: center; padding: 10px 6px; border-bottom: 1px solid #eee; border-radius: 10px;
+    animation: rowIn 0.45s ease both; animation-delay: var(--d, 0s);
+}
+.normal-rank-item:last-child { border-bottom: none; }
+@keyframes rowIn { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
+.rank-num { width: 30px; text-align: center; font-weight: bold; color: #888; }
+.lb-info { flex-grow: 1; margin-left: 12px; min-width: 0; }
+.lb-name { font-weight: 600; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-bar { height: 6px; background: #F1F5F9; border-radius: 6px; overflow: hidden; margin-top: 4px; }
+.lb-bar-fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #FDBA74, #F97316); transition: width 1s cubic-bezier(.2,1,.3,1); }
+.lb-score { font-weight: bold; color: #f57c00; margin-left: 10px; white-space: nowrap; }
+
+.me-chip { display: inline-block; font-size: 0.6rem; font-weight: 800; background: #22C55E; color: #fff; border-radius: 8px; padding: 1px 6px; margin-left: 4px; vertical-align: middle; }
+.normal-rank-item.is-me { background: #F0FDF4; box-shadow: inset 4px 0 0 #22C55E; }
+.podium-rank.is-me .rank-name { color: #15803D; }
+
+.lb-skel {
+    background: linear-gradient(90deg, #EEF2F7 25%, #F8FAFC 37%, #EEF2F7 63%);
+    background-size: 400% 100%; animation: skel 1.3s ease infinite; border-radius: 12px;
+}
+@keyframes skel { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+
+/* Certificate Preview */
+#certCanvas { width: 100%; height: auto; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.cert-tier-item { border: 2px solid #E2E8F0; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
+.cert-tier-item.unlocked { border-color: #0284C7; background: #F0F9FF; }
+
+/* เครื่องที่ตั้ง "ลดการเคลื่อนไหว": ปิดเฉพาะเอฟเฟกต์ตกแต่งชิ้นใหญ่ */
+.rm .leaf-layer, .rm .fly-points, .rm .sparkle { display: none !important; }
+.rm .det-box { animation: none !important; opacity: 1 !important; transform: none !important; }
+.rm .face, .rm .bin-body, .rm .capture-wrap, .rm .mini-bin, .rm .tierup-badge { animation: none !important; }
+.rm .bin-lid { transition: background-color 0.3s ease !important; }
+.rm .podium-rank, .rm .normal-rank-item, .rm .podium-step { animation: none !important; opacity: 1 !important; }
+.rm .podium-rank { transform: translateY(var(--ty, 0px)); }
+.rm .lb-trophy, .rm .rank-status-icon, .rm .rank-1 .avatar-wrapper::before,
+.rm .rank-1 .avatar-wrapper::after, .rm .rank-1 .rank-score::after,
+.rm .btn-cert-top::before, .rm .cert-shine::after { animation: none !important; }
