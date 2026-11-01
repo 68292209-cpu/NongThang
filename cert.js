@@ -3,6 +3,17 @@
 // (ต้องโหลดหลัง app.js)
 // =========================================================================
 
+const CERT_TEXT_MAX_W = 1270;            // ความกว้างสูงสุดของข้อความ (กันล้นขอบ)
+const CERT_FONTS = [
+    '800 64px "Prompt"', '700 22px "Prompt"', '600 24px "Prompt"', '500 24px "Prompt"',
+    '800 56px "Cinzel"', '700 32px "Cinzel"'
+];
+let certBlob = null;                     // ไฟล์ PNG ที่เตรียมไว้ล่วงหน้า (กดบันทึกแล้วใช้ได้ทันที)
+let certImgUrl = null;
+let certDrawSeq = 0;
+let certSkipImages = false;              // ถ้ารูปจากภายนอกทำให้ส่งออกไม่ได้ จะวาดใหม่โดยไม่ใส่รูป
+let certMeasureEl = null;
+
 // 🌐 ลายจุดเชื่อมต่อเทคโนโลยีด้านหลังประกาศนียบัตร
 function drawTechNetwork(ctx, W, H) {
     ctx.save();
@@ -87,7 +98,7 @@ function drawTechNetwork(ctx, W, H) {
 }
 
 // ลำดับการวาด: พื้นหลัง → ลวดลาย/โลโก้/รูปประกอบ → พื้นขาวเบลอ → ข้อความทั้งหมด (อยู่บนสุดเสมอ)
-function drawCertificateOnCanvas(tier) {
+function renderCertificate(tier) {
     const canvas = document.getElementById('certCanvas');
     const ctx = canvas.getContext('2d');
     const W = 1490;
@@ -168,13 +179,13 @@ function drawCertificateOnCanvas(tier) {
 
     // โลโก้
     const siamtechImg = getOrLoadImage(SIAMTECH_LOGO_URL);
-    if (siamtechImg && siamtechImg.complete && siamtechImg.naturalWidth > 0) {
+    if (!certSkipImages && siamtechImg && siamtechImg.complete && siamtechImg.naturalWidth > 0) {
         const scaleL = Math.min(150 / siamtechImg.naturalWidth, 130 / siamtechImg.naturalHeight);
         ctx.drawImage(siamtechImg, 80, 75, siamtechImg.naturalWidth * scaleL, siamtechImg.naturalHeight * scaleL);
     }
 
     const itmImg = getOrLoadImage(ITM_LOGO_URL);
-    if (itmImg && itmImg.complete && itmImg.naturalWidth > 0) {
+    if (!certSkipImages && itmImg && itmImg.complete && itmImg.naturalWidth > 0) {
         const scaleI = Math.min(150 / itmImg.naturalWidth, 130 / itmImg.naturalHeight);
         const iw = itmImg.naturalWidth * scaleI;
         ctx.drawImage(itmImg, W - 80 - iw, 75, iw, itmImg.naturalHeight * scaleI);
@@ -182,7 +193,7 @@ function drawCertificateOnCanvas(tier) {
 
     // รูปประกอบประจำระดับ (มุมขวาล่าง)
     const tierArtImg = getOrLoadImage(tier.artImgUrl);
-    if (tierArtImg && tierArtImg.complete && tierArtImg.naturalWidth > 0) {
+    if (!certSkipImages && tierArtImg && tierArtImg.complete && tierArtImg.naturalWidth > 0) {
         const imgScale = Math.min(460 / tierArtImg.naturalWidth, 440 / tierArtImg.naturalHeight);
         const drawW = tierArtImg.naturalWidth * imgScale;
         const drawH = tierArtImg.naturalHeight * imgScale;
@@ -229,23 +240,40 @@ function drawCertificateOnCanvas(tier) {
     ctx.fill();
     ctx.restore();
 
+    // วาดข้อความกึ่งกลางด้วยการคำนวณตำแหน่งเอง (ไม่พึ่ง textAlign = 'center'
+    // เพราะ Safari บน iPhone บางรุ่นจัดกึ่งกลางข้อความภาษาไทยบน canvas ผิด)
+    function centeredBox(text, cx, font) {
+        ctx.font = font;
+        const w = measureCertText(ctx, text, font);
+        const fitW = Math.min(w, CERT_TEXT_MAX_W);
+        return { x: cx - fitW / 2, maxW: w > CERT_TEXT_MAX_W ? CERT_TEXT_MAX_W : undefined };
+    }
+    function fillAt(text, b, y) {
+        if (b.maxW) ctx.fillText(text, b.x, y, b.maxW); else ctx.fillText(text, b.x, y);
+    }
+    function strokeAt(text, b, y) {
+        if (b.maxW) ctx.strokeText(text, b.x, y, b.maxW); else ctx.strokeText(text, b.x, y);
+    }
+
     function fillGlowingText(text, x, y, font, fillStyle, glowRadius = 30) {
         ctx.save();
-        ctx.font = font;
+        ctx.textAlign = 'left';
+        const b = centeredBox(text, x, font);
         ctx.fillStyle = fillStyle;
         ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
         ctx.shadowBlur = glowRadius;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
-        ctx.fillText(text, x, y);
+        fillAt(text, b, y);
         ctx.shadowBlur = 0;
-        ctx.fillText(text, x, y);
+        fillAt(text, b, y);
         ctx.restore();
     }
 
     function fillFadedWhiteBorderText(text, x, y, font, fillStyle, strokeWidth = 10, blurRadius = 20) {
         ctx.save();
-        ctx.font = font;
+        ctx.textAlign = 'left';
+        const b = centeredBox(text, x, font);
         ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
 
@@ -253,16 +281,16 @@ function drawCertificateOnCanvas(tier) {
         ctx.shadowBlur = blurRadius;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
         ctx.lineWidth = strokeWidth + 4;
-        ctx.strokeText(text, x, y);
+        strokeAt(text, b, y);
 
         ctx.shadowBlur = Math.round(blurRadius / 2);
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = strokeWidth;
-        ctx.strokeText(text, x, y);
+        strokeAt(text, b, y);
 
         ctx.shadowBlur = 0;
         ctx.fillStyle = fillStyle;
-        ctx.fillText(text, x, y);
+        fillAt(text, b, y);
         ctx.restore();
     }
 
@@ -371,11 +399,165 @@ function drawCertificateOnCanvas(tier) {
     fillGlowingText('หัวหน้าแผนกเทคโนโลยีสารสนเทศและสื่อดิจิทัล', W / 2, 955, '500 17px "Prompt", sans-serif', '#475569', 10);
 }
 
-function downloadCanvasAsPNG() {
+// วัดความกว้างข้อความด้วย DOM (แม่นกว่าบน Safari iOS) และใช้ค่าของ canvas เป็นสำรอง
+function measureCertText(ctx, text, font) {
+    let dom = 0;
+    try {
+        if (!certMeasureEl) {
+            certMeasureEl = document.createElement('span');
+            certMeasureEl.setAttribute('aria-hidden', 'true');
+            certMeasureEl.style.cssText = 'position:absolute; left:-99999px; top:0; white-space:pre; visibility:hidden; letter-spacing:normal; pointer-events:none;';
+            document.body.appendChild(certMeasureEl);
+        }
+        certMeasureEl.style.font = font;
+        certMeasureEl.textContent = text;
+        dom = certMeasureEl.getBoundingClientRect().width;
+    } catch (e) {}
+    const cw = ctx.measureText(text).width;
+    return dom > 0 ? Math.max(dom, cw) : cw;
+}
+
+function waitImageLoaded(img) {
+    if (!img || img.complete) return Promise.resolve();
+    return new Promise(r => {
+        img.addEventListener('load', r, { once: true });
+        img.addEventListener('error', r, { once: true });
+    });
+}
+
+// รอฟอนต์ Prompt/Cinzel (ทั้งอักษรไทยและอังกฤษ) และรูปโลโก้ให้โหลดเสร็จก่อนวาดจริง
+function certAssetsReady(tier) {
+    const jobs = [];
+    if (document.fonts && document.fonts.load) {
+        CERT_FONTS.forEach(f => jobs.push(document.fonts.load(f, 'กขคศษสัตน์ ABCabc 0123').catch(() => {})));
+    }
+    [SIAMTECH_LOGO_URL, ITM_LOGO_URL, tier.artImgUrl].forEach(u => jobs.push(waitImageLoaded(getOrLoadImage(u))));
+    return Promise.race([Promise.all(jobs), sleep(4000)]);
+}
+
+function certDownloadButton() {
+    return document.querySelector('#certPreviewModal .btn-cert-corporate');
+}
+
+function setCertDownloadBusy(busy) {
+    const b = certDownloadButton();
+    if (!b) return;
+    b.disabled = busy;
+    b.style.opacity = busy ? '0.6' : '';
+}
+
+function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+        try {
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+// แสดงประกาศนียบัตรเป็นรูปภาพ (บน iPhone กดค้างที่รูปเพื่อบันทึกได้)
+function showCertImage(blob) {
     const canvas = document.getElementById('certCanvas');
-    const link = document.createElement('a');
+    let img = document.getElementById('certImage');
+    if (!img) {
+        img = document.createElement('img');
+        img.id = 'certImage';
+        img.alt = 'ประกาศนียบัตร';
+        img.style.cssText = 'width:100%; height:auto; display:block; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2);';
+        canvas.parentNode.insertBefore(img, canvas.nextSibling);
+    }
+    if (certImgUrl) URL.revokeObjectURL(certImgUrl);
+    certImgUrl = URL.createObjectURL(blob);
+    img.src = certImgUrl;
+    img.classList.remove('hidden');
+    canvas.classList.add('hidden');
+}
+
+async function prepareCertBlob(tier, seq) {
+    const canvas = document.getElementById('certCanvas');
+    try {
+        const blob = await canvasToBlob(canvas);
+        if (seq !== certDrawSeq) return;
+        certBlob = blob;
+        showCertImage(blob);
+    } catch (e) {
+        if (!certSkipImages && e && e.name === 'SecurityError') {
+            certSkipImages = true;
+            renderCertificate(tier);
+            return prepareCertBlob(tier, seq);
+        }
+        console.warn('เตรียมไฟล์ประกาศนียบัตรไม่สำเร็จ:', e);
+    }
+}
+
+// เรียกจาก account.js: วาดทันที แล้ววาดซ้ำเมื่อฟอนต์/รูปพร้อม จากนั้นเตรียมไฟล์ PNG
+function drawCertificateOnCanvas(tier) {
+    const seq = ++certDrawSeq;
+    certBlob = null;
+    const canvas = document.getElementById('certCanvas');
+    canvas.classList.remove('hidden');
+    const img = document.getElementById('certImage');
+    if (img) img.classList.add('hidden');
+
+    renderCertificate(tier);
+    setCertDownloadBusy(true);
+
+    certAssetsReady(tier)
+        .then(() => {
+            if (seq !== certDrawSeq) return;
+            renderCertificate(tier);
+            return prepareCertBlob(tier, seq);
+        })
+        .finally(() => { if (seq === certDrawSeq) setCertDownloadBusy(false); });
+}
+
+function certFileName() {
     const safeName = (currentUser && currentUser.studentId) ? currentUser.studentId : 'user';
-    link.download = `Certificate_ESG_${selectedCertTier.id}_${safeName}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    return `Certificate_ESG_${selectedCertTier.id}_${safeName}.png`;
+}
+
+// 💾 บันทึกไฟล์
+// - มือถือ: เปิดเมนูแชร์ของระบบ (iPhone เลือก "บันทึกรูปภาพ" ได้)
+// - คอมพิวเตอร์: ดาวน์โหลดไฟล์ .png ตามปกติ
+function downloadCanvasAsPNG() {
+    if (!certBlob) {
+        showToast('⏳ กำลังเตรียมไฟล์ กรุณารอสักครู่แล้วกดอีกครั้ง');
+        return;
+    }
+    const name = certFileName();
+    let file = null;
+    try { file = new File([certBlob], name, { type: 'image/png' }); } catch (e) {}
+
+    const isTouch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    if (isTouch && file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'ประกาศนียบัตร น้องถังช่วยทิ้ง' })
+            .catch(err => {
+                if (err && err.name === 'AbortError') return;   // ผู้ใช้กดยกเลิกเอง
+                saveCertBlob(name);
+            });
+        return;
+    }
+    saveCertBlob(name);
+}
+
+function saveCertBlob(name) {
+    const url = URL.createObjectURL(certBlob);
+    const a = document.createElement('a');
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if ('download' in a) {
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        if (isIOS) showToast('📥 ถ้าไม่มีหน้าต่างบันทึกขึ้นมา ให้กดค้างที่รูปประกาศนียบัตร แล้วเลือก "บันทึกรูปภาพ"', 5000);
+    } else {
+        // iOS รุ่นเก่า: เปิดรูปในแท็บใหม่ให้กดค้างบันทึก
+        window.open(url, '_blank');
+        showToast('📥 กดค้างที่รูป แล้วเลือก "บันทึกรูปภาพ"', 5000);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
