@@ -1,5 +1,5 @@
 // =========================================================================
-// 🔐 น้องถังช่วยทิ้ง • บัญชีผู้ใช้: เข้าสู่ระบบ / สมัคร / ลืมรหัสผ่าน / โปรไฟล์ / ประกาศนียบัตร
+// 🔐 น้องถังช่วยทิ้ง • บัญชีผู้ใช้: เข้าสู่ระบบ / สมัคร / ผู้เยี่ยมชม / ลืมรหัสผ่าน / โปรไฟล์ / ประกาศนียบัตร
 // (ต้องโหลดหลัง app.js)
 // =========================================================================
 
@@ -78,6 +78,7 @@ function doLogin() {
             setBtnLoading(btn, false);
             if (res && res.success) {
                 currentUser = res;
+                try { sessionStorage.removeItem(GUEST_SESSION_KEY); } catch (e) {}
                 localStorage.setItem('smartBinUser', JSON.stringify(res));
                 showApp();
             } else {
@@ -89,6 +90,41 @@ function doLogin() {
             alert("❌ เชื่อมต่อกับระบบเซิร์ฟเวอร์ไม่สำเร็จ:\n" + err.message);
         })
         .loginUser(u, p);
+}
+
+// =========================================================================
+// 👀 โหมดผู้เยี่ยมชม: แยกขยะได้ ไม่มีโปรไฟล์ ไม่มีคะแนน (ระบบยังบันทึกภาพที่ถ่าย)
+// =========================================================================
+function enterGuestMode(silent) {
+    currentUser = {
+        success: true,
+        guest: true,
+        role: 'guest',
+        studentId: '',
+        name: TEXTS.guest.guestName,
+        avatar: '',
+        email: ''
+    };
+    try { sessionStorage.setItem(GUEST_SESSION_KEY, '1'); } catch (e) {}
+    getGuestId();
+    showApp();
+}
+
+function leaveGuestMode() {
+    try { sessionStorage.removeItem(GUEST_SESSION_KEY); } catch (e) {}
+    stopLiveVideo();
+    stopTips();
+    clearInterval(campusTimer);
+    location.reload();
+}
+
+// แตะกล่องชื่อด้านบน: ผู้ใช้ทั่วไป = เปิดโปรไฟล์ / ผู้เยี่ยมชม = ไปหน้าเข้าสู่ระบบ
+function onUserBadgeTap() {
+    if (isGuest()) {
+        if (confirm(T('loginConfirm'))) leaveGuestMode();
+        return;
+    }
+    openProfileModal();
 }
 
 async function doRegister() {
@@ -340,6 +376,10 @@ function doUpdateEmail() {
 }
 
 function logout() {
+    if (isGuest()) {
+        if (confirm(T('logoutConfirm'))) leaveGuestMode();
+        return;
+    }
     if (confirm(T('logoutConfirm'))) {
         stopLiveVideo();
         stopTips();
@@ -471,6 +511,7 @@ function openProfileModal() {
 // 🎓 ประกาศนียบัตร (การวาดอยู่ในไฟล์ cert.js)
 // =========================================================================
 function handleCertAction() {
+    if (isGuest()) return;
     const { currentTier } = getRankInfo(userTotalScore);
     const pm = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
     if (!currentTier) {
