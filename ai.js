@@ -4,6 +4,31 @@
 // (ต้องโหลดหลัง app.js)
 // =========================================================================
 
+// ⚙️ ตั้งค่าการใช้ Gemini (ค่าในไฟล์นี้ใช้แทน GEMINI_TIMEOUT_MS / GEMINI_IMAGE_MAX ใน app.js)
+const GEMINI_WAIT_MS = 9000;          // รอ Gemini ได้นานสุดเท่านี้ ก่อนใช้ผลจาก AI ในเครื่องแทน
+const GEMINI_SEND_MAX = 512;          // ย่อภาพก่อนส่ง (ภาพเล็ก = ส่งเร็ว ตอบเร็ว ยังแยกขยะได้แม่น)
+const GEMINI_JPEG_QUALITY = 0.7;
+const GEMINI_RETRY_MIN_LEFT_MS = 3500; // ถ้า Gemini ล้มเหลวเร็ว และยังเหลือเวลาเท่านี้ ให้ลองใหม่อีก 1 ครั้ง
+const AI_STATS_KEY = 'nongtang_ai_stats';
+
+// 📊 นับว่าใช้ Gemini ได้กี่ครั้ง (ดูได้ใน Console ด้วยคำสั่ง nongtangAiStats())
+function recordAiSource(source, reason) {
+    let st = { gemini: 0, local: 0, reasons: {} };
+    try { st = Object.assign(st, JSON.parse(localStorage.getItem(AI_STATS_KEY) || '{}')); } catch (e) {}
+    st[source] = (st[source] || 0) + 1;
+    if (source === 'local' && reason) st.reasons[reason] = (st.reasons[reason] || 0) + 1;
+    try { localStorage.setItem(AI_STATS_KEY, JSON.stringify(st)); } catch (e) {}
+    const total = st.gemini + st.local;
+    console.info(`[AI] ใช้ ${source}${reason ? ' (' + reason + ')' : ''} • Gemini ${st.gemini}/${total} ครั้ง (${Math.round(st.gemini / total * 100)}%)`);
+}
+
+window.nongtangAiStats = function() {
+    let st = {};
+    try { st = JSON.parse(localStorage.getItem(AI_STATS_KEY) || '{}'); } catch (e) {}
+    const total = (st.gemini || 0) + (st.local || 0);
+    return Object.assign({ percentGemini: total ? Math.round((st.gemini || 0) / total * 100) : 0 }, st);
+};
+
 async function loadAIModel() {
     try {
         const promises = [];
@@ -118,22 +143,20 @@ function renderBoxes(items, animate = true) {
     });
 }
 
-// ส่งภาพย่อไปให้ Gemini ผ่าน Apps Script — คืน null ถ้าใช้ไม่ได้ (ไม่มี key / โควตาหมด / error)
-function detectWithGemini(rawCanvas) {
-    if (!USE_GEMINI) return Promise.resolve(null);
-    const W = rawCanvas.width;
-    const H = rawCanvas.height;
-    const small = makeCanvasCopy(rawCanvas, GEMINI_IMAGE_MAX);
-    const dataUrl = small.toDataURL('image/jpeg', 0.7);
-
+// ส่งภาพย่อไปให้ Gemini ผ่าน Apps Script
+// คืน { ok:true, living, items } เมื่อสำเร็จ หรือ { ok:false, reason, quota } เมื่อใช้ไม่ได้
+function geminiOnce(dataUrl, W, H) {
     return callApi('analyzeWithGemini', [dataUrl])
         .then(res => {
             if (!res || !res.success) {
-                if (res && res.reason) console.info('Gemini ไม่พร้อม:', res.reason, res.detail || '');
-                return null;
+                const reason = (res && (res.reason || res.message)) || 'ไม่ทราบสาเหตุ';
+                const detail = String((res && res.detail) || '');
+                const quota = /429|quota|RESOURCE_EXHAUSTED|rate/i.test(reason + ' ' + detail);
+                console.info('Gemini ไม่พร้อม:', reason, detail);
+                return { ok: false, reason: reason, quota: quota };
             }
             if (res.isLivingBeing) {
-                return { living: res.livingName || 'สิ่งมีชีวิต/บุคคล', items: [] };
+                return { ok: true, living: res.livingName || 'สิ่งมีชีวิต/บุคคล', items: [] };
             }
             const items = (res.items || []).slice(0, 6).map(it => {
                 const [ymin, xmin, ymax, xmax] = it.box_2d || [150, 150, 850, 850];
@@ -149,12 +172,30 @@ function detectWithGemini(rawCanvas) {
                     ]
                 };
             }).filter(it => it.bbox[2] > 4 && it.bbox[3] > 4);
-            return { living: null, items: items };
+            return { ok: true, living: null, items: items };
         })
         .catch(err => {
             console.warn('Gemini error:', err);
-            return null;
+            return { ok: false, reason: 'เชื่อมต่อไม่สำเร็จ', quota: false };
         });
+}
+
+// ลอง Gemini ภายในเวลาที่กำหนด ถ้าล้มเหลวเร็ว (เช่น เซิร์ฟเวอร์ Gemini ยุ่งชั่วคราว) จะลองใหม่ 1 ครั้ง
+async function detectWithGemini(rawCanvas) {
+    if (!USE_GEMINI) return { ok: false, reason: 'ปิดการใช้ Gemini' };
+    const W = rawCanvas.width;
+    const H = rawCanvas.height;
+    const dataUrl = makeCanvasCopy(rawCanvas, GEMINI_SEND_MAX).toDataURL('image/jpeg', GEMINI_JPEG_QUALITY);
+    const deadline = performance.now() + GEMINI_WAIT_MS;
+    const timeoutResult = { ok: false, reason: 'รอนานเกิน ' + (GEMINI_WAIT_MS / 1000) + ' วินาที' };
+
+    let r = await withTimeout(geminiOnce(dataUrl, W, H), GEMINI_WAIT_MS) || timeoutResult;
+    const left = deadline - performance.now();
+    if (!r.ok && !r.quota && r !== timeoutResult && left > GEMINI_RETRY_MIN_LEFT_MS) {
+        console.info('ลอง Gemini อีกครั้ง...');
+        r = await withTimeout(geminiOnce(dataUrl, W, H), left) || timeoutResult;
+    }
+    return r;
 }
 
 // โมเดลในเครื่อง: COCO-SSD หาตำแหน่งวัตถุ + Teachable Machine จำแนกประเภท
@@ -288,11 +329,16 @@ async function analyzeFrame(rawCanvas, startTime) {
         return { living: null, items: [] };
     });
 
-    let result = await withTimeout(detectWithGemini(rawCanvas), GEMINI_TIMEOUT_MS);
-    lastAnalysisSource = 'gemini';
-    if (!result) {
+    const g = await detectWithGemini(rawCanvas);
+    let result;
+    if (g.ok) {
+        lastAnalysisSource = 'gemini';
+        result = g;
+        recordAiSource('gemini');
+    } else {
         lastAnalysisSource = 'local';
         result = await localPromise;
+        recordAiSource('local', g.reason);
     }
 
     lastElapsed = ((performance.now() - startTime) / 1000).toFixed(1);
