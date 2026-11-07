@@ -7,7 +7,8 @@
 // 📱 แสดงหน้าแอปหลังล็อกอิน
 // =========================================================================
 function showApp() {
-    currentRole = currentUser && currentUser.role === 'teacher' ? 'teacher' : 'student';
+    if (isGuest()) currentRole = 'guest';
+    else currentRole = currentUser && currentUser.role === 'teacher' ? 'teacher' : 'student';
     applyRoleTexts();
     setAppHeight();
     document.getElementById('authSection').classList.add('hidden');
@@ -15,7 +16,7 @@ function showApp() {
     document.getElementById('appSection').classList.remove('hidden');
     document.getElementById('dispName').innerText = currentUser.name;
     document.getElementById('userAvatar').src = currentUser.avatar || defaultAvatar;
-    updateScore();
+    if (!isGuest()) updateScore();
     startCampusPolling();
     loadAIModel();
     startLiveVideo();
@@ -331,7 +332,7 @@ function renderMultiWasteResult(items, isLivingBeing, extraInfo) {
         const item = currentDetectedItems[0];
         const info = WASTE_MAP[item.className];
 
-        badge.innerText = `${info.th} (+1 คะแนน)`;
+        badge.innerText = `${info.th}${T('pointSuffix')}`;
         badge.style.color = info.color;
         lid.style.backgroundColor = info.color;
         setMood('happy');
@@ -344,7 +345,7 @@ function renderMultiWasteResult(items, isLivingBeing, extraInfo) {
         confirmBtn.disabled = false;
         fixBtn.classList.remove('hidden');
         pointsBadge.innerText = "+1";
-        pointsBadge.classList.remove('hidden');
+        pointsBadge.classList.toggle('hidden', isGuest());
     } else {
         const count = currentDetectedItems.length;
         const firstInfo = WASTE_MAP[currentDetectedItems[0].className];
@@ -364,7 +365,7 @@ function renderMultiWasteResult(items, isLivingBeing, extraInfo) {
         confirmBtn.disabled = false;
         fixBtn.classList.remove('hidden');
         pointsBadge.innerText = `+${count}`;
-        pointsBadge.classList.remove('hidden');
+        pointsBadge.classList.toggle('hidden', isGuest());
     }
 
     showScanControls(true);
@@ -456,12 +457,64 @@ function resetCamera() {
     }
 }
 
+// ข้อมูลที่ส่งไปบันทึก (ใช้ร่วมกันทั้งผู้ใช้ทั่วไปและผู้เยี่ยมชม)
+function buildSavePayload() {
+    return {
+        categories: currentDetectedItems.map(it => WASTE_MAP[it.className].th),
+        meta: {
+            source: lastAnalysisSource,
+            corrected: itemsCorrected,
+            itemNames: currentDetectedItems.map(it => it.itemName || '')
+        },
+        image: lastRawCanvas
+            ? makeCanvasCopy(lastRawCanvas, 1024).toDataURL('image/jpeg', 0.8)
+            : document.getElementById('captured-image').src
+    };
+}
+
+// 👀 ผู้เยี่ยมชม: บันทึกภาพ + ประเภทขยะ โดยไม่มีคะแนน
+let guestSaveCount = 0;
+async function confirmSaveGuest() {
+    setActionButtonsDisabled(true);
+    const addedItems = currentDetectedItems.length;
+    const p = buildSavePayload();
+
+    const savePromise = new Promise(resolve => {
+        google.script.run
+            .withSuccessHandler(res => resolve({ res: res }))
+            .withFailureHandler(err => resolve({ err: err }))
+            .logGuestWaste(getGuestId(), p.categories, p.image, p.meta);
+    });
+
+    const [saved] = await Promise.all([savePromise, playGulp()]);
+    const res = saved.res;
+
+    if (res && res.success) {
+        const campusEl = document.getElementById('campusCount');
+        setCampusCount(Number(campusEl.dataset.val || 0) + addedItems);
+        refreshCampus(true);
+        guestSaveCount++;
+        showToast(res.message || T('saveToast'));
+        resetCamera();
+        if (guestSaveCount === 2 || guestSaveCount % 5 === 0) {
+            setTimeout(() => showToast(T('registerNudge'), 4000), 2900);
+        }
+    } else {
+        restoreAfterFailedGulp();
+        setActionButtonsDisabled(false);
+        setMood('sad');
+        const msg = res && res.message ? res.message : ('❌ บันทึกไม่สำเร็จ: ' + (saved.err ? saved.err.message : ''));
+        alert(msg);
+    }
+}
+
 // ✅ ยืนยันบันทึก: น้องถังงับขยะ + คะแนนลอยไปเข้ากระเป๋า (เล่นพร้อมกับการส่งข้อมูล)
 async function confirmSave() {
     if (!currentDetectedItems || currentDetectedItems.length === 0) {
         alert(T('notWasteAlert'));
         return;
     }
+    if (isGuest()) return confirmSaveGuest();
     setActionButtonsDisabled(true);
 
     const confirmBtn = document.getElementById('btnConfirm');
@@ -469,25 +522,16 @@ async function confirmSave() {
     const scoreEl = document.getElementById('dispScore');
 
     const addedPoints = currentDetectedItems.length;
-    const categoriesToSave = currentDetectedItems.map(it => WASTE_MAP[it.className].th);
-    const meta = {
-        source: lastAnalysisSource,
-        corrected: itemsCorrected,
-        itemNames: currentDetectedItems.map(it => it.itemName || '')
-    };
+    const payload = buildSavePayload();
     const prevShown = parseInt(scoreEl.textContent) || 0;
     const prevTierScore = userTotalScore;
     const wasLoaded = scoreLoaded;
-
-    const imgData = lastRawCanvas
-        ? makeCanvasCopy(lastRawCanvas, 1024).toDataURL('image/jpeg', 0.8)
-        : document.getElementById('captured-image').src;
 
     const savePromise = new Promise(resolve => {
         google.script.run
             .withSuccessHandler(res => resolve({ res: res }))
             .withFailureHandler(err => resolve({ err: err }))
-            .logWasteData(currentUser.studentId, categoriesToSave, imgData, meta);
+            .logWasteData(currentUser.studentId, payload.categories, payload.image, payload.meta);
     });
 
     const gulpPromise = playGulp();
@@ -515,7 +559,7 @@ async function confirmSave() {
         refreshCertificateButtons(newScore, 0);
         const afterTier = getRankInfo(newScore).currentTier;
 
-        showToast(res.message || '✅ บันทึกสำเร็จ');
+        showToast(res.message || T('saveToast'));
         resetCamera();
 
         if (wasLoaded && afterTier && (!beforeTier || beforeTier.id !== afterTier.id)) {
