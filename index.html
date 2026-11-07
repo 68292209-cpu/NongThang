@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- สไตล์ของแอป (เลข v= ช่วยให้มือถือโหลดไฟล์ใหม่ทันทีหลังอัปเดต) -->
-    <link rel="stylesheet" href="app.css?v=20261101">
+    <link rel="stylesheet" href="app.css?v=20261107">
 
     <!-- TensorFlow.js, Teachable Machine & COCO-SSD (ใช้เป็นตัวสำรองเมื่อ Gemini ไม่ตอบ) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -58,6 +58,11 @@
                     <button type="button" class="auth-link" onclick="showAuthForm('forgot')">ลืมรหัสผ่าน?</button>
                     <button type="button" class="auth-link" id="regLinkText" onclick="showAuthForm('register')">สมัครสมาชิกใหม่</button>
                 </div>
+
+                <!-- 👀 ผู้เยี่ยมชม (ไม่ต้องลงทะเบียน) -->
+                <div class="guest-divider"><span>หรือ</span></div>
+                <button type="button" class="btn-guest" onclick="enterGuestMode()">👀 ทดลองแยกขยะแบบผู้เยี่ยมชม</button>
+                <div class="guest-note">ไม่ต้องลงทะเบียน • ไม่มีโปรไฟล์และคะแนน</div>
             </div>
 
             <!-- สมัครสมาชิก -->
@@ -112,11 +117,12 @@
     <!-- 📌 แถบบนสุด (ยึดติดด้านบน ลอยอยู่หน้าสุด) -->
     <header class="top-bar hidden" id="topBar">
         <div class="top-bar-inner">
-            <div class="user-badge" id="userBadgeBox" onclick="openProfileModal()">
+            <div class="user-badge" id="userBadgeBox" onclick="onUserBadgeTap()">
                 <img id="userAvatar" src="" class="user-avatar-small" alt="" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
                 <div class="user-meta">
                     <div class="user-name-line"><span id="dispName">...</span><span id="dispRole" class="role-chip hidden">อาจารย์</span></div>
-                    <small class="fw-bold" style="color:#15803D;">🏆 <span id="dispScore">0</span> <span id="dispFlameIcon" class="flame">🔥</span></small>
+                    <small class="fw-bold" id="dispScoreLine" style="color:#15803D;">🏆 <span id="dispScore">0</span> <span id="dispFlameIcon" class="flame">🔥</span></small>
+                    <small class="guest-line hidden" id="dispGuestLine">แตะเพื่อเข้าสู่ระบบ / สมัคร</small>
                 </div>
             </div>
             <div class="top-actions">
@@ -494,11 +500,11 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <!-- ไฟล์ของแอป (ลำดับสำคัญ: config → data → app → account → scan → ai → cert) -->
     <script src="config.js"></script>
-    <script src="data.js?v=20261101"></script>
-    <script src="app.js?v=20261101"></script>
-    <script src="account.js?v=20261101"></script>
-    <script src="scan.js?v=20261101"></script>
-    <script src="ai.js?v=20261101"></script>
-    <script src="cert.js?v=20261101"></script>
+    <script src="data.js?v=20261107"></script>
+    <script src="app.js?v=20261107"></script>
+    <script src="account.js?v=20261107"></script>
+    <script src="scan.js?v=20261107"></script>
+    <script src="ai.js?v=20261107"></script>
+    <script src="cert.js?v=20261107"></script>
 </body>
 </html>
