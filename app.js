@@ -17,6 +17,8 @@ const AVATAR_SIZE = 200;                        // ขนาดรูปโป�
 const MIN_PASSWORD_LENGTH = 6;                  // ต้องตรงกับค่าใน Code.gs
 const ADMIN_SESSION_KEY = 'nongtang_admin_session';
 const AUTH_ROLE_KEY = 'nongtang_auth_role';
+const GUEST_SESSION_KEY = 'nongtang_guest';    // โหมดผู้เยี่ยมชม (จำไว้เฉพาะแท็บนี้ ปิดแท็บแล้วกลับหน้าเข้าสู่ระบบ)
+const GUEST_ID_KEY = 'nongtang_guest_id';       // รหัสสุ่มของเครื่อง (ไม่ใช่ข้อมูลส่วนตัว) ใช้จำกัดจำนวนครั้งที่บันทึก
 const CAMPUS_REFRESH_MS = 45000;                // อัปเดตตัวเลขทั้งวิทยาลัย/ภารกิจทุก 45 วินาที
 const TIP_INTERVAL_MS = 5000;                   // สลับข้อความ/เคล็ดลับบนฝาถังทุก 5 วินาที
 const LEAF_COUNT = 9;                           // จำนวนใบไม้ลอยพื้นหลัง
@@ -106,7 +108,7 @@ let cameraReady = false;
 let cameraStarting = false;
 let isAnalyzing = false;
 let currentUser = null;
-let currentRole = 'student';     // บทบาทของผู้ใช้ที่ล็อกอินอยู่
+let currentRole = 'student';     // บทบาทของผู้ใช้ที่ล็อกอินอยู่ (student / teacher / guest)
 let authRole = 'student';        // ประเภทผู้ใช้ที่เลือกในหน้าเข้าสู่ระบบ
 let userTotalScore = 0;
 let userDaysInactive = 0;
@@ -141,6 +143,21 @@ const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 function T(key) {
     const d = TEXTS[currentRole] || TEXTS.student;
     return d[key] !== undefined ? d[key] : TEXTS.student[key];
+}
+
+// 👀 ผู้เยี่ยมชม (ไม่ได้ลงทะเบียน)
+function isGuest() {
+    return !!(currentUser && currentUser.guest);
+}
+
+function getGuestId() {
+    let id = '';
+    try { id = localStorage.getItem(GUEST_ID_KEY) || ''; } catch (e) {}
+    if (!/^[a-z0-9]{12,40}$/.test(id)) {
+        id = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        try { localStorage.setItem(GUEST_ID_KEY, id); } catch (e) {}
+    }
+    return id;
 }
 
 function escapeHtml(s) {
@@ -214,6 +231,8 @@ window.onload = function() {
     setAuthRole(savedRole);
 
     const saved = localStorage.getItem('smartBinUser');
+    let guestSaved = false;
+    try { guestSaved = sessionStorage.getItem(GUEST_SESSION_KEY) === '1'; } catch (e) {}
     if (saved) {
         try {
             currentUser = JSON.parse(saved);
@@ -221,6 +240,8 @@ window.onload = function() {
         } catch (e) {
             localStorage.removeItem('smartBinUser');
         }
+    } else if (guestSaved) {
+        enterGuestMode(true);
     }
 
     // รองรับการกดปุ่ม Enter
@@ -275,8 +296,11 @@ document.getElementById('guideModal').addEventListener('hidden.bs.modal', functi
 // =========================================================================
 function applyRoleTexts() {
     const teacher = currentRole === 'teacher';
+    const guest = currentRole === 'guest';
     document.body.classList.toggle('teacher-ui', teacher);
+    document.body.classList.toggle('guest-mode', guest);
     document.getElementById('dispRole').classList.toggle('hidden', !teacher);
+    document.getElementById('dispGuestLine').classList.toggle('hidden', !guest);
     document.getElementById('camGuideTitle').textContent = T('camTitle');
     document.getElementById('camGuideSub').textContent = T('camSub');
     document.getElementById('hintText').textContent = T('defaultHint');
@@ -648,7 +672,7 @@ function applyCampus(res, fromSave) {
 function refreshCampus(fromSave) {
     if (!currentUser || (campusLoading && !fromSave)) return Promise.resolve();
     campusLoading = true;
-    return callApi('getCampusStats', [currentUser.studentId])
+    return callApi('getCampusStats', [isGuest() ? '' : currentUser.studentId])
         .then(res => { if (res && res.success) applyCampus(res, !!fromSave); })
         .catch(err => console.warn('campus stats error:', err))
         .finally(() => { campusLoading = false; });
@@ -666,6 +690,7 @@ function startCampusPolling() {
 // 🧭 ทัวร์แนะนำการใช้งาน
 // =========================================================================
 function tourSteps() {
+    if (currentRole === 'guest') return TOUR_STEPS_GUEST;
     return currentRole === 'teacher' ? TOUR_STEPS_TEACHER : TOUR_STEPS_STUDENT;
 }
 
@@ -750,6 +775,10 @@ function maybeStartFirstTour() {
     try { seen = !!localStorage.getItem(TOUR_KEY); } catch (e) {}
     if (!seen) {
         setTimeout(() => { if (!tourActive && isAppVisible()) startTour(); }, 1200);
+    } else if (isGuest()) {
+        setTimeout(() => {
+            if (!tourActive && isAppVisible()) showToast(T('guestWelcome'), 3500);
+        }, 1500);
     } else if (currentUser && !currentUser.email) {
         // เตือนบัญชีที่ยังไม่ผูกอีเมล
         setTimeout(() => {
